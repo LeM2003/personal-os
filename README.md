@@ -119,4 +119,4 @@ Toutes les données sont stockées localement dans le navigateur (`localStorage`
 
 ---
 
-*Fait avec ❤️ à Dakar — propulsé par [Claude](https://claude.ai)*
+*Fait avec ❤️ à Dakar par [LeM2003](https://github.com/LeM2003)*
