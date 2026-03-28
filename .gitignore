@@ -1,4 +1,10 @@
-# Fichier de génération des icônes (inutile après la 1ère exécution)
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Fichier de génération des icônes
 generate-icons.py
 
 # OS
@@ -9,3 +15,7 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+
+# Env
+.env
+.env.local
