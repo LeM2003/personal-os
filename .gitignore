@@ -1,0 +1,11 @@
+# Fichier de génération des icônes (inutile après la 1ère exécution)
+generate-icons.py
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Éditeurs
+.vscode/
+.idea/
+*.swp
