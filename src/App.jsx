@@ -10,6 +10,7 @@ import Ecole from './components/Ecole'
 import Finances from './components/Finances'
 import Ajustements from './components/Ajustements'
 import Stats from './components/Stats'
+import PomodoroModal from './components/shared/PomodoroModal'
 
 const TABS = [
   { id: 'dashboard',   icon: '🏠', label: 'Dashboard'      },
@@ -83,7 +84,7 @@ function ProfileModal({ profile, onSave, onClose }) {
 }
 
 export default function App() {
-  const [tab, setTab] = useState('dashboard')
+  const [tab, setTab] = useLS('pos_tab', 'dashboard')
   const [apiKey, setApiKey]         = useLS('pos_apikey', '')
   const [profile, setProfile]       = useLS('pos_profile', null)
   const [apiModal, setApiModal]     = useState(false)
@@ -103,6 +104,55 @@ export default function App() {
   const [devoirs,       setDevoirs]       = useLS('pos_devoirs',       SAMPLE_DEVOIRS)
   const [examens,       setExamens]       = useLS('pos_examens',       SAMPLE_EXAMENS)
   const [streakData,    setStreakData]    = useLS('pos_streak',        { count: 0, lastDate: '' })
+
+  /* ── Pomodoro — survit à la navigation ── */
+  const [pomo,    setPomo]    = useState(null)
+  const bellRef               = useRef(false)
+
+  useEffect(() => {
+    if (!pomo || !pomo.running || pomo.timeLeft <= 0) return
+    const t = setTimeout(() => {
+      setPomo(prev => {
+        if (!prev) return null
+        if (prev.timeLeft <= 1) return { ...prev, timeLeft: 0, running: false, finished: true }
+        return { ...prev, timeLeft: prev.timeLeft - 1 }
+      })
+    }, 1000)
+    return () => clearTimeout(t)
+  }, [pomo])
+
+  useEffect(() => {
+    if (!pomo?.finished || bellRef.current) return
+    bellRef.current = true
+    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+      new Notification('⏱ Temps écoulé !', {
+        body: `${pomo.task.name} — bien joué !`,
+        icon: NOTIF_ICON,
+      })
+    }
+  }, [pomo?.finished]) // eslint-disable-line
+
+  const startPomo = useCallback((task) => {
+    bellRef.current = false
+    const secs = Math.max(task.duration || 25, 1) * 60
+    setPomo({ task, total: secs, timeLeft: secs, running: true, finished: false })
+    setTasks(prev => prev.map(t =>
+      t.id === task.id && t.status === 'À faire' ? { ...t, status: 'En cours' } : t
+    ))
+  }, [setTasks]) // eslint-disable-line
+
+  const pausePomo = () => setPomo(p => p ? { ...p, running: !p.running } : null)
+  const stopPomo  = () => setPomo(null)
+  const donePomo  = () => {
+    if (pomo) {
+      setTasks(prev => prev.map(t => {
+        if (t.id !== pomo.task.id) return t
+        if (t.recurring) return { ...t, status: 'Terminé', lastCompletedAt: todayISO() }
+        return { ...t, status: 'Terminé' }
+      }))
+    }
+    setPomo(null)
+  }
 
   /* Reset des tâches récurrentes terminées au prochain cycle */
   useEffect(() => {
@@ -308,7 +358,7 @@ export default function App() {
       <main className="main-content">
         <div className="page-enter" key={tab}>
           {tab === 'dashboard'   && <Dashboard   {...shared} />}
-          {tab === 'taches'      && <Taches      tasks={tasks} setTasks={setTasks} adjustments={adjustments} setAdjustments={setAdjustments} />}
+          {tab === 'taches'      && <Taches      tasks={tasks} setTasks={setTasks} adjustments={adjustments} setAdjustments={setAdjustments} pomo={pomo} startPomo={startPomo} />}
           {tab === 'projets'     && <Projets     tasks={tasks} projects={projects} setProjects={setProjects} apiKey={apiKey} />}
           {tab === 'ecole'       && <Ecole       courses={courses} setCourses={setCourses} devoirs={devoirs} setDevoirs={setDevoirs} examens={examens} setExamens={setExamens} tasks={tasks} setTasks={setTasks} />}
           {tab === 'finances'    && <Finances    expenses={expenses} setExpenses={setExpenses} subscriptions={subscriptions} setSubscriptions={setSubscriptions} budgets={budgets} setBudgets={setBudgets} />}
@@ -374,6 +424,9 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* POMODORO — persiste sur tous les onglets */}
+      {pomo && <PomodoroModal pomo={pomo} onPause={pausePomo} onStop={stopPomo} onDone={donePomo} />}
 
       {/* API KEY MODAL */}
       {apiModal && (

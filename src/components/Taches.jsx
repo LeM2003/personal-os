@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import { genId, todayISO, fmtDate, daysUntil, nextOccurrenceDate } from '../utils/dates'
 import { PRIORITY_ORDER, PRIORITY_COLOR, PRIORITY_EMOJI } from '../utils/constants'
 import PageHeader from './shared/PageHeader'
@@ -6,196 +6,37 @@ import EmptyState from './shared/EmptyState'
 
 const JOURS       = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
 const JOURS_SHORT = ['Lun',   'Mar',   'Mer',      'Jeu',   'Ven',      'Sam',    'Dim']
-const NOTIF_ICON  = '/personal-os/icons/icon-192.png'
 
 const blank = {
-  name: '', project: '', priority: 'Important', duration: 25,
+  name: '', project: '', priority: 'Important',
+  durationH: 0, durationM: 25,
   deadline: '', flexible: false,
   recurring: false, recurrence: 'daily', recurrenceDays: [], recurrenceTime: ''
 }
 
-const fmt = (s) =>
-  `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
-
-/* ── Anneau SVG animé ── */
-function TimerRing({ timeLeft, total, size = 200 }) {
-  const r    = (size - 16) / 2
-  const circ = 2 * Math.PI * r
-  const pct  = total > 0 ? timeLeft / total : 0
-  const dash = pct * circ
-  const color = pct > 0.5 ? '#4ade80' : pct > 0.2 ? '#F5C518' : '#f87171'
-  return (
-    <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#1a2235" strokeWidth={8} />
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={8}
-        strokeDasharray={`${dash} ${circ - dash}`} strokeLinecap="round"
-        style={{ transition: 'stroke-dasharray .9s linear, stroke .5s ease' }} />
-    </svg>
-  )
+const formatDur = (mins) => {
+  if (!mins || mins <= 0) return null
+  const h = Math.floor(mins / 60), m = mins % 60
+  if (h > 0 && m > 0) return `${h}h ${m}min`
+  if (h > 0) return `${h}h`
+  return `${m}min`
 }
 
-/* ── Modal Pomodoro ── */
-function PomodoroModal({ pomo, onPause, onStop, onDone }) {
-  const { task, total, timeLeft, running, finished } = pomo
-  const pct   = total > 0 ? timeLeft / total : 0
-  const color = pct > 0.5 ? '#4ade80' : pct > 0.2 ? '#F5C518' : '#f87171'
-
-  return (
-    <div className="modal-overlay" style={{ zIndex: 9998 }}>
-      <div className="modal-box" style={{ maxWidth: 360, textAlign: 'center', padding: '32px 28px' }}>
-
-        {/* Titre tâche */}
-        <p style={{ fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: .8, marginBottom: 6 }}>
-          Session de travail
-        </p>
-        <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 24,
-          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          {task.name}
-        </p>
-
-        {/* Anneau + temps */}
-        <div style={{ position: 'relative', display: 'inline-block', marginBottom: 24 }}>
-          <TimerRing timeLeft={timeLeft} total={total} size={180} />
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'center' }}>
-            {finished ? (
-              <span style={{ fontSize: 40 }}>🏆</span>
-            ) : (
-              <>
-                <span style={{ fontSize: 36, fontWeight: 800, color, fontFamily: 'monospace', lineHeight: 1 }}>
-                  {fmt(timeLeft)}
-                </span>
-                <span style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4 }}>
-                  {running ? 'en cours…' : 'en pause'}
-                </span>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Message fin */}
-        {finished && (
-          <div style={{ background: 'rgba(74,222,128,.08)', border: '1px solid rgba(74,222,128,.25)',
-            borderRadius: 10, padding: '12px 16px', marginBottom: 20 }}>
-            <p style={{ fontSize: 15, fontWeight: 700, color: '#4ade80', margin: 0 }}>
-              Temps écoulé ! Excellent travail.
-            </p>
-            <p style={{ fontSize: 12, color: 'var(--muted)', margin: '4px 0 0' }}>
-              {task.duration} min sur « {task.name} »
-            </p>
-          </div>
-        )}
-
-        {/* Barre de progression */}
-        {!finished && (
-          <div style={{ background: '#1a2235', borderRadius: 999, height: 4, marginBottom: 24, overflow: 'hidden' }}>
-            <div style={{ width: `${(1 - pct) * 100}%`, height: '100%', background: color,
-              borderRadius: 999, transition: 'width .9s linear' }} />
-          </div>
-        )}
-
-        {/* Actions */}
-        <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
-          {finished ? (
-            <>
-              <button className="btn-gold" onClick={onDone} style={{ flex: 1 }}>
-                ✅ Marquer Terminé
-              </button>
-              <button className="btn-ghost" onClick={onStop} style={{ flex: 1 }}>
-                Fermer
-              </button>
-            </>
-          ) : (
-            <>
-              <button className="btn-gold" onClick={onPause} style={{ minWidth: 110 }}>
-                {running ? '⏸ Pause' : '▶ Reprendre'}
-              </button>
-              <button className="btn-ghost" onClick={onDone} style={{ minWidth: 110 }}>
-                ✅ Terminer
-              </button>
-              <button className="btn-ghost" onClick={onStop}
-                style={{ minWidth: 80, color: '#f87171', borderColor: 'rgba(248,113,113,.3)' }}>
-                ⏹ Arrêter
-              </button>
-            </>
-          )}
-        </div>
-
-        {/* Info durée */}
-        {!finished && (
-          <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 14 }}>
-            Durée prévue : {task.duration} min
-            {task.project ? ` · 📁 ${task.project}` : ''}
-          </p>
-        )}
-      </div>
-    </div>
-  )
-}
-
-export default function Taches({ tasks, setTasks, adjustments, setAdjustments }) {
+export default function Taches({ tasks, setTasks, adjustments, setAdjustments, pomo, startPomo }) {
   const [showForm,  setShowForm]  = useState(false)
   const [form,      setForm]      = useState(blank)
   const [editingId, setEditingId] = useState(null)
   const [fStatus,   setFStatus]   = useState('Tous')
   const [fPriority, setFPriority] = useState('Tous')
-  const [pomo,      setPomo]      = useState(null)
-  const bellRef = useRef(false)
 
-  /* ── Tick du timer ── */
-  useEffect(() => {
-    if (!pomo || !pomo.running || pomo.timeLeft <= 0) return
-    const t = setTimeout(() => {
-      setPomo(prev => {
-        if (!prev) return null
-        if (prev.timeLeft <= 1) return { ...prev, timeLeft: 0, running: false, finished: true }
-        return { ...prev, timeLeft: prev.timeLeft - 1 }
-      })
-    }, 1000)
-    return () => clearTimeout(t)
-  }, [pomo])
-
-  /* ── Notification quand temps écoulé ── */
-  useEffect(() => {
-    if (!pomo?.finished || bellRef.current) return
-    bellRef.current = true
-    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-      new Notification('⏱ Temps écoulé !', {
-        body: `${pomo.task.name} — ${pomo.task.duration} min de travail terminées !`,
-        icon: NOTIF_ICON,
-      })
-    }
-  }, [pomo?.finished]) // eslint-disable-line
-
-  const startPomo = (task) => {
-    bellRef.current = false
-    const secs = (task.duration || 25) * 60
-    setPomo({ task, total: secs, timeLeft: secs, running: true, finished: false })
-    setTasks(prev => prev.map(t =>
-      t.id === task.id && t.status === 'À faire' ? { ...t, status: 'En cours' } : t
-    ))
-  }
-
-  const pausePomo  = () => setPomo(p => p ? { ...p, running: !p.running } : null)
-  const stopPomo   = () => setPomo(null)
-  const donePomo   = () => {
-    if (pomo) {
-      setTasks(prev => prev.map(t => {
-        if (t.id !== pomo.task.id) return t
-        if (t.recurring) return { ...t, status: 'Terminé', lastCompletedAt: todayISO() }
-        return { ...t, status: 'Terminé' }
-      }))
-    }
-    setPomo(null)
-  }
-
-  /* ── Formulaire ── */
   const openAdd  = () => { setEditingId(null); setForm(blank); setShowForm(true) }
   const openEdit = task => {
     setEditingId(task.id)
     setForm({
       name: task.name, project: task.project || '', priority: task.priority,
-      duration: task.duration || 25, deadline: task.deadline || '', flexible: !!task.flexible,
+      durationH: Math.floor((task.duration || 0) / 60),
+      durationM: (task.duration || 0) % 60,
+      deadline: task.deadline || '', flexible: !!task.flexible,
       recurring: !!task.recurring, recurrence: task.recurrence || 'daily',
       recurrenceDays: task.recurrenceDays || [], recurrenceTime: task.recurrenceTime || ''
     })
@@ -213,11 +54,12 @@ export default function Taches({ tasks, setTasks, adjustments, setAdjustments })
 
   const saveTask = () => {
     if (!form.name.trim()) return
+    const duration = form.durationH * 60 + form.durationM
     const deadline = form.recurring && !form.deadline ? todayISO() : form.deadline
     if (editingId) {
-      setTasks(p => p.map(t => t.id === editingId ? { ...t, ...form, deadline } : t))
+      setTasks(p => p.map(t => t.id === editingId ? { ...t, ...form, duration, deadline } : t))
     } else {
-      setTasks(p => [...p, { ...form, deadline, id: genId(), status: 'À faire', createdAt: todayISO(), lastCompletedAt: null }])
+      setTasks(p => [...p, { ...form, duration, deadline, id: genId(), status: 'À faire', createdAt: todayISO(), lastCompletedAt: null }])
     }
     closeForm()
   }
@@ -267,9 +109,25 @@ export default function Taches({ tasks, setTasks, adjustments, setAdjustments })
               <option value="Important">🟡 Important</option>
               <option value="Optionnel">⚪ Optionnel</option>
             </select>
-            <input type="number" value={form.duration} min={5} step={5}
-              onChange={e => setForm({ ...form, duration: +e.target.value })}
-              placeholder="Durée estimée (min)" />
+
+            {/* Durée heures + minutes */}
+            <div style={{ gridColumn: '1/-1' }}>
+              <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 6 }}>⏱ Durée estimée</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input type="number" value={form.durationH} min={0} max={23} inputMode="numeric"
+                  onChange={e => setForm({ ...form, durationH: Math.max(0, +e.target.value) })}
+                  style={{ width: 72 }} />
+                <span style={{ color: 'var(--muted)', fontSize: 14, whiteSpace: 'nowrap' }}>h</span>
+                <input type="number" value={form.durationM} min={0} max={59} step={5} inputMode="numeric"
+                  onChange={e => setForm({ ...form, durationM: Math.max(0, +e.target.value) })}
+                  style={{ width: 72 }} />
+                <span style={{ color: 'var(--muted)', fontSize: 14, whiteSpace: 'nowrap' }}>min</span>
+                <span style={{ fontSize: 13, color: '#F5C518', marginLeft: 4 }}>
+                  {formatDur(form.durationH * 60 + form.durationM) || '—'}
+                </span>
+              </div>
+            </div>
+
             <input type="date" value={form.deadline}
               onChange={e => setForm({ ...form, deadline: e.target.value })} />
             <label style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#9ca3af', fontSize: 14, cursor: 'pointer',
@@ -295,7 +153,7 @@ export default function Taches({ tasks, setTasks, adjustments, setAdjustments })
                 <div style={{ background: 'rgba(245,197,24,.05)', border: '1px solid rgba(245,197,24,.2)', borderRadius: 8, padding: 14 }}>
                   <div style={{ marginBottom: 12 }}>
                     <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 6 }}>Fréquence</p>
-                    <div style={{ display: 'flex', gap: 8 }}>
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                       {[{ val: 'daily', label: 'Quotidien' }, { val: 'weekly', label: 'Hebdomadaire' }, { val: 'monthly', label: 'Mensuel' }]
                         .map(opt => (
                           <button key={opt.val} type="button" onClick={() => setForm({ ...form, recurrence: opt.val })}
@@ -311,11 +169,11 @@ export default function Taches({ tasks, setTasks, adjustments, setAdjustments })
 
                   {form.recurrence === 'weekly' && (
                     <div style={{ marginBottom: 12 }}>
-                      <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 6 }}>Jours de la semaine</p>
+                      <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 6 }}>Jours</p>
                       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                         {JOURS.map((jour, i) => (
                           <button key={jour} type="button" onClick={() => toggleDay(jour)}
-                            style={{ width: 40, height: 40, borderRadius: '50%', fontSize: 11, cursor: 'pointer', border: 'none',
+                            style={{ width: 38, height: 38, borderRadius: '50%', fontSize: 11, cursor: 'pointer', border: 'none',
                               background: form.recurrenceDays.includes(jour) ? '#F5C518' : '#1f2937',
                               color: form.recurrenceDays.includes(jour) ? '#0f172a' : '#9ca3af',
                               fontWeight: form.recurrenceDays.includes(jour) ? 700 : 400 }}>
@@ -357,7 +215,7 @@ export default function Taches({ tasks, setTasks, adjustments, setAdjustments })
         ))}
       </div>
 
-      {/* ── Liste des tâches ── */}
+      {/* ── Liste ── */}
       {filtered.length === 0
         ? <EmptyState icon="📝" msg="Aucune tâche ici." sub="Cliquez sur « + Nouvelle tâche » pour commencer." />
         : Object.entries(grouped).map(([priority, list]) => list.length === 0 ? null : (
@@ -375,17 +233,12 @@ export default function Taches({ tasks, setTasks, adjustments, setAdjustments })
                   cycleStatus={cycleStatus} del={del} toAdjust={toAdjust}
                   onEdit={openEdit} isEditing={editingId === t.id}
                   onPomo={startPomo}
-                  isRunning={pomo?.task?.id === t.id && pomo.running} />
+                  isRunning={pomo?.task?.id === t.id} />
               ))}
             </div>
           </div>
         ))
       }
-
-      {/* ── Modal Pomodoro ── */}
-      {pomo && (
-        <PomodoroModal pomo={pomo} onPause={pausePomo} onStop={stopPomo} onDone={donePomo} />
-      )}
     </div>
   )
 }
@@ -396,7 +249,7 @@ function recurringLabel(task) {
   if (task.recurrence === 'monthly') return 'Mensuel'
   if (task.recurrence === 'weekly') {
     const short = { Lundi:'Lun', Mardi:'Mar', Mercredi:'Mer', Jeudi:'Jeu', Vendredi:'Ven', Samedi:'Sam', Dimanche:'Dim' }
-    const days = (task.recurrenceDays || []).map(d => short[d]).join(', ')
+    const days  = (task.recurrenceDays || []).map(d => short[d]).join(', ')
     return days ? `Chaque ${days}` : 'Hebdo'
   }
   return ''
@@ -411,6 +264,7 @@ function TaskRow({ task, cycleStatus, del, toAdjust, onEdit, isEditing, onPomo, 
   const statusBg    = { 'À faire': '#1f2937', 'En cours': 'rgba(59,130,246,.15)', 'Terminé': 'rgba(34,197,94,.15)' }[task.status]
   const statusColor = { 'À faire': '#9ca3af', 'En cours': '#60a5fa', 'Terminé': '#4ade80' }[task.status]
   const nextDate    = task.recurring && task.status === 'Terminé' ? nextOccurrenceDate(task, task.lastCompletedAt) : null
+  const durLabel    = formatDur(task.duration)
 
   return (
     <div className={`task-card${task.status === 'Terminé' ? ' done' : ''}`}
@@ -432,34 +286,31 @@ function TaskRow({ task, cycleStatus, del, toAdjust, onEdit, isEditing, onPomo, 
           {task.name}
         </p>
         <div style={{ display: 'flex', gap: 10, marginTop: 3, flexWrap: 'wrap' }}>
-          {task.project       && <span style={{ fontSize: 11, color: 'var(--muted)' }}>📁 {task.project}</span>}
-          {task.duration      && <span style={{ fontSize: 11, color: 'var(--muted)' }}>⏱ {task.duration}min</span>}
-          {task.recurrenceTime&& <span style={{ fontSize: 11, color: '#F5C518' }}>🕐 {task.recurrenceTime}</span>}
-          {task.recurring     && <span style={{ fontSize: 11, color: 'rgba(245,197,24,.8)' }}>{recurringLabel(task)}</span>}
+          {task.project        && <span style={{ fontSize: 11, color: 'var(--muted)' }}>📁 {task.project}</span>}
+          {durLabel            && <span style={{ fontSize: 11, color: 'var(--muted)' }}>⏱ {durLabel}</span>}
+          {task.recurrenceTime && <span style={{ fontSize: 11, color: '#F5C518' }}>🕐 {task.recurrenceTime}</span>}
+          {task.recurring      && <span style={{ fontSize: 11, color: 'rgba(245,197,24,.8)' }}>{recurringLabel(task)}</span>}
           {task.deadline && !task.recurring && (
             <span style={{ fontSize: 11, color: overdue ? '#f87171' : urgent ? '#F5C518' : 'var(--muted)' }}>
               {overdue ? '⚠️ Retard:' : '📅'} {fmtDate(task.deadline)}
             </span>
           )}
-          {nextDate && <span style={{ fontSize: 11, color: '#4ade80' }}>🔄 Reprend le {fmtDate(nextDate)}</span>}
+          {nextDate  && <span style={{ fontSize: 11, color: '#4ade80' }}>🔄 Reprend le {fmtDate(nextDate)}</span>}
           {task.flexible && <span style={{ fontSize: 11, color: 'var(--muted)' }}>🔀 Flexible</span>}
           {isRunning && <span style={{ fontSize: 11, color: '#f97316', fontWeight: 600 }}>🍅 Timer en cours…</span>}
         </div>
       </div>
 
       <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
-        {/* ── Bouton Pomodoro ── */}
         {canPomo && (
           <button onClick={() => onPomo(task)} title="Démarrer un timer"
             style={{ background: isRunning ? 'rgba(249,115,22,.2)' : 'rgba(245,197,24,.1)',
               border: `1px solid ${isRunning ? 'rgba(249,115,22,.4)' : 'rgba(245,197,24,.3)'}`,
               borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontSize: 13,
-              color: isRunning ? '#f97316' : '#F5C518', fontWeight: 600,
-              transition: 'all .2s' }}>
+              color: isRunning ? '#f97316' : '#F5C518', fontWeight: 600 }}>
             {isRunning ? '⏱' : '▶'}
           </button>
         )}
-
         <span style={{ background: statusBg, color: statusColor, padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 600 }}>
           {task.status}
         </span>

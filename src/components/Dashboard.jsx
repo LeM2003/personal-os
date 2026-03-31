@@ -105,7 +105,7 @@ export default function Dashboard({ tasks, objectif, setObjectif, expenses, subs
       </div>
 
       {/* ── Bannière Météo / Streak / Score ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 20 }}>
+      <div className="grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 20 }}>
 
         <div className="card" style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={{ fontSize: 30, lineHeight: 1 }}>{meteo.icon}</span>
