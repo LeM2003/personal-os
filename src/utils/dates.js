@@ -29,3 +29,37 @@ export const greeting = () => {
 
 const JOURS_FR = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
 export const todayDay = () => JOURS_FR[new Date().getDay()]
+
+const JOURS_INDEX = { 'Lundi': 1, 'Mardi': 2, 'Mercredi': 3, 'Jeudi': 4, 'Vendredi': 5, 'Samedi': 6, 'Dimanche': 0 }
+
+export const nextOccurrenceDate = (task, fromISO = null) => {
+  const base = new Date((fromISO || todayISO()) + 'T00:00:00')
+  base.setHours(0, 0, 0, 0)
+
+  if (task.recurrence === 'daily') {
+    const next = new Date(base)
+    next.setDate(next.getDate() + 1)
+    return next.toISOString().split('T')[0]
+  }
+
+  if (task.recurrence === 'weekly') {
+    const days = (task.recurrenceDays || []).map(d => JOURS_INDEX[d]).filter(d => d !== undefined)
+    if (days.length === 0) {
+      const next = new Date(base); next.setDate(next.getDate() + 7)
+      return next.toISOString().split('T')[0]
+    }
+    for (let i = 1; i <= 7; i++) {
+      const candidate = new Date(base)
+      candidate.setDate(base.getDate() + i)
+      if (days.includes(candidate.getDay())) return candidate.toISOString().split('T')[0]
+    }
+  }
+
+  if (task.recurrence === 'monthly') {
+    const next = new Date(base)
+    next.setMonth(next.getMonth() + 1)
+    return next.toISOString().split('T')[0]
+  }
+
+  return todayISO()
+}
