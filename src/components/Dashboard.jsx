@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { useApp } from '../context/AppContext'
 import { todayISO, todayLabel, todayDay, greeting, fmtDate, daysUntil } from '../utils/dates'
 import { PRIORITY_ORDER, PRIORITY_COLOR, CAT_COLORS } from '../utils/constants'
 import { computeNextRenewal } from '../utils/subscriptions'
@@ -10,8 +11,10 @@ function isoMinusDays(n) {
   return d.toISOString().split('T')[0]
 }
 
-export default function Dashboard({ tasks, objectif, setObjectif, expenses, subscriptions,
-  devoirs, examens, adjustments, courses, setTab, profile, streakData, setStreakData }) {
+export default function Dashboard() {
+  const { tasks, objectif, setObjectif, expenses, subscriptions,
+    devoirs, examens, adjustments, courses, setTab, profile, streakData, setStreakData } = useApp()
+
   const now     = todayISO()
   const dayName = todayDay()
 
@@ -106,7 +109,6 @@ export default function Dashboard({ tasks, objectif, setObjectif, expenses, subs
 
       {/* ── Bannière Météo / Streak / Score ── */}
       <div className="grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 20 }}>
-
         <div className="card" style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={{ fontSize: 30, lineHeight: 1 }}>{meteo.icon}</span>
           <div style={{ minWidth: 0 }}>
@@ -115,7 +117,6 @@ export default function Dashboard({ tasks, objectif, setObjectif, expenses, subs
             <p style={{ fontSize: 10, color: 'var(--muted)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{meteo.sub}</p>
           </div>
         </div>
-
         <div className="card" style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={{ fontSize: 30, lineHeight: 1 }}>🔥</span>
           <div>
@@ -128,7 +129,6 @@ export default function Dashboard({ tasks, objectif, setObjectif, expenses, subs
             </p>
           </div>
         </div>
-
         <div className="card" style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={{ fontSize: 30, lineHeight: 1 }}>📈</span>
           <div>
@@ -142,7 +142,6 @@ export default function Dashboard({ tasks, objectif, setObjectif, expenses, subs
             </p>
           </div>
         </div>
-
       </div>
 
       {/* ── Objectif ── */}
@@ -157,226 +156,149 @@ export default function Dashboard({ tasks, objectif, setObjectif, expenses, subs
       </div>
 
       {/* ── KPI Cards ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: 14, marginBottom: 24 }}>
-        <StatCard icon="✅" value={`${completedToday}/${createdToday.length || 0}`}       label="Tâches du jour"    color="#4ade80" />
-        <StatCard icon="🔥" value={`${habitsCompleted}/${todayHabits.length}`}            label="Habitudes"         color="#f97316" onClick={() => setTab('taches')} />
-        <StatCard icon="💸" value={`${todayExpTotal.toLocaleString('fr-FR')} F`}          label="Dépenses du jour"  color="#60a5fa" />
-        <StatCard icon="🎓" value={nextExam ? `J-${daysUntil(nextExam.date)}` : '—'}      label="Prochain examen"   color="#F5C518" />
-        <StatCard icon="🔄" value={adjustments.length}                                    label="Ajustements"       color="#f87171" onClick={() => setTab('ajustements')} />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 24 }} className="grid-3">
+        <StatCard icon="📝" value={`${createdToday.length}`} label="Tâches du jour" color="#F5C518" />
+        <StatCard icon="✅" value={`${completedToday}`} label="Terminées" color="#4ade80" />
+        <StatCard icon="💸" value={`${todayExpTotal.toLocaleString('fr-FR')} F`} label="Dépensé today" color="#60a5fa" />
+        <StatCard icon={nextExam ? '🎓' : '📚'} value={nextExam ? `J-${daysUntil(nextExam.date)}` : '—'}
+          label={nextExam ? nextExam.matiere : 'Pas d\'examen'} color={nextExam ? '#f87171' : '#9ca3af'} />
       </div>
 
-      {/* ── Habitudes du jour ── */}
-      {todayHabits.length > 0 && (
-        <div className="card" style={{ padding: 20, marginBottom: 24, border: '1px solid rgba(249,115,22,.2)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <h3 style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: .8 }}>
-              🔥 Habitudes du jour
-            </h3>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: habitsPct === 100 ? '#4ade80' : '#f97316' }}>
-                {habitsCompleted}/{todayHabits.length}
-              </span>
-              <button className="btn-ghost" style={{ fontSize: 11, padding: '4px 10px' }} onClick={() => setTab('taches')}>
-                Gérer →
-              </button>
-            </div>
-          </div>
-
-          <div style={{ background: '#1f2937', borderRadius: 999, height: 6, marginBottom: 16, overflow: 'hidden' }}>
-            <div style={{ height: '100%', borderRadius: 999,
-              background: habitsPct === 100 ? '#4ade80' : 'linear-gradient(90deg, #f97316, #F5C518)',
-              width: `${habitsPct}%`, transition: 'width .4s ease' }} />
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 8 }}>
-            {todayHabits.map(t => {
-              const done = t.status === 'Terminé' && t.lastCompletedAt === now
-              return (
-                <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px',
-                  background: done ? 'rgba(74,222,128,.07)' : '#0f172a',
-                  border: `1px solid ${done ? 'rgba(74,222,128,.25)' : 'var(--border)'}`,
-                  borderRadius: 8, opacity: done ? .75 : 1 }}>
-                  <span style={{ fontSize: 18 }}>{done ? '✅' : '⭕'}</span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: 13, margin: 0, fontWeight: 500,
-                      textDecoration: done ? 'line-through' : 'none',
-                      color: done ? 'var(--muted)' : 'var(--text)',
-                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {t.name}
-                    </p>
-                    {t.recurrenceTime && (
-                      <p style={{ fontSize: 11, color: '#f97316', margin: '2px 0 0' }}>🕐 {t.recurrenceTime}</p>
-                    )}
-                  </div>
-                  {!done && <span style={{ fontSize: 11, color: 'var(--muted)', flexShrink: 0 }}>
-                    {t.duration ? `${t.duration}min` : ''}
-                  </span>}
-                </div>
-              )
-            })}
-          </div>
-
-          {habitsPct === 100 && (
-            <div style={{ marginTop: 14, textAlign: 'center', padding: '10px',
-              background: 'rgba(74,222,128,.07)', border: '1px solid rgba(74,222,128,.2)', borderRadius: 8 }}>
-              <span style={{ fontSize: 14, color: '#4ade80', fontWeight: 600 }}>
-                🏆 Toutes tes habitudes sont faites aujourd'hui !
-              </span>
-            </div>
-          )}
+      {/* ── Alertes ── */}
+      {alerts.length > 0 && (
+        <div style={{ marginBottom: 24, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {alerts.map((a, i) => (
+            <div key={i} className={`alert alert-${a.type}`}>{a.msg}</div>
+          ))}
         </div>
       )}
 
-      {/* ── Top 3 + Alertes ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }} className="grid-2">
+      {/* ── Layout 2 col ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }} className="grid-2">
+        {/* Habitudes */}
         <div className="card" style={{ padding: 20 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <h3 style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: .8 }}>⚡ Top 3 Priorités</h3>
-            <button className="btn-ghost" style={{ fontSize: 11, padding: '4px 10px' }} onClick={() => setTab('taches')}>Voir tout →</button>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+            <p style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, margin: 0 }}>
+              🔁 Habitudes du jour
+            </p>
+            <span style={{ fontSize: 14, fontWeight: 700,
+              color: habitsPct >= 80 ? '#4ade80' : habitsPct >= 50 ? '#F5C518' : '#f87171' }}>
+              {habitsPct}%
+            </span>
           </div>
+          {todayHabits.length === 0
+            ? <EmptyState icon="😴" msg="Pas d'habitudes aujourd'hui." />
+            : todayHabits.map(t => (
+              <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0',
+                borderBottom: '1px solid var(--border)' }}>
+                <span style={{ fontSize: 14 }}>{t.status === 'Terminé' && t.lastCompletedAt === now ? '✅' : '⭕'}</span>
+                <span style={{ flex: 1, fontSize: 13,
+                  color: t.status === 'Terminé' && t.lastCompletedAt === now ? 'var(--muted)' : 'var(--text)',
+                  textDecoration: t.status === 'Terminé' && t.lastCompletedAt === now ? 'line-through' : 'none' }}>
+                  {t.name}
+                </span>
+                {t.recurrenceTime && <span style={{ fontSize: 11, color: '#F5C518' }}>🕐 {t.recurrenceTime}</span>}
+              </div>
+            ))
+          }
+        </div>
+
+        {/* Top 3 */}
+        <div className="card" style={{ padding: 20 }}>
+          <p style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, marginBottom: 14 }}>
+            🔥 Top priorités
+          </p>
           {top3.length === 0
-            ? <EmptyState icon="🎉" msg="Aucune tâche active. Bien joué !" />
-            : top3.map(t => (
-              <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderBottom: '1px solid var(--border)' }}>
-                <div className="p-dot" style={{ background: PRIORITY_COLOR[t.priority] }} />
+            ? <EmptyState icon="🎉" msg="Toutes les tâches sont terminées !" />
+            : top3.map((t, i) => (
+              <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0',
+                borderBottom: '1px solid var(--border)', cursor: 'pointer' }}
+                onClick={() => setTab('taches')}>
+                <span style={{ color: '#F5C518', fontFamily: 'Syne', fontWeight: 700, fontSize: 14 }}>{i + 1}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: 14, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.name}</p>
+                  <p style={{ fontSize: 13, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</p>
+                  <div style={{ display: 'flex', gap: 8, marginTop: 2 }}>
+                    <span style={{ fontSize: 10, color: PRIORITY_COLOR[t.priority] }}>{t.priority}</span>
+                    {t.deadline && <span style={{ fontSize: 10, color: 'var(--muted)' }}>📅 {fmtDate(t.deadline)}</span>}
+                  </div>
+                </div>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+
+      {/* ── Cours du jour + Dépenses ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }} className="grid-2">
+        <div className="card" style={{ padding: 20 }}>
+          <p style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, marginBottom: 14 }}>
+            📚 Cours aujourd'hui
+          </p>
+          {todayCourses.length === 0
+            ? <EmptyState icon="🎉" msg="Pas de cours aujourd'hui !" />
+            : todayCourses.map(c => (
+              <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0',
+                borderBottom: '1px solid var(--border)' }}>
+                <div style={{ width: 4, height: 32, borderRadius: 2, background: c.color, flexShrink: 0 }} />
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: 13, fontWeight: 600, margin: 0, color: c.color }}>{c.nom}</p>
                   <p style={{ fontSize: 11, color: 'var(--muted)', margin: '2px 0 0' }}>
-                    {t.project && `📁 ${t.project}`}{t.deadline && ` · ${fmtDate(t.deadline)}`}
+                    {c.heureDebut}–{c.heureFin}{c.salle && ` · 📍 ${c.salle}`}
                   </p>
                 </div>
-                <span className={`badge badge-${t.status === 'En cours' ? 'blue' : 'gray'}`}>{t.status}</span>
               </div>
             ))
           }
         </div>
 
         <div className="card" style={{ padding: 20 }}>
-          <h3 style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: .8, marginBottom: 16 }}>⚠️ Alertes & Rappels</h3>
-          {alerts.length === 0
-            ? <EmptyState icon="✨" msg="Tout est sous contrôle !" sub="Aucune alerte pour le moment." />
-            : <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-                {alerts.slice(0, 6).map((a, i) => (
-                  <div key={i} className={`alert alert-${a.type}`}>{a.msg}</div>
-                ))}
-              </div>
-          }
-        </div>
-      </div>
-
-      {/* ── Résumé du jour ── */}
-      <div style={{ marginBottom: 8 }}>
-        <h2 style={{ fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1,
-          color: 'var(--muted)', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ display: 'inline-block', width: 3, height: 14, background: '#F5C518', borderRadius: 2 }} />
-          Résumé du jour
-        </h2>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 20, marginBottom: 20 }} className="grid-3">
-
-        {/* Agenda */}
-        <div className="card" style={{ padding: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-            <h3 style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: .8 }}>📅 Agenda — {dayName}</h3>
-            <button className="btn-ghost" style={{ fontSize: 11, padding: '4px 10px' }} onClick={() => setTab('ecole')}>École →</button>
-          </div>
-          {todayCourses.length === 0
-            ? <div style={{ textAlign: 'center', padding: '16px 0', color: 'var(--muted)' }}>
-                <div style={{ fontSize: 28, marginBottom: 6 }}>🎉</div>
-                <p style={{ fontSize: 13 }}>Pas de cours aujourd'hui</p>
-              </div>
-            : <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {todayCourses.map(c => (
-                  <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 10,
-                    background: `${c.color}14`, borderLeft: `3px solid ${c.color}`, borderRadius: 7, padding: '9px 12px' }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontWeight: 600, color: c.color, margin: 0, fontSize: 13,
-                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.nom}</p>
-                      <p style={{ fontSize: 11, color: 'var(--muted)', margin: '2px 0 0' }}>
-                        {c.heureDebut} – {c.heureFin}{c.salle ? ` · ${c.salle}` : ''}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-          }
-        </div>
-
-        {/* Dépenses */}
-        <div className="card" style={{ padding: 20 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-            <h3 style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: .8 }}>💸 Dépenses du jour</h3>
-            <button className="btn-ghost" style={{ fontSize: 11, padding: '4px 10px' }} onClick={() => setTab('finances')}>Finances →</button>
+            <p style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, margin: 0 }}>
+              💸 Dépenses du jour
+            </p>
+            <span style={{ fontSize: 14, fontWeight: 700, color: '#F5C518' }}>
+              {todayExpTotal.toLocaleString('fr-FR')} F
+            </span>
           </div>
           {todayExpenses.length === 0
-            ? <div style={{ textAlign: 'center', padding: '16px 0', color: 'var(--muted)' }}>
-                <div style={{ fontSize: 28, marginBottom: 6 }}>💰</div>
-                <p style={{ fontSize: 13 }}>Aucune dépense ce jour</p>
+            ? <EmptyState icon="💰" msg="Aucune dépense aujourd'hui." />
+            : todayExpenses.slice(0, 5).map(e => (
+              <div key={e.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0',
+                borderBottom: '1px solid var(--border)' }}>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: CAT_COLORS[e.category] || '#6b7280' }} />
+                <span style={{ flex: 1, fontSize: 13 }}>{e.note || e.category}</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#F5C518' }}>
+                  {e.amount.toLocaleString('fr-FR')} F
+                </span>
               </div>
-            : <>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
-                  {todayExpenses.slice(0, 5).map(e => (
-                    <div key={e.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: CAT_COLORS[e.category] || '#6b7280', flexShrink: 0 }} />
-                      <span style={{ flex: 1, fontSize: 13, color: '#d1d5db', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {e.note || e.category}
-                      </span>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap' }}>
-                        {e.amount.toLocaleString('fr-FR')} F
-                      </span>
-                    </div>
-                  ))}
-                  {todayExpenses.length > 5 && (
-                    <p style={{ fontSize: 11, color: 'var(--muted)', textAlign: 'center', margin: '4px 0 0' }}>
-                      +{todayExpenses.length - 5} autre{todayExpenses.length - 5 > 1 ? 's' : ''}…
-                    </p>
-                  )}
-                </div>
-                <div style={{ borderTop: '1px solid var(--border)', paddingTop: 10,
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: .5 }}>Total</span>
-                  <span style={{ fontSize: 16, fontWeight: 700, color: '#F5C518' }}>{todayExpTotal.toLocaleString('fr-FR')} FCFA</span>
-                </div>
-              </>
-          }
-        </div>
-
-        {/* Abonnements */}
-        <div className="card" style={{ padding: 20 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-            <h3 style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: .8 }}>💳 Prochains paiements</h3>
-            <button className="btn-ghost" style={{ fontSize: 11, padding: '4px 10px' }} onClick={() => setTab('finances')}>Voir →</button>
-          </div>
-          {upcomingSubs.length === 0
-            ? <div style={{ textAlign: 'center', padding: '16px 0', color: 'var(--muted)' }}>
-                <div style={{ fontSize: 28, marginBottom: 6 }}>✅</div>
-                <p style={{ fontSize: 13 }}>Aucun paiement dans 30 jours</p>
-              </div>
-            : <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {upcomingSubs.slice(0, 5).map(s => {
-                  const due    = daysUntil(s._next)
-                  const urgent = due <= 7
-                  return (
-                    <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px',
-                      background: urgent ? 'rgba(239,68,68,.06)' : '#0f172a',
-                      border: `1px solid ${urgent ? 'rgba(239,68,68,.2)' : 'var(--border)'}`, borderRadius: 8 }}>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontSize: 13, fontWeight: 600, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.name}</p>
-                        <p style={{ fontSize: 11, color: urgent ? '#fca5a5' : 'var(--muted)', margin: '2px 0 0' }}>
-                          {due === 0 ? "Aujourd'hui" : due === 1 ? 'Demain' : `Dans ${due}j`} — {fmtDate(s._next)}
-                        </p>
-                      </div>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: urgent ? '#f87171' : '#F5C518', whiteSpace: 'nowrap' }}>
-                        {s.amount.toLocaleString('fr-FR')} F
-                      </span>
-                    </div>
-                  )
-                })}
-              </div>
+            ))
           }
         </div>
       </div>
+
+      {/* ── Abonnements à venir ── */}
+      {upcomingSubs.length > 0 && (
+        <div className="card" style={{ padding: 20 }}>
+          <p style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, marginBottom: 14 }}>
+            💳 Prochains paiements (30j)
+          </p>
+          {upcomingSubs.slice(0, 5).map(s => (
+            <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0',
+              borderBottom: '1px solid var(--border)' }}>
+              <span style={{ fontSize: 14 }}>📅</span>
+              <div style={{ flex: 1 }}>
+                <p style={{ fontSize: 13, fontWeight: 600, margin: 0 }}>{s.name}</p>
+                <p style={{ fontSize: 11, color: 'var(--muted)', margin: '2px 0 0' }}>
+                  {fmtDate(s._next)} — J-{daysUntil(s._next)}
+                </p>
+              </div>
+              <span style={{ fontWeight: 700, color: '#F5C518', fontSize: 13 }}>
+                {s.amount.toLocaleString('fr-FR')} F
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

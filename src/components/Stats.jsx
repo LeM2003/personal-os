@@ -1,18 +1,21 @@
+import { useState } from 'react'
+import { useApp } from '../context/AppContext'
 import { CAT_COLORS, PRIORITY_COLOR } from '../utils/constants'
-import { todayISO, todayDay, daysUntil } from '../utils/dates'
+import { todayISO, todayDay, daysUntil, fmtDateRange } from '../utils/dates'
 import StatCard from './shared/StatCard'
+import WeeklyReport from './shared/WeeklyReport'
 
 const JOURS_FR = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
 
-function isoMinusDays(n) {
-  const d = new Date(); d.setDate(d.getDate() - n)
+function isoMinusDays(n, offset = 0) {
+  const d = new Date(); d.setDate(d.getDate() - n + offset * 7)
   return d.toISOString().split('T')[0]
 }
 
-function startOfWeekMinus(n) {
+function startOfWeekMinus(n, offset = 0) {
   const d = new Date()
   const day = d.getDay() === 0 ? 6 : d.getDay() - 1
-  d.setDate(d.getDate() - day - n * 7)
+  d.setDate(d.getDate() - day - (n + offset) * 7)
   return d.toISOString().split('T')[0]
 }
 
@@ -20,7 +23,7 @@ function MiniBar({ value, max, color, label, sublabel }) {
   const pct = max > 0 ? Math.round((value / max) * 100) : 0
   return (
     <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'center' }}>
-      <div style={{ width: '100%', background: '#1a2235', borderRadius: 6, height: 80,
+      <div style={{ width: '100%', background: 'var(--bar-bg)', borderRadius: 6, height: 80,
         display: 'flex', alignItems: 'flex-end', overflow: 'hidden' }}>
         <div style={{ width: '100%', background: color, height: `${Math.max(pct, 2)}%`,
           borderRadius: '4px 4px 0 0', transition: 'height .5s ease' }} />
@@ -38,7 +41,7 @@ function ScoreRing({ score, size = 90 }) {
   const color = score >= 75 ? '#4ade80' : score >= 50 ? '#F5C518' : score >= 30 ? '#f97316' : '#f87171'
   return (
     <svg width={size} height={size} style={{ transform: 'rotate(-90deg)', flexShrink: 0 }}>
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#1a2235" strokeWidth={7} />
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--bar-bg)" strokeWidth={7} />
       <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={7}
         strokeDasharray={`${dash} ${circ - dash}`} strokeLinecap="round"
         style={{ transition: 'stroke-dasharray .8s ease' }} />
@@ -46,19 +49,24 @@ function ScoreRing({ score, size = 90 }) {
   )
 }
 
-export default function Stats({ tasks, expenses, subscriptions, projects, devoirs = [], examens = [], adjustments = [] }) {
+export default function Stats() {
+  const { tasks, expenses, subscriptions, projects, devoirs, examens, adjustments, profile, streakData } = useApp()
+  const [showReport, setShowReport] = useState(false)
+  const [weekOffset, setWeekOffset] = useState(0)
   const today = todayISO()
   const dayName = todayDay()
 
-  /* ── Tâches : 7 derniers jours ── */
+  /* ── Tâches : 7 jours (avec navigation) ── */
   const last7 = Array.from({ length: 7 }, (_, i) => {
-    const date = isoMinusDays(6 - i)
+    const date = isoMinusDays(6 - i, weekOffset)
     const d = new Date(date + 'T00:00:00')
     const label = JOURS_FR[d.getDay()].slice(0, 3)
     const created = tasks.filter(t => t.createdAt === date).length
     const done    = tasks.filter(t => t.createdAt === date && t.status === 'Terminé').length
     return { date, label, created, done }
   })
+  const weekRangeLabel = fmtDateRange(last7[0].date, last7[6].date)
+  const isCurrentWeek = weekOffset === 0
   const maxCreated     = Math.max(...last7.map(d => d.created), 1)
   const totalCreated7  = last7.reduce((s, d) => s + d.created, 0)
   const totalDone7     = last7.reduce((s, d) => s + d.done, 0)
@@ -82,13 +90,16 @@ export default function Stats({ tasks, expenses, subscriptions, projects, devoir
   const habitsDoneToday = todayHabits.filter(t => t.status === 'Terminé' && t.lastCompletedAt === today).length
   const habitsPct       = todayHabits.length > 0 ? Math.round((habitsDoneToday / todayHabits.length) * 100) : 0
 
-  /* ── Dépenses : 4 semaines ── */
+  /* ── Dépenses : 4 semaines (avec navigation) ── */
   const weeks = Array.from({ length: 4 }, (_, i) => {
-    const start = startOfWeekMinus(3 - i)
+    const start = startOfWeekMinus(3 - i, -weekOffset)
     const we    = new Date(start + 'T00:00:00'); we.setDate(we.getDate() + 6)
     const weISO = we.toISOString().split('T')[0]
     const total = expenses.filter(e => e.date >= start && e.date <= weISO).reduce((s, e) => s + e.amount, 0)
-    return { start, end: weISO, total, label: i === 3 ? 'Cette sem.' : `S-${3 - i}` }
+    const label = isCurrentWeek
+      ? (i === 3 ? 'Cette sem.' : `S-${3 - i}`)
+      : `S${i + 1}`
+    return { start, end: weISO, total, label }
   })
   const maxWeek      = Math.max(...weeks.map(w => w.total), 1)
   const weekTrend    = weeks[2].total > 0 ? Math.round(((weeks[3].total - weeks[2].total) / weeks[2].total) * 100) : null
@@ -163,11 +174,16 @@ export default function Stats({ tasks, expenses, subscriptions, projects, devoir
 
   return (
     <div>
-      <h1 style={{ fontSize: 26, fontWeight: 800, marginBottom: 24 }}>📊 Statistiques</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        <h1 style={{ fontSize: 26, fontWeight: 800 }}>📊 Statistiques</h1>
+        <button className="btn-gold" onClick={() => setShowReport(true)} style={{ fontSize: 13 }}>
+          📤 Rapport hebdo
+        </button>
+      </div>
 
       {/* ── Score global ── */}
       <div className="card" style={{ padding: 20, marginBottom: 20,
-        background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' }}>
+        background: 'linear-gradient(135deg, var(--surface-deep) 0%, var(--surface-elevated) 100%)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
           <div style={{ position: 'relative', flexShrink: 0 }}>
             <ScoreRing score={scoreGlobal} size={90} />
@@ -184,7 +200,7 @@ export default function Stats({ tasks, expenses, subscriptions, projects, devoir
             </p>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {dimensions.map(x => (
-                <div key={x.label} style={{ background: '#0f172a', borderRadius: 8, padding: '5px 10px', textAlign: 'center' }}>
+                <div key={x.label} style={{ background: 'var(--surface-deep)', borderRadius: 8, padding: '5px 10px', textAlign: 'center' }}>
                   <p style={{ fontSize: 14, fontWeight: 700, margin: 0,
                     color: x.value >= 70 ? '#4ade80' : x.value >= 40 ? '#F5C518' : '#f87171' }}>{x.value}%</p>
                   <p style={{ fontSize: 10, color: 'var(--muted)', margin: 0 }}>{x.label}</p>
@@ -211,14 +227,30 @@ export default function Stats({ tasks, expenses, subscriptions, projects, devoir
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }} className="grid-2">
 
         <div className="card" style={{ padding: 20 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <p style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8 }}>
-              ✅ Tâches — 7 derniers jours
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+            <p style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, margin: 0 }}>
+              ✅ Tâches — 7 jours
             </p>
             <span style={{ fontSize: 20, fontWeight: 800,
               color: completionRate >= 70 ? '#4ade80' : completionRate >= 40 ? '#F5C518' : '#f87171' }}>
               {completionRate}%
             </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <button className="btn-icon" onClick={() => setWeekOffset(o => o - 1)}
+              style={{ fontSize: 14, padding: '2px 8px' }} aria-label="Semaine précédente">←</button>
+            <span style={{ fontSize: 12, color: isCurrentWeek ? '#F5C518' : 'var(--muted)', fontWeight: 600 }}>
+              {isCurrentWeek ? 'Cette semaine' : weekRangeLabel}
+            </span>
+            <div style={{ display: 'flex', gap: 4 }}>
+              <button className="btn-icon" onClick={() => setWeekOffset(o => o + 1)}
+                disabled={isCurrentWeek}
+                style={{ fontSize: 14, padding: '2px 8px', opacity: isCurrentWeek ? .3 : 1 }} aria-label="Semaine suivante">→</button>
+              {!isCurrentWeek && (
+                <button className="btn-ghost" onClick={() => setWeekOffset(0)}
+                  style={{ fontSize: 10, padding: '2px 8px' }}>Aujourd'hui</button>
+              )}
+            </div>
           </div>
           <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
             {last7.map(d => (
@@ -315,7 +347,7 @@ export default function Stats({ tasks, expenses, subscriptions, projects, devoir
               <div key={cat} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 7 }}>
                 <div style={{ width: 8, height: 8, borderRadius: '50%', background: CAT_COLORS[cat] || '#6b7280', flexShrink: 0 }} />
                 <span style={{ flex: 1, fontSize: 12, color: 'var(--muted)' }}>{cat}</span>
-                <div style={{ width: 80, background: '#1a2235', borderRadius: 999, height: 5, overflow: 'hidden' }}>
+                <div style={{ width: 80, background: 'var(--bar-bg)', borderRadius: 999, height: 5, overflow: 'hidden' }}>
                   <div style={{ width: `${(total / maxCat) * 100}%`, height: '100%',
                     background: CAT_COLORS[cat] || '#6b7280', borderRadius: 999 }} />
                 </div>
@@ -342,7 +374,7 @@ export default function Stats({ tasks, expenses, subscriptions, projects, devoir
                       {done}/{total} — <span style={{ fontWeight: 700, color: PRIORITY_COLOR[priority] }}>{pct}%</span>
                     </span>
                   </div>
-                  <div style={{ background: '#1a2235', borderRadius: 999, height: 8, overflow: 'hidden' }}>
+                  <div style={{ background: 'var(--bar-bg)', borderRadius: 999, height: 8, overflow: 'hidden' }}>
                     <div style={{ width: `${pct}%`, height: '100%', background: PRIORITY_COLOR[priority],
                       borderRadius: 999, transition: 'width .5s ease',
                       boxShadow: `0 0 6px ${PRIORITY_COLOR[priority]}60` }} />
@@ -354,12 +386,12 @@ export default function Stats({ tasks, expenses, subscriptions, projects, devoir
           <div style={{ borderTop: '1px solid var(--border)', paddingTop: 14,
             display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             {[
-              { label: 'Total tâches', value: totalTasks, color: '#9ca3af' },
+              { label: 'Total tâches', value: totalTasks, color: 'var(--muted)' },
               { label: 'Terminées',    value: totalDone,  color: '#4ade80' },
               { label: 'En cours',     value: tasks.filter(t => t.status === 'En cours').length, color: '#60a5fa' },
               { label: 'À faire',      value: tasks.filter(t => t.status === 'À faire').length,  color: '#F5C518' },
             ].map(s => (
-              <div key={s.label} style={{ background: '#0f172a', borderRadius: 8, padding: '10px 12px' }}>
+              <div key={s.label} style={{ background: 'var(--surface-deep)', borderRadius: 8, padding: '10px 12px' }}>
                 <p style={{ fontSize: 18, fontWeight: 800, color: s.color, margin: 0 }}>{s.value}</p>
                 <p style={{ fontSize: 11, color: 'var(--muted)', margin: '3px 0 0' }}>{s.label}</p>
               </div>
@@ -393,7 +425,7 @@ export default function Stats({ tasks, expenses, subscriptions, projects, devoir
                       {devoirsRendus}/{devoirsTotal} — {devoirsRate}%
                     </span>
                   </div>
-                  <div style={{ background: '#1a2235', borderRadius: 999, height: 8, overflow: 'hidden', marginBottom: 8 }}>
+                  <div style={{ background: 'var(--bar-bg)', borderRadius: 999, height: 8, overflow: 'hidden', marginBottom: 8 }}>
                     <div style={{ width: `${devoirsRate}%`, height: '100%',
                       background: devoirsRate >= 70 ? '#4ade80' : '#F5C518',
                       borderRadius: 999, transition: 'width .5s ease' }} />
@@ -418,7 +450,7 @@ export default function Stats({ tasks, expenses, subscriptions, projects, devoir
                       const j      = daysUntil(e.date)
                       const revPct = e.totalChapitres > 0 ? Math.round((e.chapitresRevises / e.totalChapitres) * 100) : 0
                       return (
-                        <div key={e.id} style={{ background: '#0f172a', borderRadius: 8, padding: '10px 12px' }}>
+                        <div key={e.id} style={{ background: 'var(--surface-deep)', borderRadius: 8, padding: '10px 12px' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
                             <span style={{ fontSize: 13, fontWeight: 600 }}>{e.matiere}</span>
                             <span style={{ fontSize: 12, fontWeight: 700,
@@ -433,7 +465,7 @@ export default function Stats({ tasks, expenses, subscriptions, projects, devoir
                                 <span>Révisions</span>
                                 <span>{e.chapitresRevises}/{e.totalChapitres} chap. — {revPct}%</span>
                               </div>
-                              <div style={{ background: '#1a2235', borderRadius: 999, height: 5, overflow: 'hidden' }}>
+                              <div style={{ background: 'var(--bar-bg)', borderRadius: 999, height: 5, overflow: 'hidden' }}>
                                 <div style={{ width: `${revPct}%`, height: '100%',
                                   background: revPct >= 70 ? '#4ade80' : revPct >= 40 ? '#F5C518' : '#f87171',
                                   borderRadius: 999, transition: 'width .5s ease' }} />
@@ -488,7 +520,7 @@ export default function Stats({ tasks, expenses, subscriptions, projects, devoir
                       {proj.progress}%
                     </span>
                   </div>
-                  <div style={{ background: '#1a2235', borderRadius: 999, height: 7, overflow: 'hidden', marginBottom: 4 }}>
+                  <div style={{ background: 'var(--bar-bg)', borderRadius: 999, height: 7, overflow: 'hidden', marginBottom: 4 }}>
                     <div style={{ width: `${proj.progress}%`, height: '100%',
                       background: proj.progress >= 70 ? '#4ade80' : proj.progress >= 40 ? '#F5C518' : '#f97316',
                       borderRadius: 999, transition: 'width .6s ease',
@@ -505,11 +537,11 @@ export default function Stats({ tasks, expenses, subscriptions, projects, devoir
 
           <div style={{ borderTop: '1px solid var(--border)', paddingTop: 14, marginTop: 16,
             display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            <div style={{ background: '#0f172a', borderRadius: 8, padding: '10px 12px' }}>
+            <div style={{ background: 'var(--surface-deep)', borderRadius: 8, padding: '10px 12px' }}>
               <p style={{ fontSize: 18, fontWeight: 800, color: '#F5C518', margin: 0 }}>{activeProjects.length}</p>
               <p style={{ fontSize: 11, color: 'var(--muted)', margin: '3px 0 0' }}>Projets actifs</p>
             </div>
-            <div style={{ background: '#0f172a', borderRadius: 8, padding: '10px 12px' }}>
+            <div style={{ background: 'var(--surface-deep)', borderRadius: 8, padding: '10px 12px' }}>
               <p style={{ fontSize: 18, fontWeight: 800, margin: 0,
                 color: disciplineRate >= 80 ? '#4ade80' : disciplineRate >= 60 ? '#F5C518' : '#f87171' }}>
                 {disciplineRate}%
@@ -520,6 +552,15 @@ export default function Stats({ tasks, expenses, subscriptions, projects, devoir
         </div>
 
       </div>
+
+      {showReport && (
+        <WeeklyReport
+          tasks={tasks} expenses={expenses} subscriptions={subscriptions}
+          projects={projects} devoirs={devoirs} examens={examens}
+          profile={profile} streakData={streakData}
+          onClose={() => setShowReport(false)}
+        />
+      )}
     </div>
   )
 }

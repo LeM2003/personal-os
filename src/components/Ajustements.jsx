@@ -1,10 +1,12 @@
+import { useApp } from '../context/AppContext'
 import { genId, todayISO, fmtDate } from '../utils/dates'
 import PageHeader from './shared/PageHeader'
 
 const REASON_LABELS = { 'manque de temps': 'Manque de temps', 'fatigue': 'Fatigue', 'autre': 'Autre raison' }
 const REASON_COLORS = { 'manque de temps': '#f87171', 'fatigue': '#fb923c', 'autre': '#60a5fa' }
 
-export default function Ajustements({ adjustments, setAdjustments, tasks, setTasks }) {
+export default function Ajustements() {
+  const { adjustments, setAdjustments, tasks, setTasks } = useApp()
   const upd = (id, field, val) => setAdjustments(p => p.map(a => a.id === id ? { ...a, [field]: val } : a))
 
   const reschedule = adj => {

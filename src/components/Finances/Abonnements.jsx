@@ -1,11 +1,13 @@
 import { useState } from 'react'
+import { useApp } from '../../context/AppContext'
 import { genId, todayISO, fmtDate, daysUntil } from '../../utils/dates'
 import { advanceCycle, computeNextRenewal, monthlyEquiv } from '../../utils/subscriptions'
 import EmptyState from '../shared/EmptyState'
 
 const CYCLE_COLORS = { Mensuel: '#60a5fa', Trimestriel: '#a78bfa', Annuel: '#34d399', Hebdomadaire: '#fb923c' }
 
-export default function Abonnements({ subscriptions, setSubscriptions }) {
+export default function Abonnements() {
+  const { subscriptions, setSubscriptions } = useApp()
   const blank = { name: '', amount: '', startDate: todayISO(), cycle: 'Mensuel', category: 'Business' }
   const [form, setForm] = useState(blank)
   const [showForm, setShowForm] = useState(false)
@@ -168,7 +170,7 @@ export default function Abonnements({ subscriptions, setSubscriptions }) {
                       <div style={{ display: 'flex', gap: 6 }}>
                         <button className="btn-gold" style={{ fontSize: 11, padding: '5px 11px' }} onClick={() => markPaid(sub)}>✅ Payé</button>
                         <button className="btn-icon" title="Modifier" onClick={() => openEdit(sub)} style={{ color: isEditing ? '#F5C518' : undefined }}>✏️</button>
-                        <button className="btn-icon" title="Supprimer" onClick={() => setSubscriptions(p => p.filter(x => x.id !== sub.id))}>✕</button>
+                        <button className="btn-icon" title="Supprimer" aria-label="Supprimer l'abonnement" onClick={() => setSubscriptions(p => p.filter(x => x.id !== sub.id))}>✕</button>
                       </div>
                     </div>
                   </div>

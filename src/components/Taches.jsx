@@ -1,8 +1,10 @@
 import { useState } from 'react'
+import { useApp } from '../context/AppContext'
 import { genId, todayISO, fmtDate, daysUntil, nextOccurrenceDate } from '../utils/dates'
 import { PRIORITY_ORDER, PRIORITY_COLOR, PRIORITY_EMOJI } from '../utils/constants'
 import PageHeader from './shared/PageHeader'
 import EmptyState from './shared/EmptyState'
+import TextImport from './shared/TextImport'
 
 const JOURS       = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
 const JOURS_SHORT = ['Lun',   'Mar',   'Mer',      'Jeu',   'Ven',      'Sam',    'Dim']
@@ -22,12 +24,20 @@ const formatDur = (mins) => {
   return `${m}min`
 }
 
-export default function Taches({ tasks, setTasks, adjustments, setAdjustments, pomo, startPomo }) {
+export default function Taches() {
+  const { tasks, setTasks, adjustments, setAdjustments, pomo, startPomo, apiKey, devoirs, setDevoirs, examens, setExamens } = useApp()
   const [showForm,  setShowForm]  = useState(false)
+  const [showImport, setShowImport] = useState(false)
   const [form,      setForm]      = useState(blank)
   const [editingId, setEditingId] = useState(null)
   const [fStatus,   setFStatus]   = useState('Tous')
   const [fPriority, setFPriority] = useState('Tous')
+  const [fDate,     setFDate]     = useState('Tout')
+  const [showDone,  setShowDone]  = useState(false)
+
+  const today = todayISO()
+  const weekEnd = (() => { const d = new Date(); d.setDate(d.getDate() + 7); return d.toISOString().split('T')[0] })()
+  const monthEnd = (() => { const d = new Date(); d.setMonth(d.getMonth() + 1, 0); return d.toISOString().split('T')[0] })()
 
   const openAdd  = () => { setEditingId(null); setForm(blank); setShowForm(true) }
   const openEdit = task => {
@@ -80,16 +90,62 @@ export default function Taches({ tasks, setTasks, adjustments, setAdjustments, p
     }])
   }
 
+  // Date filter helper
+  const matchDate = (t) => {
+    if (fDate === 'Tout') return true
+    if (!t.deadline && !t.recurring) return fDate === 'Tout'
+    const dl = t.deadline || ''
+    if (fDate === "Aujourd'hui") return dl === today || (t.recurring && t.status !== 'Terminé')
+    if (fDate === 'Semaine') return dl <= weekEnd || (t.recurring && t.status !== 'Terminé')
+    if (fDate === 'Mois') return dl <= monthEnd || (t.recurring && t.status !== 'Terminé')
+    return true
+  }
+
   const filtered = tasks
     .filter(t => fStatus === 'Tous' || t.status === fStatus)
     .filter(t => fPriority === 'Tous' || t.priority === fPriority)
+    .filter(matchDate)
+
+  // Separate done vs active
+  const activeTasks = filtered.filter(t => t.status !== 'Terminé')
+  const doneTasks = filtered.filter(t => t.status === 'Terminé')
+
+  // Sort active by urgency: overdue first, then soonest deadline, then no deadline
+  const sortByUrgency = (a, b) => {
+    const da = a.deadline || '9999-99-99'
+    const db = b.deadline || '9999-99-99'
+    return da.localeCompare(db)
+  }
+  activeTasks.sort(sortByUrgency)
 
   const grouped = { Critique: [], Important: [], Optionnel: [] }
-  filtered.forEach(t => (grouped[t.priority] ||= []).push(t))
+  activeTasks.forEach(t => (grouped[t.priority] ||= []).push(t))
+
+  const doneGrouped = { Critique: [], Important: [], Optionnel: [] }
+  doneTasks.forEach(t => (doneGrouped[t.priority] ||= []).push(t))
+
+  // Counters
+  const countCritique = activeTasks.filter(t => t.priority === 'Critique').length
+  const countImportant = activeTasks.filter(t => t.priority === 'Important').length
+  const countOptionnel = activeTasks.filter(t => t.priority === 'Optionnel').length
+
+  const handleImport = ({ taches, devoirs: newDevoirs, examens: newExamens }) => {
+    if (taches.length > 0) setTasks(p => [...p, ...taches])
+    if (newDevoirs.length > 0 && setDevoirs) setDevoirs(p => [...p, ...newDevoirs])
+    if (newExamens.length > 0 && setExamens) setExamens(p => [...p, ...newExamens])
+  }
 
   return (
     <div>
-      <PageHeader title="✅ Tâches" action={<button className="btn-gold" onClick={openAdd}>+ Nouvelle tâche</button>} />
+      <PageHeader title="✅ Tâches" action={
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn-ghost" onClick={() => setShowImport(true)}
+            style={{ fontSize: 13, padding: '8px 14px', border: '1px solid rgba(245,197,24,.3)' }}>
+            📋 Import IA
+          </button>
+          <button className="btn-gold" onClick={openAdd}>+ Nouvelle tâche</button>
+        </div>
+      } />
 
       {/* ── Formulaire ── */}
       {showForm && (
@@ -130,8 +186,8 @@ export default function Taches({ tasks, setTasks, adjustments, setAdjustments, p
 
             <input type="date" value={form.deadline}
               onChange={e => setForm({ ...form, deadline: e.target.value })} />
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#9ca3af', fontSize: 14, cursor: 'pointer',
-              background: '#0f172a', border: '1px solid #2d3748', borderRadius: 8, padding: '9px 12px' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--muted)', fontSize: 14, cursor: 'pointer',
+              background: 'var(--surface-deep)', border: '1px solid var(--input-border)', borderRadius: 8, padding: '9px 12px' }}>
               <input type="checkbox" checked={form.flexible}
                 onChange={e => setForm({ ...form, flexible: e.target.checked })}
                 style={{ width: 'auto', accentColor: '#F5C518' }} />
@@ -140,8 +196,8 @@ export default function Taches({ tasks, setTasks, adjustments, setAdjustments, p
 
             {/* Récurrence */}
             <div style={{ gridColumn: '1/-1' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#9ca3af', fontSize: 14, cursor: 'pointer',
-                background: '#0f172a', border: '1px solid #2d3748', borderRadius: 8, padding: '9px 12px',
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--muted)', fontSize: 14, cursor: 'pointer',
+                background: 'var(--surface-deep)', border: '1px solid var(--input-border)', borderRadius: 8, padding: '9px 12px',
                 marginBottom: form.recurring ? 10 : 0 }}>
                 <input type="checkbox" checked={form.recurring}
                   onChange={e => setForm({ ...form, recurring: e.target.checked })}
@@ -158,8 +214,8 @@ export default function Taches({ tasks, setTasks, adjustments, setAdjustments, p
                         .map(opt => (
                           <button key={opt.val} type="button" onClick={() => setForm({ ...form, recurrence: opt.val })}
                             style={{ padding: '6px 14px', borderRadius: 6, fontSize: 13, cursor: 'pointer', border: 'none',
-                              background: form.recurrence === opt.val ? '#F5C518' : '#1f2937',
-                              color: form.recurrence === opt.val ? '#0f172a' : '#9ca3af',
+                              background: form.recurrence === opt.val ? '#F5C518' : 'var(--hover-bg)',
+                              color: form.recurrence === opt.val ? 'var(--bg)' : 'var(--muted)',
                               fontWeight: form.recurrence === opt.val ? 700 : 400 }}>
                             {opt.label}
                           </button>
@@ -174,8 +230,8 @@ export default function Taches({ tasks, setTasks, adjustments, setAdjustments, p
                         {JOURS.map((jour, i) => (
                           <button key={jour} type="button" onClick={() => toggleDay(jour)}
                             style={{ width: 38, height: 38, borderRadius: '50%', fontSize: 11, cursor: 'pointer', border: 'none',
-                              background: form.recurrenceDays.includes(jour) ? '#F5C518' : '#1f2937',
-                              color: form.recurrenceDays.includes(jour) ? '#0f172a' : '#9ca3af',
+                              background: form.recurrenceDays.includes(jour) ? '#F5C518' : 'var(--hover-bg)',
+                              color: form.recurrenceDays.includes(jour) ? 'var(--bg)' : 'var(--muted)',
                               fontWeight: form.recurrenceDays.includes(jour) ? 700 : 400 }}>
                             {JOURS_SHORT[i]}
                           </button>
@@ -203,42 +259,101 @@ export default function Taches({ tasks, setTasks, adjustments, setAdjustments, p
       )}
 
       {/* ── Filtres ── */}
-      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 20 }}>
-        {['Tous', 'À faire', 'En cours', 'Terminé'].map(s => (
-          <button key={s} className={`filter-pill${fStatus === s ? ' active' : ''}`} onClick={() => setFStatus(s)}>{s}</button>
-        ))}
-        <div style={{ width: 1, background: 'var(--border)', margin: '0 4px' }} />
-        {['Tous', 'Critique', 'Important', 'Optionnel'].map(p => (
-          <button key={p} className={`filter-pill${fPriority === p ? ' active' : ''}`} onClick={() => setFPriority(p)}>
-            {PRIORITY_EMOJI[p] || ''} {p}
-          </button>
-        ))}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
+        {/* Ligne 1 : filtre date */}
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+          <span style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: .5 }}>Periode :</span>
+          {["Aujourd'hui", 'Semaine', 'Mois', 'Tout'].map(d => (
+            <button key={d} className={`filter-pill${fDate === d ? ' active' : ''}`} onClick={() => setFDate(d)}>{d}</button>
+          ))}
+        </div>
+        {/* Ligne 2 : filtre statut + priorite */}
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          {['Tous', 'À faire', 'En cours'].map(s => (
+            <button key={s} className={`filter-pill${fStatus === s ? ' active' : ''}`} onClick={() => setFStatus(s)}>{s}</button>
+          ))}
+          <div style={{ width: 1, background: 'var(--border)', margin: '0 4px' }} />
+          {['Tous', 'Critique', 'Important', 'Optionnel'].map(p => (
+            <button key={p} className={`filter-pill${fPriority === p ? ' active' : ''}`} onClick={() => setFPriority(p)}>
+              {PRIORITY_EMOJI[p] || ''} {p}
+            </button>
+          ))}
+        </div>
+        {/* Resume compteurs */}
+        <div style={{ display: 'flex', gap: 12, fontSize: 12, color: 'var(--muted)' }}>
+          <span>{activeTasks.length} active{activeTasks.length !== 1 ? 's' : ''}</span>
+          {countCritique > 0 && <span style={{ color: '#f87171' }}>{countCritique} critique{countCritique > 1 ? 's' : ''}</span>}
+          {countImportant > 0 && <span style={{ color: '#F5C518' }}>{countImportant} important{countImportant > 1 ? 'es' : 'e'}</span>}
+          {countOptionnel > 0 && <span style={{ color: 'var(--muted)' }}>{countOptionnel} optionnel{countOptionnel > 1 ? 'les' : 'le'}</span>}
+          {doneTasks.length > 0 && <span style={{ color: '#4ade80' }}>{doneTasks.length} terminee{doneTasks.length > 1 ? 's' : ''}</span>}
+        </div>
       </div>
 
-      {/* ── Liste ── */}
-      {filtered.length === 0
+      {/* ── Liste active ── */}
+      {activeTasks.length === 0 && doneTasks.length === 0
         ? <EmptyState icon="📝" msg="Aucune tâche ici." sub="Cliquez sur « + Nouvelle tâche » pour commencer." />
-        : Object.entries(grouped).map(([priority, list]) => list.length === 0 ? null : (
-          <div key={priority} style={{ marginBottom: 24 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-              <span>{PRIORITY_EMOJI[priority]}</span>
-              <span style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 12, color: PRIORITY_COLOR[priority],
-                textTransform: 'uppercase', letterSpacing: 1 }}>{priority}</span>
-              <span style={{ background: '#1f2937', color: 'var(--muted)', borderRadius: '50%', width: 20, height: 20,
-                display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11 }}>{list.length}</span>
+        : <>
+          {activeTasks.length === 0 && !showDone
+            ? <div style={{ textAlign: 'center', padding: '30px 0', color: 'var(--muted)', fontSize: 14 }}>
+                Toutes les taches sont terminees pour cette periode !
+              </div>
+            : Object.entries(grouped).map(([priority, list]) => list.length === 0 ? null : (
+              <div key={priority} style={{ marginBottom: 24 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                  <span>{PRIORITY_EMOJI[priority]}</span>
+                  <span style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 12, color: PRIORITY_COLOR[priority],
+                    textTransform: 'uppercase', letterSpacing: 1 }}>{priority}</span>
+                  <span style={{ background: 'var(--hover-bg)', color: 'var(--muted)', borderRadius: '50%', width: 20, height: 20,
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11 }}>{list.length}</span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {list.map(t => (
+                    <TaskRow key={t.id} task={t}
+                      cycleStatus={cycleStatus} del={del} toAdjust={toAdjust}
+                      onEdit={openEdit} isEditing={editingId === t.id}
+                      onPomo={startPomo}
+                      isRunning={pomo?.task?.id === t.id} />
+                  ))}
+                </div>
+              </div>
+            ))
+          }
+
+          {/* ── Taches terminees (cachees par defaut) ── */}
+          {doneTasks.length > 0 && (
+            <div style={{ marginTop: 16 }}>
+              <button className="btn-ghost" onClick={() => setShowDone(s => !s)}
+                style={{ width: '100%', fontSize: 13, padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                {showDone ? '▲ Masquer' : '▼ Voir'} les taches terminees ({doneTasks.length})
+              </button>
+              {showDone && (
+                <div style={{ marginTop: 14, opacity: .75 }}>
+                  {Object.entries(doneGrouped).map(([priority, list]) => list.length === 0 ? null : (
+                    <div key={`done-${priority}`} style={{ marginBottom: 16 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                        <span style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 600 }}>✅ {priority} ({list.length})</span>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        {list.map(t => (
+                          <TaskRow key={t.id} task={t}
+                            cycleStatus={cycleStatus} del={del} toAdjust={toAdjust}
+                            onEdit={openEdit} isEditing={editingId === t.id}
+                            onPomo={startPomo}
+                            isRunning={pomo?.task?.id === t.id} />
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {list.map(t => (
-                <TaskRow key={t.id} task={t}
-                  cycleStatus={cycleStatus} del={del} toAdjust={toAdjust}
-                  onEdit={openEdit} isEditing={editingId === t.id}
-                  onPomo={startPomo}
-                  isRunning={pomo?.task?.id === t.id} />
-              ))}
-            </div>
-          </div>
-        ))
+          )}
+        </>
       }
+
+      {showImport && (
+        <TextImport apiKey={apiKey} onImport={handleImport} onClose={() => setShowImport(false)} />
+      )}
     </div>
   )
 }
@@ -261,8 +376,8 @@ function TaskRow({ task, cycleStatus, del, toAdjust, onEdit, isEditing, onPomo, 
   const urgent      = due >= 0 && due <= 2
   const canPomo     = task.status !== 'Terminé'
   const statusIcon  = { 'À faire': '⭕', 'En cours': '🔵', 'Terminé': '✅' }[task.status]
-  const statusBg    = { 'À faire': '#1f2937', 'En cours': 'rgba(59,130,246,.15)', 'Terminé': 'rgba(34,197,94,.15)' }[task.status]
-  const statusColor = { 'À faire': '#9ca3af', 'En cours': '#60a5fa', 'Terminé': '#4ade80' }[task.status]
+  const statusBg    = { 'À faire': 'var(--status-idle-bg)', 'En cours': 'rgba(59,130,246,.15)', 'Terminé': 'rgba(34,197,94,.15)' }[task.status]
+  const statusColor = { 'À faire': 'var(--muted)', 'En cours': '#60a5fa', 'Terminé': '#4ade80' }[task.status]
   const nextDate    = task.recurring && task.status === 'Terminé' ? nextOccurrenceDate(task, task.lastCompletedAt) : null
   const durLabel    = formatDur(task.duration)
 

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect } from 'react'
+import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react'
 import { useLS } from '../hooks/useLocalStorage'
 import { genId, todayISO, nextOccurrenceDate } from '../utils/dates'
 import { SAMPLE_TASKS, SAMPLE_PROJECTS, SAMPLE_COURSES, SAMPLE_DEVOIRS,
@@ -6,8 +6,11 @@ import { SAMPLE_TASKS, SAMPLE_PROJECTS, SAMPLE_COURSES, SAMPLE_DEVOIRS,
 
 const AppContext = createContext(null)
 
+const NOTIF_ICON = '/personal-os/icons/icon-192.png'
+
 export function AppProvider({ children }) {
-  // ── Données persistées ──────────────────────────────────
+  /* ── Donnees persistees ── */
+  const [tab,           setTab]           = useLS('pos_tab',           'dashboard')
   const [tasks,         setTasks]         = useLS('pos_tasks',         SAMPLE_TASKS)
   const [projects,      setProjects]      = useLS('pos_projects',      SAMPLE_PROJECTS)
   const [expenses,      setExpenses]      = useLS('pos_expenses',      SAMPLE_EXPENSES)
@@ -21,8 +24,81 @@ export function AppProvider({ children }) {
   const [profile,       setProfile]       = useLS('pos_profile',       null)
   const [apiKey,        setApiKey]        = useLS('pos_apikey',        '')
   const [notifEnabled,  setNotifEnabled]  = useLS('pos_notif',         false)
+  const [theme,         setTheme]         = useLS('pos_theme',         'dark')
+  const [streakData,    setStreakData]     = useLS('pos_streak',        { count: 0, lastDate: '' })
 
-  // ── Reset tâches récurrentes au cycle suivant ───────────
+  /* ── UI state (non persiste) ── */
+  const [searchOpen,    setSearchOpen]    = useState(false)
+  const [apiModal,      setApiModal]      = useState(false)
+  const [profileModal,  setProfileModal]  = useState(false)
+  const [backupModal,   setBackupModal]   = useState(false)
+  const importRef = useRef(null)
+
+  /* ── Theme ── */
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+  }, [theme])
+  const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark')
+
+  /* ── Ctrl+K → Global Search ── */
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault()
+        setSearchOpen(s => !s)
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
+
+  /* ── Pomodoro ── */
+  const [pomo, setPomo] = useState(null)
+  const bellRef = useRef(false)
+
+  useEffect(() => {
+    if (!pomo || !pomo.running || pomo.timeLeft <= 0) return
+    const t = setTimeout(() => {
+      setPomo(prev => {
+        if (!prev) return null
+        if (prev.timeLeft <= 1) return { ...prev, timeLeft: 0, running: false, finished: true }
+        return { ...prev, timeLeft: prev.timeLeft - 1 }
+      })
+    }, 1000)
+    return () => clearTimeout(t)
+  }, [pomo])
+
+  useEffect(() => {
+    if (!pomo?.finished || bellRef.current) return
+    bellRef.current = true
+    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+      new Notification('⏱ Temps écoulé !', { body: `${pomo.task.name} — bien joué !`, icon: NOTIF_ICON })
+    }
+  }, [pomo?.finished]) // eslint-disable-line
+
+  const startPomo = useCallback((task) => {
+    bellRef.current = false
+    const secs = Math.max(task.duration || 25, 1) * 60
+    setPomo({ task, total: secs, timeLeft: secs, running: true, finished: false })
+    setTasks(prev => prev.map(t =>
+      t.id === task.id && t.status === 'À faire' ? { ...t, status: 'En cours' } : t
+    ))
+  }, [setTasks])
+
+  const pausePomo = () => setPomo(p => p ? { ...p, running: !p.running } : null)
+  const stopPomo  = () => setPomo(null)
+  const donePomo  = () => {
+    if (pomo) {
+      setTasks(prev => prev.map(t => {
+        if (t.id !== pomo.task.id) return t
+        if (t.recurring) return { ...t, status: 'Terminé', lastCompletedAt: todayISO() }
+        return { ...t, status: 'Terminé' }
+      }))
+    }
+    setPomo(null)
+  }
+
+  /* ── Reset taches recurrentes ── */
   useEffect(() => {
     const today = todayISO()
     setTasks(prev => prev.map(t => {
@@ -35,7 +111,7 @@ export function AppProvider({ children }) {
     }))
   }, []) // eslint-disable-line
 
-  // ── Auto-move tâches en retard → Ajustements ───────────
+  /* ── Auto-move taches en retard → Ajustements ── */
   useEffect(() => {
     const now = todayISO()
     const overdue = tasks.filter(t => t.deadline && t.deadline < now && t.status !== 'Terminé' && !t.recurring)
@@ -53,7 +129,74 @@ export function AppProvider({ children }) {
     })
   }, []) // eslint-disable-line
 
-  // ── Export / Import JSON ────────────────────────────────
+  /* ── Notifications ── */
+  const notifSupported = typeof Notification !== 'undefined'
+
+  const notify = useCallback((title, body) => {
+    if (!notifEnabled || !notifSupported || Notification.permission !== 'granted') return
+    new Notification(title, { body, icon: NOTIF_ICON, badge: NOTIF_ICON })
+  }, [notifEnabled, notifSupported])
+
+  const enableNotifications = async () => {
+    if (!notifSupported) { alert('Ton navigateur ne supporte pas les notifications.'); return }
+    const perm = await Notification.requestPermission()
+    if (perm === 'granted') {
+      setNotifEnabled(true)
+      new Notification('Personal OS 🔔', { body: 'Notifications activées !', icon: NOTIF_ICON })
+    } else {
+      setNotifEnabled(false)
+      alert('Permission refusée. Active les notifications dans les paramètres de ton navigateur.')
+    }
+  }
+
+  // Notifs au demarrage : examens & devoirs du jour / lendemain
+  useEffect(() => {
+    if (!notifEnabled || !notifSupported || Notification.permission !== 'granted') return
+    const today = todayISO()
+    const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1)
+    const tomorrowISO = tomorrow.toISOString().split('T')[0]
+    examens.filter(e => e.date === today).forEach(e =>
+      notify(`🎓 Examen AUJOURD'HUI`, `${e.matiere} à ${e.heure}${e.salle ? ` — ${e.salle}` : ''}`)
+    )
+    examens.filter(e => e.date === tomorrowISO).forEach(e =>
+      notify(`🎓 Examen DEMAIN`, `${e.matiere} à ${e.heure} — Penses à réviser ce soir !`)
+    )
+    devoirs.filter(d => d.dateRendu === today && d.statut !== 'Rendu').forEach(d =>
+      notify(`📋 Devoir à rendre AUJOURD'HUI`, `${d.matiere}${d.description ? ` — ${d.description}` : ''}`)
+    )
+    devoirs.filter(d => d.dateRendu === tomorrowISO && d.statut !== 'Rendu').forEach(d =>
+      notify(`📋 Devoir à rendre DEMAIN`, `${d.matiere}`)
+    )
+  }, []) // eslint-disable-line
+
+  // Verification toutes les 60s pour les habitudes recurrentes
+  const tasksRef = useRef(tasks)
+  useEffect(() => { tasksRef.current = tasks }, [tasks])
+
+  useEffect(() => {
+    if (!notifEnabled) return
+    const interval = setInterval(() => {
+      if (!notifSupported || Notification.permission !== 'granted') return
+      const now = new Date()
+      const hhmm = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+      const JOURS = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
+      const dayName = JOURS[now.getDay()]
+      const todayStr = now.toISOString().split('T')[0]
+      tasksRef.current.filter(t => {
+        if (!t.recurring || !t.recurrenceTime || t.status === 'Terminé') return false
+        if (t.recurrenceTime !== hhmm) return false
+        if (t.recurrence === 'daily') return true
+        if (t.recurrence === 'weekly') return (t.recurrenceDays || []).includes(dayName)
+        if (t.recurrence === 'monthly') return t.deadline === todayStr
+        return false
+      }).forEach(t => {
+        notify(`🔥 C'est l'heure — ${t.name}`, t.duration ? `Durée prévue : ${t.duration} min` : 'Ta routine t\'attend !')
+      })
+    }, 60000)
+    return () => clearInterval(interval)
+  }, [notifEnabled, notify, notifSupported])
+
+  /* ── Export / Import ── */
   const exportData = () => {
     const data = {
       version: 1, exportedAt: new Date().toISOString(),
@@ -69,7 +212,8 @@ export function AppProvider({ children }) {
     URL.revokeObjectURL(url)
   }
 
-  const importData = (file, onDone) => {
+  const importData = (e) => {
+    const file = e.target.files[0]
     if (!file) return
     const reader = new FileReader()
     reader.onload = (ev) => {
@@ -86,14 +230,17 @@ export function AppProvider({ children }) {
         if (data.courses)       setCourses(data.courses)
         if (data.devoirs)       setDevoirs(data.devoirs)
         if (data.examens)       setExamens(data.examens)
-        onDone?.()
+        setBackupModal(false)
         alert('✅ Données restaurées avec succès !')
       } catch { alert('Erreur : fichier JSON corrompu.') }
     }
     reader.readAsText(file)
+    e.target.value = ''
   }
 
   const value = {
+    // Navigation
+    tab, setTab,
     // Data
     tasks, setTasks,
     projects, setProjects,
@@ -108,9 +255,21 @@ export function AppProvider({ children }) {
     profile, setProfile,
     apiKey, setApiKey,
     notifEnabled, setNotifEnabled,
+    streakData, setStreakData,
+    // Theme
+    theme, toggleTheme,
+    // UI modals
+    searchOpen, setSearchOpen,
+    apiModal, setApiModal,
+    profileModal, setProfileModal,
+    backupModal, setBackupModal,
+    importRef,
+    // Pomodoro
+    pomo, startPomo, pausePomo, stopPomo, donePomo,
+    // Notifications
+    notifSupported, enableNotifications,
     // Actions
-    exportData,
-    importData,
+    exportData, importData,
   }
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>

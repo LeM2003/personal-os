@@ -1,8 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
-import { useLS } from './hooks/useLocalStorage'
-import { genId, todayISO, nextOccurrenceDate } from './utils/dates'
-import { SAMPLE_TASKS, SAMPLE_PROJECTS, SAMPLE_COURSES, SAMPLE_DEVOIRS,
-         SAMPLE_EXAMENS, SAMPLE_EXPENSES, SAMPLE_SUBS } from './data/sampleData'
+import { useState } from 'react'
+import { useApp } from './context/AppContext'
 import Dashboard from './components/Dashboard'
 import Taches from './components/Taches'
 import Projets from './components/Projets'
@@ -11,6 +8,7 @@ import Finances from './components/Finances'
 import Ajustements from './components/Ajustements'
 import Stats from './components/Stats'
 import PomodoroModal from './components/shared/PomodoroModal'
+import GlobalSearch from './components/shared/GlobalSearch'
 
 const TABS = [
   { id: 'dashboard',   icon: '🏠', label: 'Dashboard'      },
@@ -24,10 +22,7 @@ const TABS = [
 
 function SetupModal({ onSave }) {
   const [form, setForm] = useState({ prenom: '', nom: '', role: 'Étudiant-entrepreneur' })
-  const save = () => {
-    if (!form.prenom.trim()) return
-    onSave(form)
-  }
+  const save = () => { if (!form.prenom.trim()) return; onSave(form) }
   return (
     <div className="modal-overlay" style={{ zIndex: 9999 }}>
       <div className="modal-box">
@@ -41,17 +36,12 @@ function SetupModal({ onSave }) {
           <input value={form.nom} onChange={e => setForm({ ...form, nom: e.target.value })}
             placeholder="Nom (optionnel)" />
           <select value={form.role} onChange={e => setForm({ ...form, role: e.target.value })}>
-            <option>Étudiant-entrepreneur</option>
-            <option>Étudiant</option>
-            <option>Entrepreneur</option>
-            <option>Freelance</option>
-            <option>Autre</option>
+            <option>Étudiant-entrepreneur</option><option>Étudiant</option>
+            <option>Entrepreneur</option><option>Freelance</option><option>Autre</option>
           </select>
         </div>
         <button className="btn-gold" style={{ width: '100%', marginTop: 20 }} onClick={save}
-          disabled={!form.prenom.trim()}>
-          Commencer →
-        </button>
+          disabled={!form.prenom.trim()}>Commencer →</button>
       </div>
     </div>
   )
@@ -67,11 +57,8 @@ function ProfileModal({ profile, onSave, onClose }) {
           <input value={form.prenom} onChange={e => setForm({ ...form, prenom: e.target.value })} placeholder="Prénom *" autoFocus />
           <input value={form.nom} onChange={e => setForm({ ...form, nom: e.target.value })} placeholder="Nom (optionnel)" />
           <select value={form.role} onChange={e => setForm({ ...form, role: e.target.value })}>
-            <option>Étudiant-entrepreneur</option>
-            <option>Étudiant</option>
-            <option>Entrepreneur</option>
-            <option>Freelance</option>
-            <option>Autre</option>
+            <option>Étudiant-entrepreneur</option><option>Étudiant</option>
+            <option>Entrepreneur</option><option>Freelance</option><option>Autre</option>
           </select>
         </div>
         <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
@@ -84,226 +71,16 @@ function ProfileModal({ profile, onSave, onClose }) {
 }
 
 export default function App() {
-  const [tab, setTab] = useLS('pos_tab', 'dashboard')
-  const [apiKey, setApiKey]         = useLS('pos_apikey', '')
-  const [profile, setProfile]       = useLS('pos_profile', null)
-  const [apiModal, setApiModal]     = useState(false)
-  const [profileModal, setProfileModal] = useState(false)
-  const [backupModal, setBackupModal]   = useState(false)
-  const importRef = useRef(null)
-
-  const [tasks,         setTasks]         = useLS('pos_tasks',         SAMPLE_TASKS)
-  const [projects,      setProjects]      = useLS('pos_projects',      SAMPLE_PROJECTS)
-  const [expenses,      setExpenses]      = useLS('pos_expenses',      SAMPLE_EXPENSES)
-  const [subscriptions, setSubscriptions] = useLS('pos_subscriptions', SAMPLE_SUBS)
-  const [budgets,       setBudgets]       = useLS('pos_budgets',       {})
-  const [notifEnabled,  setNotifEnabled]  = useLS('pos_notif',          false)
-  const [objectif,      setObjectif]      = useLS('pos_objectif',      'Lancer ma chaîne TikTok et valider mon semestre avec mention')
-  const [adjustments,   setAdjustments]   = useLS('pos_adjustments',   [])
-  const [courses,       setCourses]       = useLS('pos_courses',       SAMPLE_COURSES)
-  const [devoirs,       setDevoirs]       = useLS('pos_devoirs',       SAMPLE_DEVOIRS)
-  const [examens,       setExamens]       = useLS('pos_examens',       SAMPLE_EXAMENS)
-  const [streakData,    setStreakData]    = useLS('pos_streak',        { count: 0, lastDate: '' })
-
-  /* ── Pomodoro — survit à la navigation ── */
-  const [pomo,    setPomo]    = useState(null)
-  const bellRef               = useRef(false)
-
-  useEffect(() => {
-    if (!pomo || !pomo.running || pomo.timeLeft <= 0) return
-    const t = setTimeout(() => {
-      setPomo(prev => {
-        if (!prev) return null
-        if (prev.timeLeft <= 1) return { ...prev, timeLeft: 0, running: false, finished: true }
-        return { ...prev, timeLeft: prev.timeLeft - 1 }
-      })
-    }, 1000)
-    return () => clearTimeout(t)
-  }, [pomo])
-
-  useEffect(() => {
-    if (!pomo?.finished || bellRef.current) return
-    bellRef.current = true
-    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-      new Notification('⏱ Temps écoulé !', {
-        body: `${pomo.task.name} — bien joué !`,
-        icon: NOTIF_ICON,
-      })
-    }
-  }, [pomo?.finished]) // eslint-disable-line
-
-  const startPomo = useCallback((task) => {
-    bellRef.current = false
-    const secs = Math.max(task.duration || 25, 1) * 60
-    setPomo({ task, total: secs, timeLeft: secs, running: true, finished: false })
-    setTasks(prev => prev.map(t =>
-      t.id === task.id && t.status === 'À faire' ? { ...t, status: 'En cours' } : t
-    ))
-  }, [setTasks]) // eslint-disable-line
-
-  const pausePomo = () => setPomo(p => p ? { ...p, running: !p.running } : null)
-  const stopPomo  = () => setPomo(null)
-  const donePomo  = () => {
-    if (pomo) {
-      setTasks(prev => prev.map(t => {
-        if (t.id !== pomo.task.id) return t
-        if (t.recurring) return { ...t, status: 'Terminé', lastCompletedAt: todayISO() }
-        return { ...t, status: 'Terminé' }
-      }))
-    }
-    setPomo(null)
-  }
-
-  /* Reset des tâches récurrentes terminées au prochain cycle */
-  useEffect(() => {
-    const today = todayISO()
-    setTasks(prev => prev.map(t => {
-      if (!t.recurring || t.status !== 'Terminé') return t
-      if (t.lastCompletedAt && t.lastCompletedAt < today) {
-        const nextDate = nextOccurrenceDate(t, t.lastCompletedAt)
-        return { ...t, status: 'À faire', deadline: nextDate, lastCompletedAt: null }
-      }
-      return t
-    }))
-  }, []) // eslint-disable-line
-
-  /* Auto-move overdue tasks → Ajustements (exclut les récurrentes) */
-  useEffect(() => {
-    const now = todayISO()
-    const overdue = tasks.filter(t => t.deadline && t.deadline < now && t.status !== 'Terminé' && !t.recurring)
-    if (!overdue.length) return
-    const ids = new Set(overdue.map(t => t.id))
-    setTasks(prev => prev.filter(t => !ids.has(t.id)))
-    setAdjustments(prev => {
-      const existIds = new Set(prev.map(a => a.taskId))
-      const news = overdue.filter(t => !existIds.has(t.id)).map(t => ({
-        id: genId(), taskId: t.id, taskName: t.name,
-        originalDeadline: t.deadline, reason: 'manque de temps',
-        newDate: '', originalTask: { ...t },
-      }))
-      return [...prev, ...news]
-    })
-  }, []) // eslint-disable-line
-
-  /* ── Notifications ── */
-  const NOTIF_ICON = '/personal-os/icons/icon-192.png'
-  const notifSupported = typeof Notification !== 'undefined'
-
-  const notify = useCallback((title, body) => {
-    if (!notifEnabled || !notifSupported || Notification.permission !== 'granted') return
-    new Notification(title, { body, icon: NOTIF_ICON, badge: NOTIF_ICON })
-  }, [notifEnabled, notifSupported])
-
-  const enableNotifications = async () => {
-    if (!notifSupported) { alert('Ton navigateur ne supporte pas les notifications.'); return }
-    const perm = await Notification.requestPermission()
-    if (perm === 'granted') {
-      setNotifEnabled(true)
-      new Notification('Personal OS 🔔', { body: 'Notifications activées ! Tu seras rappelé pour tes habitudes et examens.', icon: NOTIF_ICON })
-    } else {
-      setNotifEnabled(false)
-      alert('Permission refusée. Active les notifications dans les paramètres de ton navigateur.')
-    }
-  }
-
-  // Check au démarrage : examens & devoirs du jour / lendemain
-  useEffect(() => {
-    if (!notifEnabled || !notifSupported || Notification.permission !== 'granted') return
-    const today = todayISO()
-    const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1)
-    const tomorrowISO = tomorrow.toISOString().split('T')[0]
-
-    examens.filter(e => e.date === today).forEach(e =>
-      notify(`🎓 Examen AUJOURD'HUI`, `${e.matiere} à ${e.heure}${e.salle ? ` — ${e.salle}` : ''}`)
-    )
-    examens.filter(e => e.date === tomorrowISO).forEach(e =>
-      notify(`🎓 Examen DEMAIN`, `${e.matiere} à ${e.heure} — Penses à réviser ce soir !`)
-    )
-    devoirs.filter(d => d.dateRendu === today && d.statut !== 'Rendu').forEach(d =>
-      notify(`📋 Devoir à rendre AUJOURD'HUI`, `${d.matiere}${d.description ? ` — ${d.description}` : ''}`)
-    )
-    devoirs.filter(d => d.dateRendu === tomorrowISO && d.statut !== 'Rendu').forEach(d =>
-      notify(`📋 Devoir à rendre DEMAIN`, `${d.matiere}`)
-    )
-  }, []) // eslint-disable-line
-
-  // Vérification toutes les 60s pour les habitudes récurrentes
-  const tasksRef = useRef(tasks)
-  useEffect(() => { tasksRef.current = tasks }, [tasks])
-
-  useEffect(() => {
-    if (!notifEnabled) return
-    const interval = setInterval(() => {
-      if (!notifSupported || Notification.permission !== 'granted') return
-      const now = new Date()
-      const hhmm = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
-      const JOURS = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
-      const dayName = JOURS[now.getDay()]
-      const todayStr = now.toISOString().split('T')[0]
-
-      tasksRef.current.filter(t => {
-        if (!t.recurring || !t.recurrenceTime || t.status === 'Terminé') return false
-        if (t.recurrenceTime !== hhmm) return false
-        if (t.recurrence === 'daily') return true
-        if (t.recurrence === 'weekly') return (t.recurrenceDays || []).includes(dayName)
-        if (t.recurrence === 'monthly') return t.deadline === todayStr
-        return false
-      }).forEach(t => {
-        notify(`🔥 C'est l'heure — ${t.name}`, t.duration ? `Durée prévue : ${t.duration} min` : 'Ta routine t\'attend !')
-      })
-    }, 60000)
-    return () => clearInterval(interval)
-  }, [notifEnabled, notify, notifSupported])
-
-  const exportData = () => {
-    const data = {
-      version: 1, exportedAt: new Date().toISOString(),
-      profile, tasks, projects, expenses, subscriptions,
-      objectif, adjustments, courses, devoirs, examens
-    }
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `personal-os-backup-${new Date().toISOString().split('T')[0]}.json`
-    a.click()
-    URL.revokeObjectURL(url)
-  }
-
-  const importData = (e) => {
-    const file = e.target.files[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = (ev) => {
-      try {
-        const data = JSON.parse(ev.target.result)
-        if (!data.version) { alert('Fichier invalide.'); return }
-        if (data.profile)       setProfile(data.profile)
-        if (data.tasks)         setTasks(data.tasks)
-        if (data.projects)      setProjects(data.projects)
-        if (data.expenses)      setExpenses(data.expenses)
-        if (data.subscriptions) setSubscriptions(data.subscriptions)
-        if (data.objectif)      setObjectif(data.objectif)
-        if (data.adjustments)   setAdjustments(data.adjustments)
-        if (data.courses)       setCourses(data.courses)
-        if (data.devoirs)       setDevoirs(data.devoirs)
-        if (data.examens)       setExamens(data.examens)
-        setBackupModal(false)
-        alert('✅ Données restaurées avec succès !')
-      } catch { alert('Erreur : fichier JSON corrompu.') }
-    }
-    reader.readAsText(file)
-    e.target.value = ''
-  }
-
-  const shared = {
-    tasks, setTasks, projects, setProjects, expenses, setExpenses,
-    subscriptions, setSubscriptions, objectif, setObjectif,
-    adjustments, setAdjustments, courses, setCourses,
-    devoirs, setDevoirs, examens, setExamens,
-    apiKey, setTab, profile, budgets, setBudgets,
-    streakData, setStreakData,
-  }
+  const app = useApp()
+  const {
+    tab, setTab, profile, setProfile, apiKey, setApiKey,
+    adjustments, pomo, pausePomo, stopPomo, donePomo,
+    theme, toggleTheme, notifEnabled, setNotifEnabled, enableNotifications,
+    searchOpen, setSearchOpen, apiModal, setApiModal,
+    profileModal, setProfileModal, backupModal, setBackupModal,
+    importRef, exportData, importData,
+    tasks, devoirs, examens, projects,
+  } = app
 
   const adjBadge = adjustments.length > 0 && (
     <span style={{ background: '#f87171', color: '#fff', borderRadius: '50%', width: 18, height: 18,
@@ -320,6 +97,17 @@ export default function App() {
           <h1 style={{ fontSize: 20, fontWeight: 800, color: '#F5C518', letterSpacing: '-0.5px' }}>Personal OS</h1>
           <p style={{ color: 'var(--muted)', fontSize: 11, marginTop: 3 }}>Dashboard Pro · Dakar</p>
         </div>
+
+        <button onClick={() => setSearchOpen(true)} aria-label="Rechercher"
+          style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 12px',
+            background: 'var(--input-bg)', border: '1px solid var(--border)', borderRadius: 8,
+            color: 'var(--muted)', fontSize: 13, cursor: 'pointer', marginBottom: 16,
+            fontFamily: 'DM Sans', transition: 'border-color .2s' }}>
+          <span>🔍</span>
+          <span style={{ flex: 1, textAlign: 'left' }}>Rechercher...</span>
+          <kbd style={{ background: 'var(--bar-bg)', border: '1px solid var(--border)', borderRadius: 4,
+            padding: '1px 6px', fontSize: 10 }}>⌘K</kbd>
+        </button>
 
         <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 3 }}>
           {TABS.map(t => (
@@ -343,13 +131,22 @@ export default function App() {
             onClick={notifEnabled ? () => setNotifEnabled(false) : enableNotifications}>
             {notifEnabled ? '🔔 Notifications activées' : '🔕 Activer les notifications'}
           </button>
+          {notifEnabled && (
+            <p style={{ fontSize: 10, color: 'var(--muted)', padding: '0 12px', margin: 0, lineHeight: 1.4 }}>
+              Fonctionne uniquement quand l'app est ouverte. Pour les rappels hors-ligne, ajoute l'app à ton écran d'accueil.
+            </p>
+          )}
           <button className="btn-ghost" style={{ width: '100%', fontSize: 12, padding: '8px 12px' }}
             onClick={() => setBackupModal(true)}>
             💾 Sauvegarde / Restauration
           </button>
           <button className="btn-ghost" style={{ width: '100%', fontSize: 12, padding: '8px 12px' }}
             onClick={() => setApiModal(true)}>
-            🔑 Clé API Anthropic
+            🔑 Clé API Gemini (gratuit)
+          </button>
+          <button className="btn-ghost" style={{ width: '100%', fontSize: 12, padding: '8px 12px' }}
+            onClick={toggleTheme}>
+            {theme === 'dark' ? '☀️ Thème clair' : '🌙 Thème sombre'}
           </button>
         </div>
       </aside>
@@ -357,20 +154,20 @@ export default function App() {
       {/* MAIN */}
       <main className="main-content">
         <div className="page-enter" key={tab}>
-          {tab === 'dashboard'   && <Dashboard   {...shared} />}
-          {tab === 'taches'      && <Taches      tasks={tasks} setTasks={setTasks} adjustments={adjustments} setAdjustments={setAdjustments} pomo={pomo} startPomo={startPomo} />}
-          {tab === 'projets'     && <Projets     tasks={tasks} projects={projects} setProjects={setProjects} apiKey={apiKey} />}
-          {tab === 'ecole'       && <Ecole       courses={courses} setCourses={setCourses} devoirs={devoirs} setDevoirs={setDevoirs} examens={examens} setExamens={setExamens} tasks={tasks} setTasks={setTasks} />}
-          {tab === 'finances'    && <Finances    expenses={expenses} setExpenses={setExpenses} subscriptions={subscriptions} setSubscriptions={setSubscriptions} budgets={budgets} setBudgets={setBudgets} />}
-          {tab === 'stats'       && <Stats tasks={tasks} expenses={expenses} subscriptions={subscriptions} projects={projects} devoirs={devoirs} examens={examens} adjustments={adjustments} />}
-          {tab === 'ajustements' && <Ajustements adjustments={adjustments} setAdjustments={setAdjustments} tasks={tasks} setTasks={setTasks} />}
+          {tab === 'dashboard'   && <Dashboard />}
+          {tab === 'taches'      && <Taches />}
+          {tab === 'projets'     && <Projets />}
+          {tab === 'ecole'       && <Ecole />}
+          {tab === 'finances'    && <Finances />}
+          {tab === 'stats'       && <Stats />}
+          {tab === 'ajustements' && <Ajustements />}
         </div>
       </main>
 
       {/* BOTTOM NAV (mobile) */}
       <nav className="bottom-nav">
         {TABS.map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)}
+          <button key={t.id} onClick={() => setTab(t.id)} aria-label={t.label}
             style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column',
               alignItems: 'center', gap: 2, padding: '4px 8px',
               color: tab === t.id ? '#F5C518' : 'var(--muted)', position: 'relative' }}>
@@ -387,10 +184,8 @@ export default function App() {
         ))}
       </nav>
 
-      {/* SETUP PROFIL (premier lancement) */}
-      {!profile && (
-        <SetupModal onSave={setProfile} />
-      )}
+      {/* SETUP PROFIL */}
+      {!profile && <SetupModal onSave={setProfile} />}
 
       {/* MODIFIER PROFIL */}
       {profileModal && (
@@ -425,20 +220,33 @@ export default function App() {
         </div>
       )}
 
-      {/* POMODORO — persiste sur tous les onglets */}
+      {/* POMODORO */}
       {pomo && <PomodoroModal pomo={pomo} onPause={pausePomo} onStop={stopPomo} onDone={donePomo} />}
+
+      {/* GLOBAL SEARCH */}
+      {searchOpen && (
+        <GlobalSearch
+          tasks={tasks} devoirs={devoirs} examens={examens} projects={projects}
+          onNavigate={setTab} onClose={() => setSearchOpen(false)}
+        />
+      )}
 
       {/* API KEY MODAL */}
       {apiModal && (
         <div className="modal-overlay" onClick={() => setApiModal(false)}>
           <div className="modal-box" onClick={e => e.stopPropagation()}>
-            <h3 style={{ fontSize: 18, marginBottom: 8, color: '#F5C518' }}>🔑 Clé API Anthropic</h3>
+            <h3 style={{ fontSize: 18, marginBottom: 8, color: '#F5C518' }}>🔑 Clé API Gemini (gratuit)</h3>
             <p style={{ color: 'var(--muted)', fontSize: 14, marginBottom: 16, lineHeight: 1.6 }}>
-              Votre clé API est stockée uniquement dans votre navigateur (localStorage).<br />
-              Obtenez-la sur <strong style={{ color: 'var(--text)' }}>console.anthropic.com</strong>
+              Clé 100% gratuite, stockée uniquement dans ton navigateur.<br />
+              Obtiens-la sur <strong style={{ color: 'var(--text)' }}>aistudio.google.com/apikey</strong>
             </p>
             <input type="password" value={apiKey} onChange={e => setApiKey(e.target.value)}
-              placeholder="sk-ant-api03-..." style={{ marginBottom: 16 }} />
+              placeholder="AIzaSy..." style={{ marginBottom: 10 }} />
+            <p style={{ fontSize: 11, color: '#f97316', margin: '0 0 14px', lineHeight: 1.5,
+              background: 'rgba(249,115,22,.06)', border: '1px solid rgba(249,115,22,.2)',
+              borderRadius: 6, padding: '8px 10px' }}>
+              🔒 Ta clé est stockée localement. Ne partage pas ce navigateur et ne l'utilise pas sur un appareil public.
+            </p>
             <div style={{ display: 'flex', gap: 8 }}>
               <button className="btn-gold" onClick={() => setApiModal(false)}>Enregistrer</button>
               <button className="btn-ghost" onClick={() => setApiModal(false)}>Fermer</button>

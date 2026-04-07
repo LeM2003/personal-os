@@ -1,63 +1,148 @@
 import { useState } from 'react'
+import { useApp } from '../context/AppContext'
 import { genId, todayISO, fmtDate } from '../utils/dates'
 import PageHeader from './shared/PageHeader'
 import EmptyState from './shared/EmptyState'
 
-export default function Projets({ tasks, projects, setProjects, apiKey }) {
-  const blank = { name: '', objective: '', targetDate: '' }
+const blankProject = {
+  name: '', objective: '', targetDate: '', type: 'projet', notes: '',
+}
+
+export default function Projets() {
+  const { tasks, projects, setProjects, apiKey } = useApp()
   const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState(blank)
+  const [form, setForm] = useState(blankProject)
+  const [editingId, setEditingId] = useState(null)
   const [analyzing, setAnalyzing] = useState(null)
   const [aiError, setAiError] = useState('')
+  const [viewTab, setViewTab] = useState('projets') // 'projets' | 'idees'
+  const [expandedId, setExpandedId] = useState(null)
+  const [newStep, setNewStep] = useState('')
 
-  const addProject = () => {
+  /* ── CRUD ── */
+  const openAdd = (type) => {
+    setEditingId(null)
+    setForm({ ...blankProject, type })
+    setShowForm(true)
+  }
+  const openEdit = (proj) => {
+    setEditingId(proj.id)
+    setForm({
+      name: proj.name, objective: proj.objective || '', targetDate: proj.targetDate || '',
+      type: proj.type || 'projet', notes: proj.notes || '',
+    })
+    setShowForm(true)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+  const closeForm = () => { setShowForm(false); setEditingId(null); setForm(blankProject) }
+
+  const saveProject = () => {
     if (!form.name.trim()) return
-    setProjects(p => [...p, { ...form, id: genId(), createdAt: todayISO(), aiAnalysis: null }])
-    setForm(blank); setShowForm(false)
+    if (editingId) {
+      setProjects(p => p.map(x => x.id === editingId ? { ...x, ...form } : x))
+    } else {
+      setProjects(p => [...p, {
+        ...form, id: genId(), createdAt: todayISO(),
+        steps: [], aiAnalysis: null, status: 'En cours',
+      }])
+    }
+    closeForm()
   }
 
   const del = id => setProjects(p => p.filter(x => x.id !== id))
 
-  const progress = proj => {
-    const linked = tasks.filter(t => t.project === proj.name)
-    if (!linked.length) return 0
-    return Math.round((linked.filter(t => t.status === 'Terminé').length / linked.length) * 100)
+  /* ── Promouvoir idee → projet ── */
+  const promote = (proj) => {
+    setProjects(p => p.map(x => x.id === proj.id ? { ...x, type: 'projet' } : x))
   }
 
+  /* ── Steps ── */
+  const addStep = (projId) => {
+    if (!newStep.trim()) return
+    setProjects(p => p.map(x => {
+      if (x.id !== projId) return x
+      const steps = [...(x.steps || []), { id: genId(), title: newStep.trim(), done: false, order: (x.steps || []).length }]
+      return { ...x, steps }
+    }))
+    setNewStep('')
+  }
+
+  const toggleStep = (projId, stepId) => {
+    setProjects(p => p.map(x => {
+      if (x.id !== projId) return x
+      const steps = (x.steps || []).map(s => s.id === stepId ? { ...s, done: !s.done } : s)
+      return { ...x, steps }
+    }))
+  }
+
+  const delStep = (projId, stepId) => {
+    setProjects(p => p.map(x => {
+      if (x.id !== projId) return x
+      return { ...x, steps: (x.steps || []).filter(s => s.id !== stepId) }
+    }))
+  }
+
+  const moveStep = (projId, stepId, dir) => {
+    setProjects(p => p.map(x => {
+      if (x.id !== projId) return x
+      const steps = [...(x.steps || [])]
+      const idx = steps.findIndex(s => s.id === stepId)
+      const newIdx = idx + dir
+      if (newIdx < 0 || newIdx >= steps.length) return x
+      ;[steps[idx], steps[newIdx]] = [steps[newIdx], steps[idx]]
+      return { ...x, steps: steps.map((s, i) => ({ ...s, order: i })) }
+    }))
+  }
+
+  /* ── Notes ── */
+  const updateNotes = (projId, notes) => {
+    setProjects(p => p.map(x => x.id === projId ? { ...x, notes } : x))
+  }
+
+  /* ── Progress ── */
+  const calcProgress = (proj) => {
+    const steps = proj.steps || []
+    const linked = tasks.filter(t => t.project === proj.name)
+    const totalItems = steps.length + linked.length
+    if (totalItems === 0) return 0
+    const doneItems = steps.filter(s => s.done).length + linked.filter(t => t.status === 'Terminé').length
+    return Math.round((doneItems / totalItems) * 100)
+  }
+
+  /* ── AI Analysis ── */
   const analyzeProject = async proj => {
     if (!apiKey) {
-      setAiError("⚠️ Veuillez d'abord configurer votre clé API (bouton « Clé API » en bas de la barre latérale).")
+      setAiError("Configure ta cle API Gemini (gratuite) dans la sidebar — bouton 🔑")
       return
     }
     setAnalyzing(proj.id); setAiError('')
     const linked = tasks.filter(t => t.project === proj.name)
+    const steps = proj.steps || []
     const prompt = [
       `Nom du projet : ${proj.name}`,
-      `Objectif final : ${proj.objective || 'Non défini'}`,
-      `Date cible : ${fmtDate(proj.targetDate)}`,
-      `Tâches liées :`,
+      `Type : ${proj.type}`,
+      `Objectif final : ${proj.objective || 'Non defini'}`,
+      `Date cible : ${proj.targetDate ? fmtDate(proj.targetDate) : 'Non definie'}`,
+      `Notes/Plan : ${proj.notes || 'Aucune'}`,
+      `Etapes definies (${steps.filter(s => s.done).length}/${steps.length} faites) :`,
+      steps.length ? steps.map(s => `  ${s.done ? '✓' : '○'} ${s.title}`).join('\n') : '  Aucune etape',
+      `Taches liees (${linked.filter(t => t.status === 'Terminé').length}/${linked.length} terminees) :`,
       linked.length
-        ? linked.map(t => `  - ${t.name} (${t.status}, priorité: ${t.priority})`).join('\n')
-        : '  Aucune tâche définie encore.',
+        ? linked.map(t => `  - ${t.name} (${t.status}, priorite: ${t.priority})`).join('\n')
+        : '  Aucune tache definie.',
+      '',
+      'Reponds avec exactement ce format JSON :',
+      '{"score_faisabilite": 8, "priorite_recommandee": "Haute", "prochaines_etapes": ["etape 1", "etape 2", "etape 3"], "raison": "Explication courte et motivante"}',
     ].join('\n')
 
     try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
         method: 'POST',
-        headers: {
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'content-type': 'application/json',
-          'anthropic-dangerous-direct-browser-access': 'true',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 600,
-          system: 'Tu es un coach business pour entrepreneurs africains. Analyse ce projet et donne une évaluation claire, pratique et motivante. Réponds en français. Réponds UNIQUEMENT en JSON valide, sans markdown ni backticks.',
-          messages: [{
-            role: 'user',
-            content: prompt + '\n\nRéponds avec exactement ce format JSON :\n{"score_faisabilite": 8, "priorite_recommandee": "Haute", "prochaines_etapes": ["étape 1", "étape 2", "étape 3"], "raison": "Explication courte et motivante"}',
-          }],
+          systemInstruction: { parts: [{ text: 'Tu es un coach business pour entrepreneurs africains. Analyse ce projet et donne une evaluation claire, pratique et motivante. Reponds en francais. Reponds UNIQUEMENT en JSON valide, sans markdown ni backticks.' }] },
+          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+          generationConfig: { maxOutputTokens: 600, temperature: 0.3 },
         }),
       })
       if (!res.ok) {
@@ -65,18 +150,24 @@ export default function Projets({ tasks, projects, setProjects, apiKey }) {
         throw new Error(e.error?.message || `Erreur HTTP ${res.status}`)
       }
       const data = await res.json()
-      let text = data.content?.[0]?.text || ''
-      text = text.replace(/```json?|```/g, '').trim()
-      const analysis = JSON.parse(text)
+      let rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+      rawText = rawText.replace(/```json?|```/g, '').trim()
+      const jsonMatch = rawText.match(/\{[\s\S]*\}/)
+      const analysis = JSON.parse(jsonMatch ? jsonMatch[0] : rawText)
       setProjects(p => p.map(x => x.id === proj.id ? { ...x, aiAnalysis: analysis } : x))
     } catch (e) {
-      setAiError(`Erreur lors de l'analyse IA : ${e.message}`)
+      setAiError(`Erreur IA : ${e.message}`)
     } finally {
       setAnalyzing(null)
     }
   }
 
-  const sorted = [...projects].sort((a, b) => {
+  /* ── Filtrage ── */
+  const projetsOnly = projects.filter(p => (p.type || 'projet') === 'projet')
+  const ideesOnly = projects.filter(p => p.type === 'idee')
+  const currentList = viewTab === 'projets' ? projetsOnly : ideesOnly
+
+  const sorted = [...currentList].sort((a, b) => {
     const sa = a.aiAnalysis?.score_faisabilite ?? -1
     const sb = b.aiAnalysis?.score_faisabilite ?? -1
     return sb - sa
@@ -84,7 +175,27 @@ export default function Projets({ tasks, projects, setProjects, apiKey }) {
 
   return (
     <div>
-      <PageHeader title="🎯 Projets & Idées" action={<button className="btn-gold" onClick={() => setShowForm(s => !s)}>+ Nouveau projet</button>} />
+      <PageHeader title="🎯 Projets & Idées" action={
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn-ghost" onClick={() => openAdd('idee')}
+            style={{ fontSize: 13, padding: '8px 14px', border: '1px solid rgba(139,92,246,.3)', color: '#a78bfa' }}>
+            💡 Nouvelle idée
+          </button>
+          <button className="btn-gold" onClick={() => openAdd('projet')}>+ Nouveau projet</button>
+        </div>
+      } />
+
+      {/* Tabs Projets / Idees */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20, alignItems: 'center' }}>
+        <div className="subtab-bar">
+          <button className={`subtab${viewTab === 'projets' ? ' active' : ''}`} onClick={() => setViewTab('projets')}>
+            🎯 Projets ({projetsOnly.length})
+          </button>
+          <button className={`subtab${viewTab === 'idees' ? ' active' : ''}`} onClick={() => setViewTab('idees')}>
+            💡 Idées ({ideesOnly.length})
+          </button>
+        </div>
+      </div>
 
       {aiError && (
         <div className="alert alert-red" style={{ marginBottom: 16 }}>
@@ -93,37 +204,63 @@ export default function Projets({ tasks, projects, setProjects, apiKey }) {
         </div>
       )}
 
+      {/* Formulaire */}
       {showForm && (
-        <div className="card" style={{ padding: 20, marginBottom: 20 }}>
-          <h3 style={{ fontSize: 16, marginBottom: 16 }}>Nouveau projet / idée</h3>
+        <div className="card" style={{ padding: 20, marginBottom: 20, border: '1px solid rgba(245,197,24,.3)' }}>
+          <h3 style={{ fontSize: 16, marginBottom: 16 }}>
+            {editingId ? '✏️ Modifier' : form.type === 'idee' ? '💡 Nouvelle idée' : '🎯 Nouveau projet'}
+          </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
-              placeholder="Nom du projet *" autoFocus />
+              placeholder={form.type === 'idee' ? "Nom de l'idée *" : "Nom du projet *"} autoFocus />
             <textarea rows={2} value={form.objective} onChange={e => setForm({ ...form, objective: e.target.value })}
               placeholder="Objectif final (ex : atteindre 10K abonnés)" />
-            <input type="date" value={form.targetDate} onChange={e => setForm({ ...form, targetDate: e.target.value })} />
+            <textarea rows={3} value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })}
+              placeholder="Notes / Plan détaillé (optionnel)" />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }} className="grid-2">
+              <input type="date" value={form.targetDate} onChange={e => setForm({ ...form, targetDate: e.target.value })} />
+              <select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })}>
+                <option value="projet">🎯 Projet</option>
+                <option value="idee">💡 Idée</option>
+              </select>
+            </div>
           </div>
           <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
-            <button className="btn-gold" onClick={addProject}>Créer</button>
-            <button className="btn-ghost" onClick={() => { setShowForm(false); setForm(blank) }}>Annuler</button>
+            <button className="btn-gold" onClick={saveProject}>{editingId ? 'Enregistrer' : 'Créer'}</button>
+            <button className="btn-ghost" onClick={closeForm}>Annuler</button>
           </div>
         </div>
       )}
 
+      {/* Liste */}
       {sorted.length === 0
-        ? <EmptyState icon="🚀" msg="Aucun projet pour l'instant." sub="Créez votre premier projet et analysez-le avec l'IA !" />
+        ? <EmptyState
+            icon={viewTab === 'idees' ? '💡' : '🚀'}
+            msg={viewTab === 'idees' ? "Aucune idée pour l'instant." : "Aucun projet pour l'instant."}
+            sub={viewTab === 'idees' ? "Note tes idées ici, tu pourras les promouvoir en projet plus tard !" : "Crée ton premier projet ou promeus une idée !"} />
         : sorted.map(proj => {
-          const pct = progress(proj)
+          const pct = calcProgress(proj)
           const linked = tasks.filter(t => t.project === proj.name)
+          const steps = proj.steps || []
           const ai = proj.aiAnalysis
           const isAnalyzing = analyzing === proj.id
           const scoreColor = !ai ? null : ai.score_faisabilite >= 7 ? '#4ade80' : ai.score_faisabilite >= 4 ? '#F5C518' : '#f87171'
+          const isExpanded = expandedId === proj.id
+          const isIdee = (proj.type || 'projet') === 'idee'
+          const stepsDone = steps.filter(s => s.done).length
+          const isEditing = editingId === proj.id
 
           return (
-            <div key={proj.id} className="card" style={{ padding: 20, marginBottom: 16 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 14 }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
+            <div key={proj.id} className="card" style={{
+              padding: 20, marginBottom: 16,
+              borderLeft: `3px solid ${isIdee ? '#a78bfa' : pct === 100 ? '#4ade80' : '#F5C518'}`,
+              background: isEditing ? 'rgba(245,197,24,.03)' : undefined,
+            }}>
+              {/* Header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 12 }}>
+                <div style={{ flex: 1, minWidth: 0, cursor: 'pointer' }} onClick={() => setExpandedId(isExpanded ? null : proj.id)}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 4 }}>
+                    <span style={{ fontSize: 16 }}>{isIdee ? '💡' : '🎯'}</span>
                     <h2 style={{ fontSize: 18, margin: 0 }}>{proj.name}</h2>
                     {ai && (
                       <span className="badge" style={{ background: `${scoreColor}22`, color: scoreColor, fontSize: 12 }}>
@@ -131,24 +268,34 @@ export default function Projets({ tasks, projects, setProjects, apiKey }) {
                       </span>
                     )}
                     {ai?.priorite_recommandee && <span className="badge badge-yellow">{ai.priorite_recommandee}</span>}
+                    {isIdee && <span className="badge" style={{ background: 'rgba(139,92,246,.15)', color: '#a78bfa', fontSize: 11 }}>Idée</span>}
                   </div>
-                  {proj.objective && <p style={{ color: '#9ca3af', fontSize: 13, margin: '0 0 4px' }}>{proj.objective}</p>}
+                  {proj.objective && <p style={{ color: 'var(--muted)', fontSize: 13, margin: '0 0 4px' }}>{proj.objective}</p>}
                   {proj.targetDate && <p style={{ color: 'var(--muted)', fontSize: 12, margin: 0 }}>🗓 Cible : {fmtDate(proj.targetDate)}</p>}
                 </div>
-                <div style={{ display: 'flex', gap: 8, flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                  <button className="btn-gold" style={{ fontSize: 12, padding: '7px 13px' }}
+                <div style={{ display: 'flex', gap: 6, flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                  {isIdee && (
+                    <button className="btn-gold" style={{ fontSize: 11, padding: '6px 12px' }} onClick={() => promote(proj)}>
+                      🚀 Promouvoir en projet
+                    </button>
+                  )}
+                  <button className="btn-gold" style={{ fontSize: 11, padding: '6px 12px' }}
                     onClick={() => analyzeProject(proj)} disabled={isAnalyzing}>
-                    {isAnalyzing ? <><span className="spinner" />Analyse…</> : '🤖 Analyser avec IA'}
+                    {isAnalyzing ? <><span className="spinner" />Analyse…</> : '🤖 IA'}
                   </button>
+                  <button className="btn-icon" onClick={() => openEdit(proj)} title="Modifier">✏️</button>
                   <button className="btn-icon" onClick={() => del(proj.id)} title="Supprimer">✕</button>
                 </div>
               </div>
 
-              {/* Progress */}
-              <div style={{ marginBottom: 14 }}>
+              {/* Progress bar */}
+              <div style={{ marginBottom: 12 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
                   <span style={{ fontSize: 12, color: 'var(--muted)' }}>
-                    {linked.length} tâche{linked.length !== 1 ? 's' : ''} liée{linked.length !== 1 ? 's' : ''}
+                    {steps.length > 0 && `${stepsDone}/${steps.length} étapes`}
+                    {steps.length > 0 && linked.length > 0 && ' · '}
+                    {linked.length > 0 && `${linked.filter(t => t.status === 'Terminé').length}/${linked.length} tâches`}
+                    {steps.length === 0 && linked.length === 0 && 'Aucune étape ni tâche'}
                   </span>
                   <span style={{ fontSize: 12, fontWeight: 700, color: pct === 100 ? '#4ade80' : '#F5C518' }}>{pct}%</span>
                 </div>
@@ -157,51 +304,137 @@ export default function Projets({ tasks, projects, setProjects, apiKey }) {
                 </div>
               </div>
 
-              {linked.length > 0 && (
-                <div>
-                  <p style={{ fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: .8, marginBottom: 8 }}>Tâches</p>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                    {linked.map(t => (
-                      <span key={t.id} style={{
-                        background: t.status === 'Terminé' ? 'rgba(34,197,94,.1)' : '#1a2235',
-                        border: `1px solid ${t.status === 'Terminé' ? 'rgba(34,197,94,.3)' : '#2d3748'}`,
-                        color: t.status === 'Terminé' ? '#4ade80' : '#9ca3af',
-                        borderRadius: 6, padding: '3px 10px', fontSize: 12,
-                      }}>
-                        {t.status === 'Terminé' ? '✓ ' : ''}{t.name}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
+              {/* Expand toggle */}
+              <button className="btn-ghost" onClick={() => setExpandedId(isExpanded ? null : proj.id)}
+                style={{ width: '100%', fontSize: 12, padding: '6px 12px', marginBottom: isExpanded ? 14 : 0 }}>
+                {isExpanded ? '▲ Replier' : '▼ Détails — étapes, notes, tâches'}
+              </button>
 
-              {ai && (
-                <div className="ai-block">
-                  <p style={{ color: '#F5C518', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 14 }}>
-                    🤖 Analyse IA
-                  </p>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }} className="grid-2">
-                    <div>
-                      <p style={{ fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: .8, marginBottom: 5 }}>Score de faisabilité</p>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ fontFamily: 'Syne', fontWeight: 800, fontSize: 28, color: scoreColor }}>{ai.score_faisabilite}</span>
-                        <span style={{ color: 'var(--muted)', fontSize: 16 }}>/10</span>
-                      </div>
-                    </div>
-                    <div>
-                      <p style={{ fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: .8, marginBottom: 5 }}>Raison</p>
-                      <p style={{ fontSize: 13, color: 'var(--text)', margin: 0, lineHeight: 1.5 }}>{ai.raison}</p>
-                    </div>
-                  </div>
-                  {ai.prochaines_etapes?.length > 0 && (
-                    <div>
-                      <p style={{ fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: .8, marginBottom: 10 }}>Prochaines étapes</p>
-                      {ai.prochaines_etapes.map((step, i) => (
-                        <div key={i} style={{ display: 'flex', gap: 10, marginBottom: 8, alignItems: 'flex-start' }}>
-                          <span style={{ color: '#F5C518', fontFamily: 'Syne', fontWeight: 700, fontSize: 13, flexShrink: 0, marginTop: 1 }}>{i + 1}.</span>
-                          <span style={{ fontSize: 13, color: 'var(--text)', lineHeight: 1.5 }}>{step}</span>
+              {/* Expanded content */}
+              {isExpanded && (
+                <div style={{ marginTop: 8 }}>
+
+                  {/* Steps / Workflow */}
+                  <div style={{ marginBottom: 18 }}>
+                    <p style={{ fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: .8, marginBottom: 10, fontFamily: 'Syne', fontWeight: 700 }}>
+                      📋 Étapes du workflow
+                    </p>
+
+                    {steps.length === 0 && (
+                      <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 10 }}>Aucune étape — ajoutes-en pour suivre ta progression.</p>
+                    )}
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 10 }}>
+                      {steps.map((step, idx) => (
+                        <div key={step.id} style={{
+                          display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderRadius: 8,
+                          background: step.done ? 'rgba(74,222,128,.06)' : 'rgba(245,197,24,.03)',
+                          border: `1px solid ${step.done ? 'rgba(74,222,128,.2)' : 'var(--border)'}`,
+                        }}>
+                          <button onClick={() => toggleStep(proj.id, step.id)}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, padding: 0, lineHeight: 1 }}>
+                            {step.done ? '✅' : '⭕'}
+                          </button>
+                          <span style={{
+                            flex: 1, fontSize: 13,
+                            textDecoration: step.done ? 'line-through' : 'none',
+                            color: step.done ? 'var(--muted)' : 'var(--text)',
+                          }}>
+                            {step.title}
+                          </span>
+                          <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+                            <button className="btn-icon" style={{ fontSize: 10, width: 22, height: 22 }}
+                              onClick={() => moveStep(proj.id, step.id, -1)} disabled={idx === 0}>↑</button>
+                            <button className="btn-icon" style={{ fontSize: 10, width: 22, height: 22 }}
+                              onClick={() => moveStep(proj.id, step.id, 1)} disabled={idx === steps.length - 1}>↓</button>
+                            <button className="btn-icon" style={{ fontSize: 11 }}
+                              onClick={() => delStep(proj.id, step.id)}>✕</button>
+                          </div>
                         </div>
                       ))}
+                    </div>
+
+                    {/* Add step */}
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <input value={newStep} onChange={e => setNewStep(e.target.value)}
+                        placeholder="Ajouter une étape..."
+                        onKeyDown={e => { if (e.key === 'Enter') addStep(proj.id) }}
+                        style={{ flex: 1, fontSize: 13 }} />
+                      <button className="btn-gold" style={{ fontSize: 12, padding: '7px 14px', flexShrink: 0 }}
+                        onClick={() => addStep(proj.id)} disabled={!newStep.trim()}>
+                        + Ajouter
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Notes */}
+                  <div style={{ marginBottom: 18 }}>
+                    <p style={{ fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: .8, marginBottom: 8, fontFamily: 'Syne', fontWeight: 700 }}>
+                      📝 Notes / Plan
+                    </p>
+                    <textarea
+                      rows={4}
+                      value={proj.notes || ''}
+                      onChange={e => updateNotes(proj.id, e.target.value)}
+                      placeholder="Ecris ton plan, tes idées, ta stratégie..."
+                      style={{ fontSize: 13, lineHeight: 1.6 }}
+                    />
+                  </div>
+
+                  {/* Linked tasks */}
+                  {linked.length > 0 && (
+                    <div style={{ marginBottom: 18 }}>
+                      <p style={{ fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: .8, marginBottom: 8, fontFamily: 'Syne', fontWeight: 700 }}>
+                        ✅ Tâches liées ({linked.filter(t => t.status === 'Terminé').length}/{linked.length})
+                      </p>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                        {linked.map(t => (
+                          <span key={t.id} style={{
+                            background: t.status === 'Terminé' ? 'rgba(34,197,94,.1)' : 'var(--pill-bg)',
+                            border: `1px solid ${t.status === 'Terminé' ? 'rgba(34,197,94,.3)' : 'var(--border)'}`,
+                            color: t.status === 'Terminé' ? '#4ade80' : 'var(--muted)',
+                            borderRadius: 6, padding: '3px 10px', fontSize: 12,
+                          }}>
+                            {t.status === 'Terminé' ? '✓ ' : t.status === 'En cours' ? '◉ ' : ''}{t.name}
+                          </span>
+                        ))}
+                      </div>
+                      <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 6 }}>
+                        Astuce : dans Tâches, mets le nom du projet dans « Projet lié » pour les rattacher ici.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* AI Analysis */}
+                  {ai && (
+                    <div className="ai-block">
+                      <p style={{ color: '#F5C518', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 14 }}>
+                        🤖 Analyse IA
+                      </p>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }} className="grid-2">
+                        <div>
+                          <p style={{ fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: .8, marginBottom: 5 }}>Score de faisabilité</p>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span style={{ fontFamily: 'Syne', fontWeight: 800, fontSize: 28, color: scoreColor }}>{ai.score_faisabilite}</span>
+                            <span style={{ color: 'var(--muted)', fontSize: 16 }}>/10</span>
+                          </div>
+                        </div>
+                        <div>
+                          <p style={{ fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: .8, marginBottom: 5 }}>Raison</p>
+                          <p style={{ fontSize: 13, color: 'var(--text)', margin: 0, lineHeight: 1.5 }}>{ai.raison}</p>
+                        </div>
+                      </div>
+                      {ai.prochaines_etapes?.length > 0 && (
+                        <div>
+                          <p style={{ fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: .8, marginBottom: 10 }}>Prochaines étapes suggérées</p>
+                          {ai.prochaines_etapes.map((step, i) => (
+                            <div key={i} style={{ display: 'flex', gap: 10, marginBottom: 8, alignItems: 'flex-start' }}>
+                              <span style={{ color: '#F5C518', fontFamily: 'Syne', fontWeight: 700, fontSize: 13, flexShrink: 0, marginTop: 1 }}>{i + 1}.</span>
+                              <span style={{ fontSize: 13, color: 'var(--text)', lineHeight: 1.5 }}>{step}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

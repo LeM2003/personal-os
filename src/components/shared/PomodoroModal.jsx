@@ -9,7 +9,7 @@ function TimerRing({ timeLeft, total, size = 180 }) {
   const color = pct > 0.5 ? '#4ade80' : pct > 0.2 ? '#F5C518' : '#f87171'
   return (
     <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#1a2235" strokeWidth={8} />
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--bar-bg)" strokeWidth={8} />
       <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={8}
         strokeDasharray={`${dash} ${circ - dash}`} strokeLinecap="round"
         style={{ transition: 'stroke-dasharray .9s linear, stroke .5s ease' }} />
@@ -73,7 +73,7 @@ export default function PomodoroModal({ pomo, onPause, onStop, onDone }) {
         )}
 
         {!finished && (
-          <div style={{ background: '#1a2235', borderRadius: 999, height: 4, marginBottom: 24, overflow: 'hidden' }}>
+          <div style={{ background: 'var(--bar-bg)', borderRadius: 999, height: 4, marginBottom: 24, overflow: 'hidden' }}>
             <div style={{ width: `${(1 - pct) * 100}%`, height: '100%', background: color,
               borderRadius: 999, transition: 'width .9s linear' }} />
           </div>

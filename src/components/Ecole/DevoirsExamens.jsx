@@ -1,8 +1,10 @@
 import { useState } from 'react'
+import { useApp } from '../../context/AppContext'
 import { genId, todayISO, fmtDate, daysUntil } from '../../utils/dates'
 import EmptyState from '../shared/EmptyState'
 
-export default function DevoirsExamens({ devoirs, setDevoirs, examens, setExamens, tasks, setTasks }) {
+export default function DevoirsExamens() {
+  const { devoirs, setDevoirs, examens, setExamens, tasks, setTasks } = useApp()
   const blankD = { matiere: '', description: '', dateRendu: '', statut: 'À faire', priorite: 'Important' }
   const blankE = { matiere: '', date: '', heure: '08:00', salle: '', chapitres: '', totalChapitres: 3, chapitresRevises: 0 }
   const [showDForm, setShowDForm] = useState(false)
@@ -76,7 +78,7 @@ export default function DevoirsExamens({ devoirs, setDevoirs, examens, setExamen
               </select>
 
               {/* Liaison tâche */}
-              <label style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#9ca3af', fontSize: 13,
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--muted)', fontSize: 13,
                 cursor: 'pointer', background: 'rgba(245,197,24,.05)', border: '1px solid rgba(245,197,24,.2)',
                 borderRadius: 8, padding: '9px 12px' }}>
                 <input type="checkbox" checked={createTask} onChange={e => setCreateTask(e.target.checked)}
@@ -111,7 +113,7 @@ export default function DevoirsExamens({ devoirs, setDevoirs, examens, setExamen
                       {due > 2 && due <= 7 && <span className="badge badge-yellow">J-{due}</span>}
                       {isLinked && <span style={{ fontSize: 11, color: '#4ade80' }}>✅ Tâche liée</span>}
                     </div>
-                    {d.description && <p style={{ fontSize: 13, color: '#9ca3af', margin: '0 0 3px' }}>{d.description}</p>}
+                    {d.description && <p style={{ fontSize: 13, color: 'var(--muted)', margin: '0 0 3px' }}>{d.description}</p>}
                     {d.dateRendu && <p style={{ fontSize: 12, color: 'var(--muted)', margin: 0 }}>📅 À rendre : {fmtDate(d.dateRendu)}</p>}
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 5, alignItems: 'flex-end', flexShrink: 0 }}>
@@ -119,7 +121,7 @@ export default function DevoirsExamens({ devoirs, setDevoirs, examens, setExamen
                       onChange={e => setDevoirs(p => p.map(x => x.id === d.id ? { ...x, statut: e.target.value } : x))}>
                       <option>À faire</option><option>En cours</option><option>Rendu</option>
                     </select>
-                    <button className="btn-icon" style={{ fontSize: 12 }} onClick={() => setDevoirs(p => p.filter(x => x.id !== d.id))}>✕</button>
+                    <button className="btn-icon" style={{ fontSize: 12 }} onClick={() => setDevoirs(p => p.filter(x => x.id !== d.id))} aria-label="Supprimer le devoir">✕</button>
                   </div>
                 </div>
               </div>
@@ -172,13 +174,13 @@ export default function DevoirsExamens({ devoirs, setDevoirs, examens, setExamen
             const isTomorrow = due === 1
             const isUrgent = due >= 0 && due <= 3
 
-            const countdownBg = isToday ? 'rgba(239,68,68,.12)' : isTomorrow ? 'rgba(249,115,22,.1)' : isUrgent ? 'rgba(245,197,24,.07)' : '#0f172a'
+            const countdownBg = isToday ? 'rgba(239,68,68,.12)' : isTomorrow ? 'rgba(249,115,22,.1)' : isUrgent ? 'rgba(245,197,24,.07)' : 'var(--surface-deep)'
             const countdownBorder = isToday ? 'rgba(239,68,68,.4)' : isTomorrow ? 'rgba(249,115,22,.3)' : isUrgent ? 'rgba(245,197,24,.2)' : 'var(--border)'
             const countdownColor = isToday ? '#f87171' : isTomorrow ? '#f97316' : isUrgent ? '#F5C518' : 'var(--muted)'
 
             return (
               <div key={e.id} className="card" style={{ padding: '13px 14px', marginBottom: 8,
-                borderLeft: `3px solid ${isPast ? '#2d3748' : countdownColor}`,
+                borderLeft: `3px solid ${isPast ? 'var(--input-border)' : countdownColor}`,
                 opacity: isPast ? .6 : 1 }}>
 
                 {/* Header : matière + countdown */}
@@ -188,7 +190,7 @@ export default function DevoirsExamens({ devoirs, setDevoirs, examens, setExamen
                     <p style={{ fontSize: 12, color: 'var(--muted)', margin: '3px 0 0' }}>
                       📅 {fmtDate(e.date)} à {e.heure}{e.salle && ` · 📍 ${e.salle}`}
                     </p>
-                    {e.chapitres && <p style={{ fontSize: 12, color: '#9ca3af', margin: '3px 0 0' }}>📖 {e.chapitres}</p>}
+                    {e.chapitres && <p style={{ fontSize: 12, color: 'var(--muted)', margin: '3px 0 0' }}>📖 {e.chapitres}</p>}
                   </div>
 
                   {/* Countdown badge */}
@@ -209,7 +211,7 @@ export default function DevoirsExamens({ devoirs, setDevoirs, examens, setExamen
                   )}
                   {isPast && <span className="badge badge-gray">Passé</span>}
 
-                  <button className="btn-icon" onClick={() => setExamens(p => p.filter(x => x.id !== e.id))} style={{ marginLeft: 8 }}>✕</button>
+                  <button className="btn-icon" onClick={() => setExamens(p => p.filter(x => x.id !== e.id))} style={{ marginLeft: 8 }} aria-label="Supprimer l'examen">✕</button>
                 </div>
 
                 {/* Révision */}
@@ -219,12 +221,12 @@ export default function DevoirsExamens({ devoirs, setDevoirs, examens, setExamen
                       Révision — {pct === 100 ? '✅ Prêt !' : `${pct}% révisé`}
                     </span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <button className="btn-icon" style={{ width: 22, height: 22, background: '#1f2937', fontSize: 13, borderRadius: 5 }}
+                      <button className="btn-icon" style={{ width: 22, height: 22, background: 'var(--hover-bg)', fontSize: 13, borderRadius: 5 }}
                         onClick={() => setExamens(p => p.map(x => x.id === e.id ? { ...x, chapitresRevises: Math.max(0, revus - 1) } : x))}>−</button>
                       <span style={{ fontSize: 12, fontWeight: 700, color: pct === 100 ? '#4ade80' : '#F5C518', minWidth: 40, textAlign: 'center' }}>
                         {revus}/{total}
                       </span>
-                      <button className="btn-icon" style={{ width: 22, height: 22, background: '#1f2937', fontSize: 13, borderRadius: 5 }}
+                      <button className="btn-icon" style={{ width: 22, height: 22, background: 'var(--hover-bg)', fontSize: 13, borderRadius: 5 }}
                         onClick={() => setExamens(p => p.map(x => x.id === e.id ? { ...x, chapitresRevises: Math.min(total, revus + 1) } : x))}>+</button>
                     </div>
                   </div>

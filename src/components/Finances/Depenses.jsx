@@ -1,17 +1,23 @@
 import { useState } from 'react'
-import { genId, todayISO, fmtDate } from '../../utils/dates'
+import { useApp } from '../../context/AppContext'
+import { genId, todayISO, fmtDate, fmtMonth } from '../../utils/dates'
 import { CAT_COLORS } from '../../utils/constants'
 import StatCard from '../shared/StatCard'
 import EmptyState from '../shared/EmptyState'
 
 const CATS = ['Nourriture', 'Transport', 'Business', 'École', 'Loisirs', 'Autre']
 
-export default function Depenses({ expenses, setExpenses, budgets, setBudgets }) {
+export default function Depenses() {
+  const { expenses, setExpenses, budgets, setBudgets } = useApp()
   const [editBudget, setEditBudget] = useState(false)
   const [budgetDraft, setBudgetDraft] = useState({})
   const blank = { amount: '', category: 'Nourriture', date: todayISO(), type: 'Variable', note: '' }
   const [form, setForm] = useState(blank)
   const [editingId, setEditingId] = useState(null)
+  const [fPeriod, setFPeriod] = useState('Mois')
+  const [visibleCount, setVisibleCount] = useState(20)
+  const [selYear, setSelYear] = useState(new Date().getFullYear())
+  const [selMonth, setSelMonth] = useState(new Date().getMonth())
 
   const openEdit = exp => {
     setEditingId(exp.id)
@@ -33,7 +39,13 @@ export default function Depenses({ expenses, setExpenses, budgets, setBudgets })
 
   const now = todayISO()
   const weekAgo = (() => { const d = new Date(); d.setDate(d.getDate() - 7); return d.toISOString().split('T')[0] })()
-  const monthStart = (() => { const d = new Date(); d.setDate(1); return d.toISOString().split('T')[0] })()
+  const currentMonthStart = (() => { const d = new Date(); d.setDate(1); return d.toISOString().split('T')[0] })()
+  // Selected month boundaries for navigation
+  const selMonthStart = new Date(selYear, selMonth, 1).toISOString().split('T')[0]
+  const selMonthEnd   = new Date(selYear, selMonth + 1, 0).toISOString().split('T')[0]
+  const isCurrentMonth = selYear === new Date().getFullYear() && selMonth === new Date().getMonth()
+  // monthStart used for budget calculations = current month
+  const monthStart = currentMonthStart
 
   const todayTotal = expenses.filter(e => e.date === now).reduce((s, e) => s + e.amount, 0)
   const weekTotal  = expenses.filter(e => e.date >= weekAgo).reduce((s, e) => s + e.amount, 0)
@@ -67,6 +79,34 @@ export default function Depenses({ expenses, setExpenses, budgets, setBudgets })
 
   const sorted = [...expenses].sort((a, b) => new Date(b.date) - new Date(a.date))
 
+  const prevMonth = () => {
+    if (selMonth === 0) { setSelMonth(11); setSelYear(y => y - 1) }
+    else setSelMonth(m => m - 1)
+    setVisibleCount(20)
+  }
+  const nextMonth = () => {
+    if (isCurrentMonth) return
+    if (selMonth === 11) { setSelMonth(0); setSelYear(y => y + 1) }
+    else setSelMonth(m => m + 1)
+    setVisibleCount(20)
+  }
+  const goCurrentMonth = () => {
+    setSelYear(new Date().getFullYear())
+    setSelMonth(new Date().getMonth())
+    setVisibleCount(20)
+  }
+
+  // Period filter for history
+  const filteredHistory = sorted.filter(e => {
+    if (fPeriod === 'Tout') return true
+    if (fPeriod === "Aujourd'hui") return e.date === now
+    if (fPeriod === '7 jours') return e.date >= weekAgo
+    if (fPeriod === 'Mois') return e.date >= selMonthStart && e.date <= selMonthEnd
+    return true
+  })
+  const filteredTotal = filteredHistory.reduce((s, e) => s + e.amount, 0)
+  const hasMore = visibleCount < filteredHistory.length
+
   return (
     <div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14, marginBottom: 24 }} className="grid-3">
@@ -88,7 +128,7 @@ export default function Depenses({ expenses, setExpenses, budgets, setBudgets })
               {budgetRestant >= 0 ? `${budgetRestant.toLocaleString('fr-FR')} FCFA restants` : `⚠️ Dépassé de ${Math.abs(budgetRestant).toLocaleString('fr-FR')} FCFA`}
             </span>
           </div>
-          <div style={{ background: '#1a2235', borderRadius: 999, height: 8, overflow: 'hidden', marginBottom: 8 }}>
+          <div style={{ background: 'var(--bar-bg)', borderRadius: 999, height: 8, overflow: 'hidden', marginBottom: 8 }}>
             <div style={{
               height: '100%', borderRadius: 999, transition: 'width .5s ease',
               background: budgetBarColor(Math.round((totalDepenses / totalBudget) * 100)),
@@ -157,7 +197,7 @@ export default function Depenses({ expenses, setExpenses, budgets, setBudgets })
                       {pct !== null && <span style={{ marginLeft: 6, fontWeight: 700, color: barColor }}>{pct}%</span>}
                     </span>
                   </div>
-                  <div style={{ background: '#1a2235', borderRadius: 999, height: 10, overflow: 'hidden' }}>
+                  <div style={{ background: 'var(--bar-bg)', borderRadius: 999, height: 10, overflow: 'hidden' }}>
                     <div style={{
                       background: barColor, height: 10, borderRadius: 999,
                       width: barWidth, transition: 'width .5s ease',
@@ -207,28 +247,74 @@ export default function Depenses({ expenses, setExpenses, budgets, setBudgets })
 
       {/* History */}
       <div className="card" style={{ padding: 20 }}>
-        <p style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, marginBottom: 16 }}>
-          Historique ({sorted.length} entrée{sorted.length !== 1 ? 's' : ''})
-        </p>
-        {sorted.length === 0 ? <EmptyState icon="🧾" msg="Aucune dépense enregistrée." /> : (
-          sorted.slice(0, 30).map(e => (
-            <div key={e.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0',
-              borderBottom: '1px solid var(--border)',
-              background: editingId === e.id ? 'rgba(245,197,24,.04)' : undefined,
-              borderRadius: editingId === e.id ? 6 : undefined }}>
-              <div style={{ width: 10, height: 10, borderRadius: '50%', background: CAT_COLORS[e.category] || '#6b7280', flexShrink: 0 }} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ margin: 0, fontSize: 14 }}>{e.note || e.category}</p>
-                <p style={{ margin: 0, fontSize: 11, color: 'var(--muted)' }}>{fmtDate(e.date)} · {e.category} · {e.type}</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 10 }}>
+          <p style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, margin: 0 }}>
+            Historique
+          </p>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {["Aujourd'hui", '7 jours', 'Mois', 'Tout'].map(p => (
+              <button key={p} className={`filter-pill${fPeriod === p ? ' active' : ''}`}
+                onClick={() => { setFPeriod(p); setVisibleCount(20) }}>{p}</button>
+            ))}
+          </div>
+        </div>
+
+        {/* Month navigator (visible when "Mois" is selected) */}
+        {fPeriod === 'Mois' && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 14 }}>
+            <button className="btn-icon" onClick={prevMonth}
+              style={{ fontSize: 14, padding: '2px 8px' }} aria-label="Mois précédent">←</button>
+            <span style={{ fontSize: 13, fontWeight: 700, color: isCurrentMonth ? '#F5C518' : 'var(--text)',
+              textTransform: 'capitalize', minWidth: 140, textAlign: 'center' }}>
+              {fmtMonth(selYear, selMonth)}
+            </span>
+            <button className="btn-icon" onClick={nextMonth} disabled={isCurrentMonth}
+              style={{ fontSize: 14, padding: '2px 8px', opacity: isCurrentMonth ? .3 : 1 }} aria-label="Mois suivant">→</button>
+            {!isCurrentMonth && (
+              <button className="btn-ghost" onClick={goCurrentMonth}
+                style={{ fontSize: 10, padding: '3px 8px' }}>Ce mois</button>
+            )}
+          </div>
+        )}
+
+        {/* Compteur filtre */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14,
+          padding: '8px 12px', background: 'rgba(245,197,24,.05)', borderRadius: 8, border: '1px solid rgba(245,197,24,.15)' }}>
+          <span style={{ fontSize: 12, color: 'var(--muted)' }}>
+            {filteredHistory.length} depense{filteredHistory.length !== 1 ? 's' : ''}
+          </span>
+          <span style={{ fontSize: 14, fontWeight: 700, color: '#F5C518' }}>
+            {filteredTotal.toLocaleString('fr-FR')} FCFA
+          </span>
+        </div>
+
+        {filteredHistory.length === 0 ? <EmptyState icon="🧾" msg="Aucune dépense pour cette période." /> : (
+          <>
+            {filteredHistory.slice(0, visibleCount).map(e => (
+              <div key={e.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0',
+                borderBottom: '1px solid var(--border)',
+                background: editingId === e.id ? 'rgba(245,197,24,.04)' : undefined,
+                borderRadius: editingId === e.id ? 6 : undefined }}>
+                <div style={{ width: 10, height: 10, borderRadius: '50%', background: CAT_COLORS[e.category] || '#6b7280', flexShrink: 0 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ margin: 0, fontSize: 14 }}>{e.note || e.category}</p>
+                  <p style={{ margin: 0, fontSize: 11, color: 'var(--muted)' }}>{fmtDate(e.date)} · {e.category} · {e.type}</p>
+                </div>
+                <span style={{ fontWeight: 700, color: '#F5C518', whiteSpace: 'nowrap', fontSize: 14 }}>
+                  {e.amount.toLocaleString('fr-FR')} FCFA
+                </span>
+                <button className="btn-icon" title="Modifier" onClick={() => openEdit(e)}
+                  style={{ color: editingId === e.id ? '#F5C518' : undefined }}>✏️</button>
+                <button className="btn-icon" onClick={() => setExpenses(p => p.filter(x => x.id !== e.id))} aria-label="Supprimer la dépense">✕</button>
               </div>
-              <span style={{ fontWeight: 700, color: '#F5C518', whiteSpace: 'nowrap', fontSize: 14 }}>
-                {e.amount.toLocaleString('fr-FR')} FCFA
-              </span>
-              <button className="btn-icon" title="Modifier" onClick={() => openEdit(e)}
-                style={{ color: editingId === e.id ? '#F5C518' : undefined }}>✏️</button>
-              <button className="btn-icon" onClick={() => setExpenses(p => p.filter(x => x.id !== e.id))}>✕</button>
-            </div>
-          ))
+            ))}
+            {hasMore && (
+              <button className="btn-ghost" onClick={() => setVisibleCount(v => v + 20)}
+                style={{ width: '100%', marginTop: 14, fontSize: 13, padding: '10px 16px' }}>
+                Charger plus ({filteredHistory.length - visibleCount} restantes)
+              </button>
+            )}
+          </>
         )}
       </div>
     </div>

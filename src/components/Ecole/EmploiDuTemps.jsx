@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useApp } from '../../context/AppContext'
 import { genId, todayISO, todayDay } from '../../utils/dates'
 import { COURSE_PALETTE } from '../../utils/constants'
 
@@ -6,7 +7,8 @@ const JOURS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
 
 const blank = { nom: '', jour: 'Lundi', heureDebut: '08:00', heureFin: '10:00', salle: '', professeur: '', color: '#6366f1' }
 
-export default function EmploiDuTemps({ courses, setCourses }) {
+export default function EmploiDuTemps() {
+  const { courses, setCourses } = useApp()
   const [showForm,  setShowForm]  = useState(false)
   const [form,      setForm]      = useState(blank)
   const [editingId, setEditingId] = useState(null)
@@ -114,7 +116,7 @@ export default function EmploiDuTemps({ courses, setCourses }) {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {dayCourses.length === 0
-                  ? <p style={{ color: '#2d3748', fontSize: 12, textAlign: 'center', padding: '12px 0' }}>—</p>
+                  ? <p style={{ color: 'var(--input-border)', fontSize: 12, textAlign: 'center', padding: '12px 0' }}>—</p>
                   : dayCourses.map(c => {
                       const present = isPresent(c)
                       const attendCount = (c.attended || []).length

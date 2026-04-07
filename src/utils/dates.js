@@ -32,6 +32,25 @@ export const todayDay = () => JOURS_FR[new Date().getDay()]
 
 const JOURS_INDEX = { 'Lundi': 1, 'Mardi': 2, 'Mercredi': 3, 'Jeudi': 4, 'Vendredi': 5, 'Samedi': 6, 'Dimanche': 0 }
 
+export const isoAddDays = (iso, n) => {
+  const d = new Date(iso + 'T00:00:00')
+  d.setDate(d.getDate() + n)
+  return d.toISOString().split('T')[0]
+}
+
+export const fmtDateRange = (startISO, endISO) => {
+  const s = new Date(startISO + 'T00:00:00')
+  const e = new Date(endISO + 'T00:00:00')
+  const optS = { day: 'numeric', month: 'short' }
+  const optE = { day: 'numeric', month: 'short', year: 'numeric' }
+  return `${s.toLocaleDateString('fr-FR', optS)} — ${e.toLocaleDateString('fr-FR', optE)}`
+}
+
+export const fmtMonth = (year, month) => {
+  const d = new Date(year, month, 1)
+  return d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
+}
+
 export const nextOccurrenceDate = (task, fromISO = null) => {
   const base = new Date((fromISO || todayISO()) + 'T00:00:00')
   base.setHours(0, 0, 0, 0)

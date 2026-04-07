@@ -2,7 +2,7 @@ import { useState } from 'react'
 import Depenses from './Depenses'
 import Abonnements from './Abonnements'
 
-export default function Finances({ expenses, setExpenses, subscriptions, setSubscriptions, budgets, setBudgets }) {
+export default function Finances() {
   const [sub, setSub] = useState('depenses')
   return (
     <div>
@@ -13,9 +13,7 @@ export default function Finances({ expenses, setExpenses, subscriptions, setSubs
           <button className={`subtab${sub === 'abonnements' ? ' active' : ''}`} onClick={() => setSub('abonnements')}>🔄 Abonnements</button>
         </div>
       </div>
-      {sub === 'depenses'
-        ? <Depenses expenses={expenses} setExpenses={setExpenses} budgets={budgets} setBudgets={setBudgets} />
-        : <Abonnements subscriptions={subscriptions} setSubscriptions={setSubscriptions} />}
+      {sub === 'depenses' ? <Depenses /> : <Abonnements />}
     </div>
   )
 }
