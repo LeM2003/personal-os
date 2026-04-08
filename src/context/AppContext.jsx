@@ -6,7 +6,7 @@ import { SAMPLE_TASKS, SAMPLE_PROJECTS, SAMPLE_COURSES, SAMPLE_DEVOIRS,
 
 const AppContext = createContext(null)
 
-const NOTIF_ICON = '/personal-os/icons/icon-192.png'
+const NOTIF_ICON = '/icons/icon-192.png'
 
 export function AppProvider({ children }) {
   /* ── Donnees persistees ── */
@@ -52,22 +52,27 @@ export function AppProvider({ children }) {
     return () => window.removeEventListener('keydown', handler)
   }, [])
 
-  /* ── Pomodoro ── */
+  /* ── Pomodoro (timestamp-based = survit en arrière-plan) ── */
   const [pomo, setPomo] = useState(null)
   const bellRef = useRef(false)
 
+  // Tick every second — uses endTime to survive background/sleep
   useEffect(() => {
-    if (!pomo || !pomo.running || pomo.timeLeft <= 0) return
-    const t = setTimeout(() => {
+    if (!pomo || !pomo.running || pomo.finished) return
+    const tick = () => {
       setPomo(prev => {
-        if (!prev) return null
-        if (prev.timeLeft <= 1) return { ...prev, timeLeft: 0, running: false, finished: true }
-        return { ...prev, timeLeft: prev.timeLeft - 1 }
+        if (!prev || !prev.running) return prev
+        const left = Math.max(0, Math.round((prev.endTime - Date.now()) / 1000))
+        if (left <= 0) return { ...prev, timeLeft: 0, running: false, finished: true }
+        return { ...prev, timeLeft: left }
       })
-    }, 1000)
-    return () => clearTimeout(t)
-  }, [pomo])
+    }
+    tick() // immediate check (in case we come back from background)
+    const t = setInterval(tick, 1000)
+    return () => clearInterval(t)
+  }, [pomo?.running, pomo?.finished]) // eslint-disable-line
 
+  // Notification when finished
   useEffect(() => {
     if (!pomo?.finished || bellRef.current) return
     bellRef.current = true
@@ -79,13 +84,23 @@ export function AppProvider({ children }) {
   const startPomo = useCallback((task) => {
     bellRef.current = false
     const secs = Math.max(task.duration || 25, 1) * 60
-    setPomo({ task, total: secs, timeLeft: secs, running: true, finished: false })
+    setPomo({ task, total: secs, timeLeft: secs, running: true, finished: false, endTime: Date.now() + secs * 1000 })
     setTasks(prev => prev.map(t =>
       t.id === task.id && t.status === 'À faire' ? { ...t, status: 'En cours' } : t
     ))
   }, [setTasks])
 
-  const pausePomo = () => setPomo(p => p ? { ...p, running: !p.running } : null)
+  const pausePomo = () => setPomo(p => {
+    if (!p) return null
+    if (p.running) {
+      // Pause: save remaining time
+      return { ...p, running: false, pausedTimeLeft: p.timeLeft }
+    } else {
+      // Resume: recalculate endTime from remaining time
+      const left = p.pausedTimeLeft || p.timeLeft
+      return { ...p, running: true, timeLeft: left, endTime: Date.now() + left * 1000 }
+    }
+  })
   const stopPomo  = () => setPomo(null)
   const donePomo  = () => {
     if (pomo) {
@@ -98,36 +113,45 @@ export function AppProvider({ children }) {
     setPomo(null)
   }
 
-  /* ── Reset taches recurrentes ── */
+  /* ── Reset taches recurrentes (vérifie à chaque changement de tasks) ── */
+  const didResetRef = useRef(false)
   useEffect(() => {
+    if (didResetRef.current) return
+    didResetRef.current = true
     const today = todayISO()
-    setTasks(prev => prev.map(t => {
-      if (!t.recurring || t.status !== 'Terminé') return t
-      if (t.lastCompletedAt && t.lastCompletedAt < today) {
-        const nextDate = nextOccurrenceDate(t, t.lastCompletedAt)
-        return { ...t, status: 'À faire', deadline: nextDate, lastCompletedAt: null }
-      }
-      return t
-    }))
-  }, []) // eslint-disable-line
+    setTasks(prev => {
+      const updated = prev.map(t => {
+        if (!t.recurring || t.status !== 'Terminé') return t
+        if (t.lastCompletedAt && t.lastCompletedAt < today) {
+          const nextDate = nextOccurrenceDate(t, t.lastCompletedAt)
+          return { ...t, status: 'À faire', deadline: nextDate, lastCompletedAt: null }
+        }
+        return t
+      })
+      // Only update if something changed
+      return updated.some((t, i) => t !== prev[i]) ? updated : prev
+    })
+  }) // runs once per mount via ref guard
 
   /* ── Auto-move taches en retard → Ajustements ── */
+  const didAdjustRef = useRef(false)
   useEffect(() => {
+    if (didAdjustRef.current) return
+    didAdjustRef.current = true
     const now = todayISO()
     const overdue = tasks.filter(t => t.deadline && t.deadline < now && t.status !== 'Terminé' && !t.recurring)
     if (!overdue.length) return
     const ids = new Set(overdue.map(t => t.id))
+    const existIds = new Set(adjustments.map(a => a.taskId))
+    const news = overdue.filter(t => !existIds.has(t.id))
+    if (!news.length) return
     setTasks(prev => prev.filter(t => !ids.has(t.id)))
-    setAdjustments(prev => {
-      const existIds = new Set(prev.map(a => a.taskId))
-      const news = overdue.filter(t => !existIds.has(t.id)).map(t => ({
-        id: genId(), taskId: t.id, taskName: t.name,
-        originalDeadline: t.deadline, reason: 'manque de temps',
-        newDate: '', originalTask: { ...t },
-      }))
-      return [...prev, ...news]
-    })
-  }, []) // eslint-disable-line
+    setAdjustments(prev => [...prev, ...news.map(t => ({
+      id: genId(), taskId: t.id, taskName: t.name,
+      originalDeadline: t.deadline, reason: 'manque de temps',
+      newDate: '', originalTask: { ...t },
+    }))])
+  }) // runs once per mount via ref guard
 
   /* ── Notifications ── */
   const notifSupported = typeof Notification !== 'undefined'
@@ -200,7 +224,7 @@ export function AppProvider({ children }) {
   const exportData = () => {
     const data = {
       version: 1, exportedAt: new Date().toISOString(),
-      profile, tasks, projects, expenses, subscriptions,
+      profile, tasks, projects, expenses, subscriptions, budgets,
       objectif, adjustments, courses, devoirs, examens,
     }
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
@@ -219,7 +243,12 @@ export function AppProvider({ children }) {
     reader.onload = (ev) => {
       try {
         const data = JSON.parse(ev.target.result)
-        if (!data.version) { alert('Fichier invalide.'); return }
+        if (!data.version || typeof data !== 'object') { alert('Fichier invalide — pas un backup Personal OS.'); return }
+        // Validate arrays are actually arrays
+        const arrays = ['tasks', 'projects', 'expenses', 'subscriptions', 'adjustments', 'courses', 'devoirs', 'examens']
+        for (const k of arrays) {
+          if (data[k] && !Array.isArray(data[k])) { alert(`Fichier corrompu — "${k}" n'est pas un tableau.`); return }
+        }
         if (data.profile)       setProfile(data.profile)
         if (data.tasks)         setTasks(data.tasks)
         if (data.projects)      setProjects(data.projects)
@@ -230,9 +259,10 @@ export function AppProvider({ children }) {
         if (data.courses)       setCourses(data.courses)
         if (data.devoirs)       setDevoirs(data.devoirs)
         if (data.examens)       setExamens(data.examens)
+        if (data.budgets && typeof data.budgets === 'object') setBudgets(data.budgets)
         setBackupModal(false)
         alert('✅ Données restaurées avec succès !')
-      } catch { alert('Erreur : fichier JSON corrompu.') }
+      } catch { alert('Erreur : fichier JSON corrompu ou illisible.') }
     }
     reader.readAsText(file)
     e.target.value = ''

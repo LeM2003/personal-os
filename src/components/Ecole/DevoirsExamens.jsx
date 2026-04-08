@@ -221,12 +221,12 @@ export default function DevoirsExamens() {
                       Révision — {pct === 100 ? '✅ Prêt !' : `${pct}% révisé`}
                     </span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <button className="btn-icon" style={{ width: 22, height: 22, background: 'var(--hover-bg)', fontSize: 13, borderRadius: 5 }}
+                      <button className="btn-icon" style={{ width: 32, height: 32, background: 'var(--hover-bg)', fontSize: 14, borderRadius: 6 }}
                         onClick={() => setExamens(p => p.map(x => x.id === e.id ? { ...x, chapitresRevises: Math.max(0, revus - 1) } : x))}>−</button>
                       <span style={{ fontSize: 12, fontWeight: 700, color: pct === 100 ? '#4ade80' : '#F5C518', minWidth: 40, textAlign: 'center' }}>
                         {revus}/{total}
                       </span>
-                      <button className="btn-icon" style={{ width: 22, height: 22, background: 'var(--hover-bg)', fontSize: 13, borderRadius: 5 }}
+                      <button className="btn-icon" style={{ width: 32, height: 32, background: 'var(--hover-bg)', fontSize: 14, borderRadius: 6 }}
                         onClick={() => setExamens(p => p.map(x => x.id === e.id ? { ...x, chapitresRevises: Math.min(total, revus + 1) } : x))}>+</button>
                     </div>
                   </div>

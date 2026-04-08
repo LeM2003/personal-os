@@ -1,30 +1,25 @@
 /* ============================================================
    Service Worker — Personal OS Dashboard
-   Stratégie : Cache-first pour les assets statiques,
-               Network-first pour l'HTML principal.
+   Stratégie : Network-first pour HTML, Cache-first pour assets.
    Fonctionne entièrement hors ligne après le 1er chargement.
    ============================================================ */
 
-const CACHE_NAME = 'personal-os-v1';
+const CACHE_NAME = 'personal-os-v2';
 
-/* Ressources à mettre en cache dès l'installation */
 const PRECACHE_URLS = [
+  './',
   './index.html',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
-  /* CDN — mis en cache au 1er accès via fetch handler */
 ];
 
-/* CDN hosts à mettre en cache automatiquement */
 const CDN_HOSTS = [
-  'unpkg.com',
-  'cdn.tailwindcss.com',
   'fonts.googleapis.com',
   'fonts.gstatic.com',
 ];
 
-/* ---- INSTALL : pré-cache les fichiers locaux ---- */
+/* ---- INSTALL ---- */
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -33,15 +28,11 @@ self.addEventListener('install', event => {
   );
 });
 
-/* ---- ACTIVATE : supprime les anciens caches ---- */
+/* ---- ACTIVATE ---- */
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(
-        keys
-          .filter(key => key !== CACHE_NAME)
-          .map(key => caches.delete(key))
-      )
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
     ).then(() => self.clients.claim())
   );
 });
@@ -50,49 +41,48 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
-  /* Fichiers locaux : network-first (pour maj), fallback cache */
-  if (url.origin === self.location.origin) {
-    event.respondWith(
-      fetch(event.request)
-        .then(response => {
-          /* Mettre à jour le cache avec la version fraîche */
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-          return response;
-        })
-        .catch(() => caches.match(event.request))
-    );
+  // Never cache API calls (Gemini, etc.)
+  if (url.hostname.includes('googleapis.com') && url.pathname.includes('generateContent')) {
+    event.respondWith(fetch(event.request));
     return;
   }
 
-  /* CDN : cache-first (vitesse + offline) */
+  // CDN fonts: cache-first
   if (CDN_HOSTS.some(h => url.hostname.includes(h))) {
     event.respondWith(
       caches.match(event.request).then(cached => {
         if (cached) return cached;
-        return fetch(event.request).then(response => {
-          const clone = response.clone();
+        return fetch(event.request).then(res => {
+          const clone = res.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-          return response;
+          return res;
         });
       })
     );
     return;
   }
 
-  /* Anthropic API : toujours réseau (pas de cache pour les requêtes IA) */
-  if (url.hostname.includes('anthropic.com')) {
-    event.respondWith(fetch(event.request));
+  // Local files: network-first, fallback to cache
+  if (url.origin === self.location.origin) {
+    event.respondWith(
+      fetch(event.request)
+        .then(res => {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+          return res;
+        })
+        .catch(() => caches.match(event.request))
+    );
     return;
   }
 
-  /* Tout le reste : cache-first */
+  // Everything else: cache-first
   event.respondWith(
     caches.match(event.request).then(cached => cached || fetch(event.request))
   );
 });
 
-/* ---- NOTIFICATION CLICK : focus l'app ---- */
+/* ---- NOTIFICATION CLICK ---- */
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   event.waitUntil(

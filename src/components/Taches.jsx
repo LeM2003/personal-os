@@ -25,7 +25,7 @@ const formatDur = (mins) => {
 }
 
 export default function Taches() {
-  const { tasks, setTasks, adjustments, setAdjustments, pomo, startPomo, apiKey, devoirs, setDevoirs, examens, setExamens } = useApp()
+  const { tasks, setTasks, adjustments, setAdjustments, pomo, startPomo, apiKey, devoirs, setDevoirs, examens, setExamens, projects } = useApp()
   const [showForm,  setShowForm]  = useState(false)
   const [showImport, setShowImport] = useState(false)
   const [form,      setForm]      = useState(blank)
@@ -33,7 +33,10 @@ export default function Taches() {
   const [fStatus,   setFStatus]   = useState('Tous')
   const [fPriority, setFPriority] = useState('Tous')
   const [fDate,     setFDate]     = useState('Tout')
+  const [fProject,  setFProject]  = useState('Tous')
   const [showDone,  setShowDone]  = useState(false)
+
+  const projectNames = projects ? [...new Set(projects.map(p => p.name).filter(Boolean))] : []
 
   const today = todayISO()
   const weekEnd = (() => { const d = new Date(); d.setDate(d.getDate() + 7); return d.toISOString().split('T')[0] })()
@@ -104,6 +107,7 @@ export default function Taches() {
   const filtered = tasks
     .filter(t => fStatus === 'Tous' || t.status === fStatus)
     .filter(t => fPriority === 'Tous' || t.priority === fPriority)
+    .filter(t => fProject === 'Tous' || t.project === fProject)
     .filter(matchDate)
 
   // Separate done vs active
@@ -158,8 +162,10 @@ export default function Taches() {
               <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
                 placeholder="Nom de la tâche *" autoFocus />
             </div>
-            <input value={form.project} onChange={e => setForm({ ...form, project: e.target.value })}
-              placeholder="Projet lié (optionnel)" />
+            <select value={form.project} onChange={e => setForm({ ...form, project: e.target.value })}>
+              <option value="">— Aucun projet —</option>
+              {projectNames.map(p => <option key={p} value={p}>{p}</option>)}
+            </select>
             <select value={form.priority} onChange={e => setForm({ ...form, priority: e.target.value })}>
               <option value="Critique">🔴 Critique</option>
               <option value="Important">🟡 Important</option>
@@ -278,6 +284,19 @@ export default function Taches() {
               {PRIORITY_EMOJI[p] || ''} {p}
             </button>
           ))}
+          {projectNames.length > 0 && (
+            <>
+              <div style={{ width: 1, background: 'var(--border)', margin: '0 4px' }} />
+              <select value={fProject} onChange={e => setFProject(e.target.value)}
+                style={{ padding: '5px 10px', fontSize: 12, borderRadius: 999, width: 'auto',
+                  background: fProject !== 'Tous' ? 'var(--gold)' : 'var(--pill-bg)',
+                  color: fProject !== 'Tous' ? '#0A0E1A' : 'var(--muted)',
+                  border: 'none', fontWeight: fProject !== 'Tous' ? 700 : 500, cursor: 'pointer' }}>
+                <option value="Tous">Tous les projets</option>
+                {projectNames.map(p => <option key={p} value={p}>{p}</option>)}
+              </select>
+            </>
+          )}
         </div>
         {/* Resume compteurs */}
         <div style={{ display: 'flex', gap: 12, fontSize: 12, color: 'var(--muted)' }}>

@@ -49,7 +49,12 @@ export default function Projets() {
     closeForm()
   }
 
-  const del = id => setProjects(p => p.filter(x => x.id !== id))
+  const del = id => {
+    const proj = projects.find(p => p.id === id)
+    setProjects(p => p.filter(x => x.id !== id))
+    // Detach linked tasks
+    if (proj) setTasks(prev => prev.map(t => t.project === proj.name ? { ...t, project: '' } : t))
+  }
 
   /* ── Promouvoir idee → projet ── */
   const promote = (proj) => {
@@ -343,9 +348,9 @@ export default function Projets() {
                             {step.title}
                           </span>
                           <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
-                            <button className="btn-icon" style={{ fontSize: 10, width: 22, height: 22 }}
+                            <button className="btn-icon" style={{ fontSize: 12, width: 32, height: 32 }}
                               onClick={() => moveStep(proj.id, step.id, -1)} disabled={idx === 0}>↑</button>
-                            <button className="btn-icon" style={{ fontSize: 10, width: 22, height: 22 }}
+                            <button className="btn-icon" style={{ fontSize: 12, width: 32, height: 32 }}
                               onClick={() => moveStep(proj.id, step.id, 1)} disabled={idx === steps.length - 1}>↓</button>
                             <button className="btn-icon" style={{ fontSize: 11 }}
                               onClick={() => delStep(proj.id, step.id)}>✕</button>

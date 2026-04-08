@@ -81,6 +81,7 @@ export default function App() {
     importRef, exportData, importData,
     tasks, devoirs, examens, projects,
   } = app
+  const [mobileMore, setMobileMore] = useState(false)
 
   const adjBadge = adjustments.length > 0 && (
     <span style={{ background: '#f87171', color: '#fff', borderRadius: '50%', width: 18, height: 18,
@@ -164,25 +165,96 @@ export default function App() {
         </div>
       </main>
 
-      {/* BOTTOM NAV (mobile) */}
+      {/* BOTTOM NAV (mobile) — 5 onglets principaux */}
       <nav className="bottom-nav">
-        {TABS.map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)} aria-label={t.label}
+        {TABS.filter(t => ['dashboard', 'taches', 'projets', 'finances', 'stats'].includes(t.id)).map(t => (
+          <button key={t.id} onClick={() => { setTab(t.id); setMobileMore(false) }} aria-label={t.label}
             style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column',
-              alignItems: 'center', gap: 2, padding: '4px 8px',
-              color: tab === t.id ? '#F5C518' : 'var(--muted)', position: 'relative' }}>
+              alignItems: 'center', gap: 2, padding: '4px 6px', flex: 1,
+              color: tab === t.id ? '#F5C518' : 'var(--muted)' }}>
             <span style={{ fontSize: 20 }}>{t.icon}</span>
             <span style={{ fontSize: 9, fontFamily: 'DM Sans', fontWeight: 500 }}>{t.label.split(' ')[0]}</span>
-            {t.id === 'ajustements' && adjustments.length > 0 && (
-              <span style={{ position: 'absolute', top: 0, right: 0, background: '#f87171', color: '#fff',
-                borderRadius: '50%', width: 14, height: 14, fontSize: 9,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
-                {adjustments.length}
-              </span>
-            )}
           </button>
         ))}
+        <button onClick={() => setMobileMore(m => !m)} aria-label="Plus d'options"
+          style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column',
+            alignItems: 'center', gap: 2, padding: '4px 6px', flex: 1, position: 'relative',
+            color: ['ecole', 'ajustements'].includes(tab) ? '#F5C518' : 'var(--muted)' }}>
+          <span style={{ fontSize: 20 }}>⋯</span>
+          <span style={{ fontSize: 9, fontFamily: 'DM Sans', fontWeight: 500 }}>Plus</span>
+          {adjustments.length > 0 && (
+            <span style={{ position: 'absolute', top: 0, right: 2, background: '#f87171', color: '#fff',
+              borderRadius: '50%', width: 14, height: 14, fontSize: 9,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
+              {adjustments.length}
+            </span>
+          )}
+        </button>
       </nav>
+
+      {/* MOBILE MORE MENU */}
+      {mobileMore && (
+        <div style={{ position: 'fixed', bottom: 62, left: 0, right: 0, zIndex: 201,
+          padding: '0 10px', display: 'flex', justifyContent: 'flex-end' }}>
+          <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12,
+            padding: 8, display: 'flex', flexDirection: 'column', gap: 2, minWidth: 180,
+            boxShadow: '0 -4px 20px rgba(0,0,0,.3)' }}>
+            {TABS.filter(t => ['ecole', 'ajustements'].includes(t.id)).map(t => (
+              <button key={t.id} onClick={() => { setTab(t.id); setMobileMore(false) }}
+                style={{ background: tab === t.id ? 'var(--gold-dim)' : 'none', border: 'none', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 8,
+                  color: tab === t.id ? '#F5C518' : 'var(--text)', fontFamily: 'DM Sans', fontSize: 14,
+                  fontWeight: tab === t.id ? 600 : 400, width: '100%', textAlign: 'left' }}>
+                <span style={{ fontSize: 18 }}>{t.icon}</span>
+                {t.label}
+                {t.id === 'ajustements' && adjustments.length > 0 && (
+                  <span style={{ marginLeft: 'auto', background: '#f87171', color: '#fff', borderRadius: '50%',
+                    width: 18, height: 18, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 10, fontWeight: 700 }}>{adjustments.length}</span>
+                )}
+              </button>
+            ))}
+            <div style={{ height: 1, background: 'var(--border)', margin: '4px 0' }} />
+            <button onClick={() => { setMobileMore(false); toggleTheme() }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center',
+                gap: 10, padding: '10px 14px', borderRadius: 8, color: 'var(--text)', fontFamily: 'DM Sans',
+                fontSize: 14, width: '100%', textAlign: 'left' }}>
+              <span style={{ fontSize: 18 }}>{theme === 'dark' ? '☀️' : '🌙'}</span>
+              {theme === 'dark' ? 'Thème clair' : 'Thème sombre'}
+            </button>
+            <button onClick={() => { setMobileMore(false); notifEnabled ? setNotifEnabled(false) : enableNotifications() }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center',
+                gap: 10, padding: '10px 14px', borderRadius: 8, color: notifEnabled ? '#4ade80' : 'var(--text)',
+                fontFamily: 'DM Sans', fontSize: 14, width: '100%', textAlign: 'left' }}>
+              <span style={{ fontSize: 18 }}>{notifEnabled ? '🔔' : '🔕'}</span>
+              {notifEnabled ? 'Notifications ON' : 'Notifications'}
+            </button>
+            <button onClick={() => { setMobileMore(false); setBackupModal(true) }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center',
+                gap: 10, padding: '10px 14px', borderRadius: 8, color: 'var(--text)', fontFamily: 'DM Sans',
+                fontSize: 14, width: '100%', textAlign: 'left' }}>
+              <span style={{ fontSize: 18 }}>💾</span>
+              Sauvegarde
+            </button>
+            <button onClick={() => { setMobileMore(false); setApiModal(true) }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center',
+                gap: 10, padding: '10px 14px', borderRadius: 8, color: 'var(--text)', fontFamily: 'DM Sans',
+                fontSize: 14, width: '100%', textAlign: 'left' }}>
+              <span style={{ fontSize: 18 }}>🔑</span>
+              Clé API
+            </button>
+            {profile && (
+              <button onClick={() => { setMobileMore(false); setProfileModal(true) }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center',
+                  gap: 10, padding: '10px 14px', borderRadius: 8, color: 'var(--text)', fontFamily: 'DM Sans',
+                  fontSize: 14, width: '100%', textAlign: 'left' }}>
+                <span style={{ fontSize: 18 }}>👤</span>
+                {profile.prenom}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* SETUP PROFIL */}
       {!profile && <SetupModal onSave={setProfile} />}
