@@ -5,6 +5,12 @@ import { PRIORITY_ORDER, PRIORITY_COLOR, CAT_COLORS } from '../utils/constants'
 import { computeNextRenewal } from '../utils/subscriptions'
 import StatCard from './shared/StatCard'
 import EmptyState from './shared/EmptyState'
+import {
+  CloudSun, Cloud, CloudLightning, Moon as MoonIcon,
+  Flame, TrendingUp, Target, ClipboardList, CheckCircle2,
+  Receipt, GraduationCap, BookOpen, Repeat, Zap, Calendar,
+  CreditCard, MapPin, Clock
+} from 'lucide-react'
 
 function isoMinusDays(n) {
   const d = new Date(); d.setDate(d.getDate() - n)
@@ -47,12 +53,12 @@ export default function Dashboard() {
   const devoirsUrgCount = devoirs.filter(d => { const j = daysUntil(d.dateRendu); return d.statut !== 'Rendu' && j >= 0 && j <= 1 }).length
   const chargeScore     = todayCourses.length + tasksDueToday + devoirsUrgCount * 2
   const meteo = chargeScore === 0
-    ? { label: 'Calme',   icon: '🌙', color: '#9ca3af', sub: 'Profite pour avancer' }
+    ? { label: 'Calme',   icon: <MoonIcon size={28} />, color: '#9ca3af', sub: 'Profite pour avancer' }
     : chargeScore <= 2
-    ? { label: 'Légère',  icon: '☀️', color: '#4ade80', sub: `${todayCourses.length + tasksDueToday} élément(s)` }
+    ? { label: 'Légère',  icon: <CloudSun size={28} />, color: '#4ade80', sub: `${todayCourses.length + tasksDueToday} élément(s)` }
     : chargeScore <= 5
-    ? { label: 'Normale', icon: '⛅', color: '#F5C518', sub: `${todayCourses.length + tasksDueToday} élément(s)` }
-    : { label: 'Chargée', icon: '⛈️', color: '#f87171', sub: 'Organise-toi maintenant' }
+    ? { label: 'Normale', icon: <Cloud size={28} />, color: '#F5C518', sub: `${todayCourses.length + tasksDueToday} élément(s)` }
+    : { label: 'Chargée', icon: <CloudLightning size={28} />, color: '#f87171', sub: 'Organise-toi maintenant' }
 
   /* ── Score de la semaine (7 derniers jours) ── */
   const weekScore = (() => {
@@ -86,16 +92,16 @@ export default function Dashboard() {
     .forEach(e => {
       const d = daysUntil(e.date)
       const label = d === 0 ? "AUJOURD'HUI" : d === 1 ? 'DEMAIN' : `J-${d}`
-      alerts.push({ type: 'red', msg: `🎓 Examen ${label} : ${e.matiere} — ${fmtDate(e.date)}` })
+      alerts.push({ type: 'red', msg: `Examen ${label} : ${e.matiere} — ${fmtDate(e.date)}` })
     })
   devoirs.filter(d => d.statut !== 'Rendu' && daysUntil(d.dateRendu) >= 0 && daysUntil(d.dateRendu) <= 2)
-    .forEach(d => alerts.push({ type: 'red', msg: `📋 Devoir urgent J-${daysUntil(d.dateRendu)} : ${d.matiere}` }))
+    .forEach(d => alerts.push({ type: 'red', msg: `Devoir urgent J-${daysUntil(d.dateRendu)} : ${d.matiere}` }))
   upcomingSubs.filter(s => daysUntil(s._next) <= 7)
-    .forEach(s => alerts.push({ type: 'yellow', msg: `💳 ${s.name} — paiement dans ${daysUntil(s._next)}j (${s.amount.toLocaleString('fr-FR')} FCFA)` }))
+    .forEach(s => alerts.push({ type: 'yellow', msg: `${s.name} — paiement dans ${daysUntil(s._next)}j (${s.amount.toLocaleString('fr-FR')} FCFA)` }))
   devoirs.filter(d => d.statut !== 'Rendu' && daysUntil(d.dateRendu) < 0)
-    .forEach(d => alerts.push({ type: 'red', msg: `⚠️ Devoir en retard : ${d.matiere}` }))
+    .forEach(d => alerts.push({ type: 'red', msg: `Devoir en retard : ${d.matiere}` }))
   if (adjustments.length > 0)
-    alerts.push({ type: 'blue', msg: `🔄 ${adjustments.length} tâche${adjustments.length > 1 ? 's' : ''} en attente de reprogrammation` })
+    alerts.push({ type: 'blue', msg: `${adjustments.length} tâche${adjustments.length > 1 ? 's' : ''} en attente de reprogrammation` })
 
   return (
     <div>
@@ -103,14 +109,14 @@ export default function Dashboard() {
       <div style={{ marginBottom: 20 }}>
         <p style={{ color: 'var(--muted)', fontSize: 13, textTransform: 'capitalize', marginBottom: 6 }}>{todayLabel()}</p>
         <h1 style={{ fontSize: 30, fontWeight: 800, lineHeight: 1.2 }}>
-          {greeting()}, <span style={{ color: '#F5C518' }}>{profile?.prenom || 'toi'}</span> 👋
+          {greeting()}, <span style={{ color: '#F5C518' }}>{profile?.prenom || 'toi'}</span>
         </h1>
       </div>
 
       {/* ── Bannière Météo / Streak / Score ── */}
       <div className="grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 20 }}>
         <div className="card" style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ fontSize: 30, lineHeight: 1 }}>{meteo.icon}</span>
+          <span style={{ color: meteo.color, lineHeight: 1 }}>{meteo.icon}</span>
           <div style={{ minWidth: 0 }}>
             <p style={{ fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: .7, margin: 0 }}>Journée</p>
             <p style={{ fontSize: 16, fontWeight: 700, color: meteo.color, margin: '2px 0 1px' }}>{meteo.label}</p>
@@ -118,19 +124,19 @@ export default function Dashboard() {
           </div>
         </div>
         <div className="card" style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ fontSize: 30, lineHeight: 1 }}>🔥</span>
+          <Flame size={28} style={{ color: streak >= 3 ? '#f97316' : 'var(--muted)' }} />
           <div>
             <p style={{ fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: .7, margin: 0 }}>Streak</p>
             <p style={{ fontSize: 16, fontWeight: 700, color: streak >= 7 ? '#4ade80' : streak >= 3 ? '#f97316' : 'var(--text)', margin: '2px 0 1px' }}>
               {streak} jour{streak !== 1 ? 's' : ''}
             </p>
             <p style={{ fontSize: 10, color: 'var(--muted)', margin: 0 }}>
-              {streak === 0 ? 'Commence aujourd\'hui' : streak >= 7 ? 'En feu 🔥' : 'Continue comme ça'}
+              {streak === 0 ? 'Commence aujourd\'hui' : streak >= 7 ? 'En feu !' : 'Continue comme ça'}
             </p>
           </div>
         </div>
         <div className="card" style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ fontSize: 30, lineHeight: 1 }}>📈</span>
+          <TrendingUp size={28} style={{ color: weekScore >= 70 ? '#4ade80' : weekScore >= 40 ? '#F5C518' : '#f87171' }} />
           <div>
             <p style={{ fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: .7, margin: 0 }}>Score 7 jours</p>
             <p style={{ fontSize: 16, fontWeight: 700, margin: '2px 0 1px',
@@ -147,7 +153,7 @@ export default function Dashboard() {
       {/* ── Objectif ── */}
       <div className="card card-gold" style={{ padding: '16px 20px', marginBottom: 24 }}>
         <p style={{ color: '#F5C518', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
-          🎯 Objectif principal du moment
+          <Target size={12} style={{ display: 'inline', verticalAlign: -1, marginRight: 4 }} /> Objectif principal du moment
         </p>
         <input value={objectif} onChange={e => setObjectif(e.target.value)}
           style={{ background: 'transparent', border: 'none', color: 'var(--text)', fontSize: 16,
@@ -157,10 +163,11 @@ export default function Dashboard() {
 
       {/* ── KPI Cards ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 24 }} className="grid-3">
-        <StatCard icon="📝" value={`${createdToday.length}`} label="Tâches du jour" color="#F5C518" />
-        <StatCard icon="✅" value={`${completedToday}`} label="Terminées" color="#4ade80" />
-        <StatCard icon="💸" value={`${todayExpTotal.toLocaleString('fr-FR')} F`} label="Dépensé today" color="#60a5fa" />
-        <StatCard icon={nextExam ? '🎓' : '📚'} value={nextExam ? `J-${daysUntil(nextExam.date)}` : '—'}
+        <StatCard icon={<ClipboardList size={24} color="#F5C518" />} value={`${createdToday.length}`} label="Tâches du jour" color="#F5C518" />
+        <StatCard icon={<CheckCircle2 size={24} color="#4ade80" />} value={`${completedToday}`} label="Terminées" color="#4ade80" />
+        <StatCard icon={<Receipt size={24} color="#60a5fa" />} value={`${todayExpTotal.toLocaleString('fr-FR')} F`} label="Dépensé today" color="#60a5fa" />
+        <StatCard icon={nextExam ? <GraduationCap size={24} color="#f87171" /> : <BookOpen size={24} color="#9ca3af" />}
+          value={nextExam ? `J-${daysUntil(nextExam.date)}` : '—'}
           label={nextExam ? nextExam.matiere : 'Pas d\'examen'} color={nextExam ? '#f87171' : '#9ca3af'} />
       </div>
 
@@ -179,7 +186,7 @@ export default function Dashboard() {
         <div className="card" style={{ padding: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
             <p style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, margin: 0 }}>
-              🔁 Habitudes du jour
+              <Repeat size={13} style={{ display: 'inline', verticalAlign: -2, marginRight: 4 }} /> Habitudes du jour
             </p>
             <span style={{ fontSize: 14, fontWeight: 700,
               color: habitsPct >= 80 ? '#4ade80' : habitsPct >= 50 ? '#F5C518' : '#f87171' }}>
@@ -197,7 +204,7 @@ export default function Dashboard() {
                   textDecoration: t.status === 'Terminé' && t.lastCompletedAt === now ? 'line-through' : 'none' }}>
                   {t.name}
                 </span>
-                {t.recurrenceTime && <span style={{ fontSize: 11, color: '#F5C518' }}>🕐 {t.recurrenceTime}</span>}
+                {t.recurrenceTime && <span style={{ fontSize: 11, color: '#F5C518', display: 'flex', alignItems: 'center', gap: 3 }}><Clock size={11} /> {t.recurrenceTime}</span>}
               </div>
             ))
           }
@@ -206,7 +213,7 @@ export default function Dashboard() {
         {/* Top 3 */}
         <div className="card" style={{ padding: 20 }}>
           <p style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, marginBottom: 14 }}>
-            🔥 Top priorités
+            <Zap size={13} style={{ display: 'inline', verticalAlign: -2, marginRight: 4 }} /> Top priorités
           </p>
           {top3.length === 0
             ? <EmptyState icon="🎉" msg="Toutes les tâches sont terminées !" />
@@ -219,7 +226,7 @@ export default function Dashboard() {
                   <p style={{ fontSize: 13, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</p>
                   <div style={{ display: 'flex', gap: 8, marginTop: 2 }}>
                     <span style={{ fontSize: 10, color: PRIORITY_COLOR[t.priority] }}>{t.priority}</span>
-                    {t.deadline && <span style={{ fontSize: 10, color: 'var(--muted)' }}>📅 {fmtDate(t.deadline)}</span>}
+                    {t.deadline && <span style={{ fontSize: 10, color: 'var(--muted)', display: 'inline-flex', alignItems: 'center', gap: 2 }}><Calendar size={10} /> {fmtDate(t.deadline)}</span>}
                   </div>
                 </div>
               </div>
@@ -232,7 +239,7 @@ export default function Dashboard() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }} className="grid-2">
         <div className="card" style={{ padding: 20 }}>
           <p style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, marginBottom: 14 }}>
-            📚 Cours aujourd'hui
+            <BookOpen size={13} style={{ display: 'inline', verticalAlign: -2, marginRight: 4 }} /> Cours aujourd'hui
           </p>
           {todayCourses.length === 0
             ? <EmptyState icon="🎉" msg="Pas de cours aujourd'hui !" />
@@ -243,7 +250,7 @@ export default function Dashboard() {
                 <div style={{ flex: 1 }}>
                   <p style={{ fontSize: 13, fontWeight: 600, margin: 0, color: c.color }}>{c.nom}</p>
                   <p style={{ fontSize: 11, color: 'var(--muted)', margin: '2px 0 0' }}>
-                    {c.heureDebut}–{c.heureFin}{c.salle && ` · 📍 ${c.salle}`}
+                    {c.heureDebut}–{c.heureFin}{c.salle && <> · <MapPin size={10} style={{ display: 'inline', verticalAlign: -1 }} /> {c.salle}</>}
                   </p>
                 </div>
               </div>
@@ -254,7 +261,7 @@ export default function Dashboard() {
         <div className="card" style={{ padding: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
             <p style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, margin: 0 }}>
-              💸 Dépenses du jour
+              <Receipt size={13} style={{ display: 'inline', verticalAlign: -2, marginRight: 4 }} /> Dépenses du jour
             </p>
             <span style={{ fontSize: 14, fontWeight: 700, color: '#F5C518' }}>
               {todayExpTotal.toLocaleString('fr-FR')} F
@@ -280,12 +287,12 @@ export default function Dashboard() {
       {upcomingSubs.length > 0 && (
         <div className="card" style={{ padding: 20 }}>
           <p style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, marginBottom: 14 }}>
-            💳 Prochains paiements (30j)
+            <CreditCard size={13} style={{ display: 'inline', verticalAlign: -2, marginRight: 4 }} /> Prochains paiements (30j)
           </p>
           {upcomingSubs.slice(0, 5).map(s => (
             <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0',
               borderBottom: '1px solid var(--border)' }}>
-              <span style={{ fontSize: 14 }}>📅</span>
+              <Calendar size={16} style={{ color: 'var(--muted)', flexShrink: 0 }} />
               <div style={{ flex: 1 }}>
                 <p style={{ fontSize: 13, fontWeight: 600, margin: 0 }}>{s.name}</p>
                 <p style={{ fontSize: 11, color: 'var(--muted)', margin: '2px 0 0' }}>

@@ -10,15 +10,22 @@ import Ajustements from './components/Ajustements'
 import Stats from './components/Stats'
 import PomodoroModal from './components/shared/PomodoroModal'
 import GlobalSearch from './components/shared/GlobalSearch'
+import {
+  LayoutDashboard, CheckSquare, Target, GraduationCap, Wallet,
+  BarChart3, RefreshCw, Search, User, Bell, BellOff, Save,
+  KeyRound, Sun, Moon, LogOut, MoreHorizontal
+} from 'lucide-react'
+
+const ICON_SIZE = 18
 
 const TABS = [
-  { id: 'dashboard',   icon: '🏠', label: 'Dashboard'      },
-  { id: 'taches',      icon: '✅', label: 'Tâches'          },
-  { id: 'projets',     icon: '🎯', label: 'Projets & Idées' },
-  { id: 'ecole',       icon: '📚', label: 'École'           },
-  { id: 'finances',    icon: '💰', label: 'Finances'        },
-  { id: 'stats',       icon: '📊', label: 'Statistiques'    },
-  { id: 'ajustements', icon: '🔄', label: 'Ajustements'     },
+  { id: 'dashboard',   icon: <LayoutDashboard size={ICON_SIZE} />,  label: 'Dashboard'      },
+  { id: 'taches',      icon: <CheckSquare size={ICON_SIZE} />,      label: 'Tâches'          },
+  { id: 'projets',     icon: <Target size={ICON_SIZE} />,           label: 'Projets & Idées' },
+  { id: 'ecole',       icon: <GraduationCap size={ICON_SIZE} />,    label: 'École'           },
+  { id: 'finances',    icon: <Wallet size={ICON_SIZE} />,           label: 'Finances'        },
+  { id: 'stats',       icon: <BarChart3 size={ICON_SIZE} />,        label: 'Statistiques'    },
+  { id: 'ajustements', icon: <RefreshCw size={ICON_SIZE} />,        label: 'Ajustements'     },
 ]
 
 function SetupModal({ onSave }) {
@@ -117,7 +124,7 @@ export default function App() {
             background: 'var(--input-bg)', border: '1px solid var(--border)', borderRadius: 8,
             color: 'var(--muted)', fontSize: 13, cursor: 'pointer', marginBottom: 16,
             fontFamily: 'DM Sans', transition: 'border-color .2s' }}>
-          <span>🔍</span>
+          <Search size={14} />
           <span style={{ flex: 1, textAlign: 'left' }}>Rechercher...</span>
           <kbd style={{ background: 'var(--bar-bg)', border: '1px solid var(--border)', borderRadius: 4,
             padding: '1px 6px', fontSize: 10 }}>⌘K</kbd>
@@ -137,13 +144,15 @@ export default function App() {
           {profile && (
             <button className="btn-ghost" style={{ width: '100%', fontSize: 12, padding: '8px 12px', textAlign: 'left' }}
               onClick={() => setProfileModal(true)}>
-              👤 {profile.prenom} {profile.nom || ''} <span style={{ color: 'var(--muted)', fontSize: 11 }}>— Modifier</span>
+              <User size={13} style={{ display: 'inline', verticalAlign: -2, marginRight: 4 }} /> {profile.prenom} {profile.nom || ''} <span style={{ color: 'var(--muted)', fontSize: 11 }}>— Modifier</span>
             </button>
           )}
           <button className="btn-ghost" style={{ width: '100%', fontSize: 12, padding: '8px 12px',
             color: notifEnabled ? '#4ade80' : undefined }}
             onClick={notifEnabled ? () => setNotifEnabled(false) : enableNotifications}>
-            {notifEnabled ? '🔔 Notifications activées' : '🔕 Activer les notifications'}
+            {notifEnabled
+              ? <><Bell size={13} style={{ display: 'inline', verticalAlign: -2, marginRight: 4 }} /> Notifications activées</>
+              : <><BellOff size={13} style={{ display: 'inline', verticalAlign: -2, marginRight: 4 }} /> Activer les notifications</>}
           </button>
           {notifEnabled && (
             <p style={{ fontSize: 10, color: 'var(--muted)', padding: '0 12px', margin: 0, lineHeight: 1.4 }}>
@@ -152,20 +161,22 @@ export default function App() {
           )}
           <button className="btn-ghost" style={{ width: '100%', fontSize: 12, padding: '8px 12px' }}
             onClick={() => setBackupModal(true)}>
-            💾 Sauvegarde / Restauration
+            <Save size={13} style={{ display: 'inline', verticalAlign: -2, marginRight: 4 }} /> Sauvegarde / Restauration
           </button>
           <button className="btn-ghost" style={{ width: '100%', fontSize: 12, padding: '8px 12px' }}
             onClick={() => setApiModal(true)}>
-            🔑 Clé API Gemini (gratuit)
+            <KeyRound size={13} style={{ display: 'inline', verticalAlign: -2, marginRight: 4 }} /> Clé API Gemini (gratuit)
           </button>
           <button className="btn-ghost" style={{ width: '100%', fontSize: 12, padding: '8px 12px' }}
             onClick={toggleTheme}>
-            {theme === 'dark' ? '☀️ Thème clair' : '🌙 Thème sombre'}
+            {theme === 'dark'
+              ? <><Sun size={13} style={{ display: 'inline', verticalAlign: -2, marginRight: 4 }} /> Thème clair</>
+              : <><Moon size={13} style={{ display: 'inline', verticalAlign: -2, marginRight: 4 }} /> Thème sombre</>}
           </button>
           <button className="btn-ghost" style={{ width: '100%', fontSize: 12, padding: '8px 12px',
             color: '#f87171', borderColor: 'rgba(248,113,113,.25)', marginTop: 4 }}
             onClick={logout}>
-            🚪 Déconnexion
+            <LogOut size={13} style={{ display: 'inline', verticalAlign: -2, marginRight: 4 }} /> Déconnexion
           </button>
         </div>
       </aside>
@@ -190,7 +201,7 @@ export default function App() {
             style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column',
               alignItems: 'center', gap: 2, padding: '4px 6px', flex: 1,
               color: tab === t.id ? '#F5C518' : 'var(--muted)' }}>
-            <span style={{ fontSize: 20 }}>{t.icon}</span>
+            <span>{t.icon}</span>
             <span style={{ fontSize: 9, fontFamily: 'DM Sans', fontWeight: 500 }}>{t.label.split(' ')[0]}</span>
           </button>
         ))}
@@ -198,7 +209,7 @@ export default function App() {
           style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column',
             alignItems: 'center', gap: 2, padding: '4px 6px', flex: 1, position: 'relative',
             color: ['ecole', 'ajustements'].includes(tab) ? '#F5C518' : 'var(--muted)' }}>
-          <span style={{ fontSize: 20 }}>⋯</span>
+          <MoreHorizontal size={20} />
           <span style={{ fontSize: 9, fontFamily: 'DM Sans', fontWeight: 500 }}>Plus</span>
           {adjustments.length > 0 && (
             <span style={{ position: 'absolute', top: 0, right: 2, background: '#f87171', color: '#fff',
@@ -223,7 +234,7 @@ export default function App() {
                   display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 8,
                   color: tab === t.id ? '#F5C518' : 'var(--text)', fontFamily: 'DM Sans', fontSize: 14,
                   fontWeight: tab === t.id ? 600 : 400, width: '100%', textAlign: 'left' }}>
-                <span style={{ fontSize: 18 }}>{t.icon}</span>
+                <span>{t.icon}</span>
                 {t.label}
                 {t.id === 'ajustements' && adjustments.length > 0 && (
                   <span style={{ marginLeft: 'auto', background: '#f87171', color: '#fff', borderRadius: '50%',
@@ -237,28 +248,28 @@ export default function App() {
               style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center',
                 gap: 10, padding: '10px 14px', borderRadius: 8, color: 'var(--text)', fontFamily: 'DM Sans',
                 fontSize: 14, width: '100%', textAlign: 'left' }}>
-              <span style={{ fontSize: 18 }}>{theme === 'dark' ? '☀️' : '🌙'}</span>
+              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
               {theme === 'dark' ? 'Thème clair' : 'Thème sombre'}
             </button>
             <button onClick={() => { setMobileMore(false); notifEnabled ? setNotifEnabled(false) : enableNotifications() }}
               style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center',
                 gap: 10, padding: '10px 14px', borderRadius: 8, color: notifEnabled ? '#4ade80' : 'var(--text)',
                 fontFamily: 'DM Sans', fontSize: 14, width: '100%', textAlign: 'left' }}>
-              <span style={{ fontSize: 18 }}>{notifEnabled ? '🔔' : '🔕'}</span>
+              {notifEnabled ? <Bell size={18} /> : <BellOff size={18} />}
               {notifEnabled ? 'Notifications ON' : 'Notifications'}
             </button>
             <button onClick={() => { setMobileMore(false); setBackupModal(true) }}
               style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center',
                 gap: 10, padding: '10px 14px', borderRadius: 8, color: 'var(--text)', fontFamily: 'DM Sans',
                 fontSize: 14, width: '100%', textAlign: 'left' }}>
-              <span style={{ fontSize: 18 }}>💾</span>
+              <Save size={18} />
               Sauvegarde
             </button>
             <button onClick={() => { setMobileMore(false); setApiModal(true) }}
               style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center',
                 gap: 10, padding: '10px 14px', borderRadius: 8, color: 'var(--text)', fontFamily: 'DM Sans',
                 fontSize: 14, width: '100%', textAlign: 'left' }}>
-              <span style={{ fontSize: 18 }}>🔑</span>
+              <KeyRound size={18} />
               Clé API
             </button>
             {profile && (
@@ -266,7 +277,7 @@ export default function App() {
                 style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center',
                   gap: 10, padding: '10px 14px', borderRadius: 8, color: 'var(--text)', fontFamily: 'DM Sans',
                   fontSize: 14, width: '100%', textAlign: 'left' }}>
-                <span style={{ fontSize: 18 }}>👤</span>
+                <User size={18} />
                 {profile.prenom}
               </button>
             )}
@@ -275,7 +286,7 @@ export default function App() {
               style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center',
                 gap: 10, padding: '10px 14px', borderRadius: 8, color: '#f87171', fontFamily: 'DM Sans',
                 fontSize: 14, width: '100%', textAlign: 'left' }}>
-              <span style={{ fontSize: 18 }}>🚪</span>
+              <LogOut size={18} />
               Déconnexion
             </button>
           </div>
