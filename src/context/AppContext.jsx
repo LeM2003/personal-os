@@ -1,8 +1,7 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react'
 import { useLS } from '../hooks/useLocalStorage'
 import { genId, todayISO, nextOccurrenceDate } from '../utils/dates'
-import { SAMPLE_TASKS, SAMPLE_PROJECTS, SAMPLE_COURSES, SAMPLE_DEVOIRS,
-         SAMPLE_EXAMENS, SAMPLE_EXPENSES, SAMPLE_SUBS } from '../data/sampleData'
+// Sample data no longer loaded by default — new users start with empty dashboard
 
 const AppContext = createContext(null)
 
@@ -11,16 +10,16 @@ const NOTIF_ICON = '/icons/icon-192.png'
 export function AppProvider({ children }) {
   /* ── Donnees persistees ── */
   const [tab,           setTab]           = useLS('pos_tab',           'dashboard')
-  const [tasks,         setTasks]         = useLS('pos_tasks',         SAMPLE_TASKS)
-  const [projects,      setProjects]      = useLS('pos_projects',      SAMPLE_PROJECTS)
-  const [expenses,      setExpenses]      = useLS('pos_expenses',      SAMPLE_EXPENSES)
-  const [subscriptions, setSubscriptions] = useLS('pos_subscriptions', SAMPLE_SUBS)
+  const [tasks,         setTasks]         = useLS('pos_tasks',         [])
+  const [projects,      setProjects]      = useLS('pos_projects',      [])
+  const [expenses,      setExpenses]      = useLS('pos_expenses',      [])
+  const [subscriptions, setSubscriptions] = useLS('pos_subscriptions', [])
   const [budgets,       setBudgets]       = useLS('pos_budgets',       {})
-  const [objectif,      setObjectif]      = useLS('pos_objectif',      'Lancer ma chaîne TikTok et valider mon semestre avec mention')
+  const [objectif,      setObjectif]      = useLS('pos_objectif',      '')
   const [adjustments,   setAdjustments]   = useLS('pos_adjustments',   [])
-  const [courses,       setCourses]       = useLS('pos_courses',       SAMPLE_COURSES)
-  const [devoirs,       setDevoirs]       = useLS('pos_devoirs',       SAMPLE_DEVOIRS)
-  const [examens,       setExamens]       = useLS('pos_examens',       SAMPLE_EXAMENS)
+  const [courses,       setCourses]       = useLS('pos_courses',       [])
+  const [devoirs,       setDevoirs]       = useLS('pos_devoirs',       [])
+  const [examens,       setExamens]       = useLS('pos_examens',       [])
   const [profile,       setProfile]       = useLS('pos_profile',       null)
   const [apiKey,        setApiKey]        = useLS('pos_apikey',        '')
   const [notifEnabled,  setNotifEnabled]  = useLS('pos_notif',         false)
