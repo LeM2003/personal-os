@@ -83,6 +83,13 @@ export default function App() {
     tasks, devoirs, examens, projects,
   } = app
   const [mobileMore, setMobileMore] = useState(false)
+  const [loggedOut, setLoggedOut] = useState(false)
+
+  const logout = () => setLoggedOut(true)
+  const handleStart = (formData) => {
+    setProfile(formData)
+    setLoggedOut(false)
+  }
 
   const adjBadge = adjustments.length > 0 && (
     <span style={{ background: '#f87171', color: '#fff', borderRadius: '50%', width: 18, height: 18,
@@ -91,9 +98,9 @@ export default function App() {
     </span>
   )
 
-  // ── Nouveau visiteur → Landing Page ──
-  if (!profile) {
-    return <LandingPage onStart={setProfile} />
+  // ── Nouveau visiteur OU déconnecté → Landing Page ──
+  if (!profile || loggedOut) {
+    return <LandingPage onStart={handleStart} />
   }
 
   return (
@@ -154,6 +161,11 @@ export default function App() {
           <button className="btn-ghost" style={{ width: '100%', fontSize: 12, padding: '8px 12px' }}
             onClick={toggleTheme}>
             {theme === 'dark' ? '☀️ Thème clair' : '🌙 Thème sombre'}
+          </button>
+          <button className="btn-ghost" style={{ width: '100%', fontSize: 12, padding: '8px 12px',
+            color: '#f87171', borderColor: 'rgba(248,113,113,.25)', marginTop: 4 }}
+            onClick={logout}>
+            🚪 Déconnexion
           </button>
         </div>
       </aside>
@@ -258,6 +270,14 @@ export default function App() {
                 {profile.prenom}
               </button>
             )}
+            <div style={{ height: 1, background: 'var(--border)', margin: '4px 0' }} />
+            <button onClick={() => { setMobileMore(false); logout() }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center',
+                gap: 10, padding: '10px 14px', borderRadius: 8, color: '#f87171', fontFamily: 'DM Sans',
+                fontSize: 14, width: '100%', textAlign: 'left' }}>
+              <span style={{ fontSize: 18 }}>🚪</span>
+              Déconnexion
+            </button>
           </div>
         </div>
       )}
