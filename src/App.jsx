@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useApp } from './context/AppContext'
+import LandingPage from './components/LandingPage'
 import Dashboard from './components/Dashboard'
 import Taches from './components/Taches'
 import Projets from './components/Projets'
@@ -89,6 +90,11 @@ export default function App() {
       {adjustments.length}
     </span>
   )
+
+  // ── Nouveau visiteur → Landing Page ──
+  if (!profile) {
+    return <LandingPage onStart={setProfile} />
+  }
 
   return (
     <div>
@@ -256,8 +262,7 @@ export default function App() {
         </div>
       )}
 
-      {/* SETUP PROFIL */}
-      {!profile && <SetupModal onSave={setProfile} />}
+      {/* SETUP PROFIL — remplacé par LandingPage, rendu plus haut */}
 
       {/* MODIFIER PROFIL */}
       {profileModal && (
