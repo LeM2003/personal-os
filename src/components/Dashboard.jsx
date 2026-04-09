@@ -152,13 +152,16 @@ export default function Dashboard() {
 
       {/* ── Objectif ── */}
       <div className="card card-gold" style={{ padding: '16px 20px', marginBottom: 24 }}>
-        <p style={{ color: '#F5C518', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
-          <Target size={12} style={{ display: 'inline', verticalAlign: -1, marginRight: 4 }} /> Objectif principal du moment
-        </p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <p style={{ color: '#F5C518', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, margin: 0 }}>
+            <Target size={12} style={{ display: 'inline', verticalAlign: -1, marginRight: 4 }} /> Objectif principal du moment
+          </p>
+          {objectif && <span style={{ fontSize: 10, color: '#4ade80', fontWeight: 500 }}>Sauvegardé automatiquement</span>}
+        </div>
         <input value={objectif} onChange={e => setObjectif(e.target.value)}
           style={{ background: 'transparent', border: 'none', color: 'var(--text)', fontSize: 16,
             fontWeight: 500, fontFamily: 'Syne', padding: 0, boxShadow: 'none' }}
-          placeholder="Définis ton objectif principal…" />
+          placeholder="Ex: Valider mon semestre et lancer mon projet…" />
       </div>
 
       {/* ── KPI Cards ── */}

@@ -117,7 +117,7 @@ export default function Projets() {
   /* ── AI Analysis ── */
   const analyzeProject = async proj => {
     if (!apiKey) {
-      setAiError("Configure ta cle API Gemini (gratuite) dans la sidebar — bouton 🔑")
+      alert('Configure ta clé API Gemini (gratuit) dans le menu Plus → Clé API pour utiliser l\'IA.')
       return
     }
     setAnalyzing(proj.id); setAiError('')

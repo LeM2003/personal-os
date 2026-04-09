@@ -141,12 +141,19 @@ export default function Taches() {
 
   return (
     <div>
-      <PageHeader title="✅ Tâches" action={
+      <PageHeader title="Tâches" action={
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn-ghost" onClick={() => setShowImport(true)}
-            style={{ fontSize: 13, padding: '8px 14px', border: '1px solid rgba(245,197,24,.3)' }}>
-            📋 Import IA
-          </button>
+          {apiKey ? (
+            <button className="btn-ghost" onClick={() => setShowImport(true)}
+              style={{ fontSize: 13, padding: '8px 14px', border: '1px solid rgba(245,197,24,.3)' }}>
+              Import IA
+            </button>
+          ) : (
+            <button className="btn-ghost" onClick={() => alert('Configure ta clé API Gemini (gratuit) dans le menu Plus → Clé API pour utiliser l\'IA.')}
+              style={{ fontSize: 13, padding: '8px 14px', opacity: .5 }}>
+              Import IA
+            </button>
+          )}
           <button className="btn-gold" onClick={openAdd}>+ Nouvelle tâche</button>
         </div>
       } />
