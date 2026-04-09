@@ -55,7 +55,7 @@ export default function LandingPage({ onStart }) {
     <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', overflowX: 'hidden' }}>
 
       {/* ── HERO ── */}
-      <header style={{ padding: '56px 20px 40px', textAlign: 'center', maxWidth: 700, margin: '0 auto' }}>
+      <header style={{ padding: 'clamp(36px, 6vw, 56px) 20px clamp(24px, 4vw, 40px)', textAlign: 'center', maxWidth: 700, margin: '0 auto' }}>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'var(--gold-dim)',
           border: '1px solid rgba(245,197,24,.2)', borderRadius: 999, padding: '6px 16px', marginBottom: 24 }}>
           <span style={{ fontSize: 12, color: 'var(--gold)', fontWeight: 600 }}>100% gratuit — aucun compte requis</span>
@@ -67,8 +67,8 @@ export default function LandingPage({ onStart }) {
           <span style={{ color: '#F5C518', display: 'inline-block' }}>Un seul système.</span>
         </h1>
 
-        <p style={{ fontSize: 'clamp(15px, 3vw, 18px)', color: 'var(--muted)', lineHeight: 1.7,
-          maxWidth: 520, margin: '0 auto 32px' }}>
+        <p style={{ fontSize: 'clamp(14px, 3vw, 17px)', color: 'var(--muted)', lineHeight: 1.6,
+          maxWidth: 500, margin: '0 auto 28px' }}>
           Personal OS est le dashboard conçu pour les étudiants qui construisent quelque chose.
           Organise ta vie en 30 secondes — sans inscription, sans téléchargement.
         </p>
@@ -100,7 +100,7 @@ export default function LandingPage({ onStart }) {
       </div>
 
       {/* ── LE PROBLÈME ── */}
-      <section style={{ padding: '48px 20px', maxWidth: 700, margin: '0 auto' }}>
+      <section style={{ padding: 'clamp(28px, 5vw, 48px) 20px', maxWidth: 700, margin: '0 auto' }}>
         <h2 style={{ fontFamily: 'Syne', fontSize: 'clamp(20px, 4vw, 28px)', fontWeight: 800,
           textAlign: 'center', marginBottom: 8 }}>
           On connaît le <span style={{ color: '#f87171' }}>chaos.</span>
@@ -130,7 +130,7 @@ export default function LandingPage({ onStart }) {
       </section>
 
       {/* ── FEATURES ── */}
-      <section style={{ padding: '48px 20px', maxWidth: 900, margin: '0 auto' }}>
+      <section style={{ padding: 'clamp(28px, 5vw, 48px) 20px', maxWidth: 900, margin: '0 auto' }}>
         <h2 style={{ fontFamily: 'Syne', fontSize: 'clamp(20px, 4vw, 28px)', fontWeight: 800,
           textAlign: 'center', marginBottom: 8 }}>
           Tout ce qu'il te faut. <span style={{ color: '#F5C518' }}>Rien de plus.</span>
@@ -154,7 +154,7 @@ export default function LandingPage({ onStart }) {
       </section>
 
       {/* ── CTA MILIEU ── */}
-      <section style={{ padding: '32px 20px', textAlign: 'center' }}>
+      <section style={{ padding: 'clamp(20px, 4vw, 32px) 20px', textAlign: 'center' }}>
         <button onClick={() => setShowSetup(true)}
           style={{ ...CTA_BTN, padding: '14px 36px', fontSize: 16 }}
           onMouseOver={e => e.target.style.transform = 'translateY(-2px)'}
@@ -164,10 +164,10 @@ export default function LandingPage({ onStart }) {
       </section>
 
       {/* ── POUR QUI ── */}
-      <section style={{ padding: '40px 20px', background: 'var(--card)', borderTop: '1px solid var(--border)',
+      <section style={{ padding: 'clamp(24px, 4vw, 40px) 20px', background: 'var(--card)', borderTop: '1px solid var(--border)',
         borderBottom: '1px solid var(--border)' }}>
         <div style={{ maxWidth: 700, margin: '0 auto', textAlign: 'center' }}>
-          <h2 style={{ fontFamily: 'Syne', fontSize: 'clamp(18px, 4vw, 24px)', fontWeight: 800, marginBottom: 24 }}>
+          <h2 style={{ fontFamily: 'Syne', fontSize: 'clamp(18px, 4vw, 24px)', fontWeight: 800, marginBottom: 20 }}>
             Créé pour toi si tu es...
           </h2>
           <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 10 }}>
@@ -182,9 +182,9 @@ export default function LandingPage({ onStart }) {
       </section>
 
       {/* ── TÉMOIGNAGES ── */}
-      <section style={{ padding: '48px 20px', maxWidth: 800, margin: '0 auto' }}>
+      <section style={{ padding: 'clamp(28px, 5vw, 48px) 20px', maxWidth: 800, margin: '0 auto' }}>
         <h2 style={{ fontFamily: 'Syne', fontSize: 'clamp(18px, 4vw, 24px)', fontWeight: 800,
-          textAlign: 'center', marginBottom: 28 }}>
+          textAlign: 'center', marginBottom: 24 }}>
           Ce qu'ils en disent
         </h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
@@ -209,11 +209,11 @@ export default function LandingPage({ onStart }) {
       </section>
 
       {/* ── COMMENT ÇA MARCHE ── */}
-      <section style={{ padding: '40px 20px', background: 'var(--card)', borderTop: '1px solid var(--border)',
+      <section style={{ padding: 'clamp(24px, 4vw, 40px) 20px', background: 'var(--card)', borderTop: '1px solid var(--border)',
         borderBottom: '1px solid var(--border)' }}>
         <div style={{ maxWidth: 600, margin: '0 auto' }}>
           <h2 style={{ fontFamily: 'Syne', fontSize: 'clamp(18px, 4vw, 24px)', fontWeight: 800,
-            textAlign: 'center', marginBottom: 28 }}>
+            textAlign: 'center', marginBottom: 24 }}>
             3 secondes pour commencer
           </h2>
           {[
@@ -238,7 +238,7 @@ export default function LandingPage({ onStart }) {
       </section>
 
       {/* ── CTA FINAL ── */}
-      <section style={{ padding: '64px 20px', textAlign: 'center' }}>
+      <section style={{ padding: 'clamp(36px, 6vw, 64px) 20px', textAlign: 'center' }}>
         <h2 style={{ fontFamily: 'Syne', fontSize: 'clamp(20px, 5vw, 32px)', fontWeight: 800, marginBottom: 12 }}>
           Prêt à reprendre le contrôle ?
         </h2>
