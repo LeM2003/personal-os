@@ -73,7 +73,7 @@ export default function Depenses() {
   const budgetBarColor = (pct) => {
     if (pct >= 100) return '#f87171'
     if (pct >= 80)  return '#f97316'
-    if (pct >= 60)  return '#F5C518'
+    if (pct >= 60)  return '#5B8DBF'
     return '#4ade80'
   }
 
@@ -110,7 +110,7 @@ export default function Depenses() {
   return (
     <div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14, marginBottom: 24 }} className="grid-3">
-        <StatCard icon="☀️" value={`${todayTotal.toLocaleString('fr-FR')} FCFA`} label="Aujourd'hui"      color="#F5C518" />
+        <StatCard icon="☀️" value={`${todayTotal.toLocaleString('fr-FR')} FCFA`} label="Aujourd'hui"      color="#5B8DBF" />
         <StatCard icon="📅" value={`${weekTotal.toLocaleString('fr-FR')} FCFA`}  label="7 derniers jours" color="#60a5fa" />
         <StatCard icon="📆" value={`${monthTotal.toLocaleString('fr-FR')} FCFA`} label="Ce mois"          color="#4ade80" />
       </div>
@@ -120,7 +120,7 @@ export default function Depenses() {
         <div className="card" style={{ padding: 20, marginBottom: 20,
           border: `1px solid ${budgetRestant < 0 ? 'rgba(248,113,113,.3)' : budgetRestant < totalBudget * 0.2 ? 'rgba(249,115,22,.3)' : 'rgba(74,222,128,.2)'}` }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <p style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8 }}>
+            <p style={{ fontFamily: 'Fraunces', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8 }}>
               📊 Budget du mois
             </p>
             <span style={{ fontSize: 22, fontWeight: 800,
@@ -146,7 +146,7 @@ export default function Depenses() {
         {/* Bar chart avec budgets */}
         <div className="card" style={{ padding: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <p style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8 }}>
+            <p style={{ fontFamily: 'Fraunces', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8 }}>
               Dépenses ce mois
             </p>
             {!editBudget
@@ -176,7 +176,7 @@ export default function Depenses() {
               ))}
             </div>
           ) : CATS.filter(c => catTotals[c] > 0 || budgets[c] > 0).length === 0 ? (
-            <EmptyState icon="📊" msg="Aucune dépense ce mois." sub="Clique sur 'Définir des budgets' pour commencer." />
+            <EmptyState icon="📊" msg="Rien à ce mois. Page blanche." sub="Fixe tes budgets pour garder l'œil dessus." />
           ) : (
             CATS.map(cat => {
               const spent = catTotals[cat]
@@ -217,8 +217,8 @@ export default function Depenses() {
         </div>
 
         {/* Add / Edit form */}
-        <div className="card" style={{ padding: 20, border: editingId ? '1px solid rgba(245,197,24,.35)' : undefined }}>
-          <p style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, marginBottom: 16 }}>
+        <div className="card" style={{ padding: 20, border: editingId ? '1px solid rgba(91,141,191,.35)' : undefined }}>
+          <p style={{ fontFamily: 'Fraunces', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, marginBottom: 16 }}>
             {editingId ? '✏️ Modifier la dépense' : 'Ajouter une dépense'}
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -248,7 +248,7 @@ export default function Depenses() {
       {/* History */}
       <div className="card" style={{ padding: 20 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 10 }}>
-          <p style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, margin: 0 }}>
+          <p style={{ fontFamily: 'Fraunces', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, margin: 0 }}>
             Historique
           </p>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -264,7 +264,7 @@ export default function Depenses() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 14 }}>
             <button className="btn-icon" onClick={prevMonth}
               style={{ fontSize: 14, padding: '2px 8px' }} aria-label="Mois précédent">←</button>
-            <span style={{ fontSize: 13, fontWeight: 700, color: isCurrentMonth ? '#F5C518' : 'var(--text)',
+            <span style={{ fontSize: 13, fontWeight: 700, color: isCurrentMonth ? '#5B8DBF' : 'var(--text)',
               textTransform: 'capitalize', minWidth: 140, textAlign: 'center' }}>
               {fmtMonth(selYear, selMonth)}
             </span>
@@ -279,32 +279,32 @@ export default function Depenses() {
 
         {/* Compteur filtre */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14,
-          padding: '8px 12px', background: 'rgba(245,197,24,.05)', borderRadius: 8, border: '1px solid rgba(245,197,24,.15)' }}>
+          padding: '8px 12px', background: 'rgba(91,141,191,.05)', borderRadius: 8, border: '1px solid rgba(91,141,191,.15)' }}>
           <span style={{ fontSize: 12, color: 'var(--muted)' }}>
             {filteredHistory.length} depense{filteredHistory.length !== 1 ? 's' : ''}
           </span>
-          <span style={{ fontSize: 14, fontWeight: 700, color: '#F5C518' }}>
+          <span style={{ fontSize: 14, fontWeight: 700, color: '#5B8DBF' }}>
             {filteredTotal.toLocaleString('fr-FR')} FCFA
           </span>
         </div>
 
-        {filteredHistory.length === 0 ? <EmptyState icon="🧾" msg="Aucune dépense pour cette période." /> : (
+        {filteredHistory.length === 0 ? <EmptyState icon="🧾" msg="Rien sur cette période." /> : (
           <>
             {filteredHistory.slice(0, visibleCount).map(e => (
               <div key={e.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0',
                 borderBottom: '1px solid var(--border)',
-                background: editingId === e.id ? 'rgba(245,197,24,.04)' : undefined,
+                background: editingId === e.id ? 'rgba(91,141,191,.04)' : undefined,
                 borderRadius: editingId === e.id ? 6 : undefined }}>
                 <div style={{ width: 10, height: 10, borderRadius: '50%', background: CAT_COLORS[e.category] || '#6b7280', flexShrink: 0 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ margin: 0, fontSize: 14 }}>{e.note || e.category}</p>
                   <p style={{ margin: 0, fontSize: 11, color: 'var(--muted)' }}>{fmtDate(e.date)} · {e.category} · {e.type}</p>
                 </div>
-                <span style={{ fontWeight: 700, color: '#F5C518', whiteSpace: 'nowrap', fontSize: 14 }}>
+                <span style={{ fontWeight: 700, color: '#5B8DBF', whiteSpace: 'nowrap', fontSize: 14 }}>
                   {e.amount.toLocaleString('fr-FR')} FCFA
                 </span>
                 <button className="btn-icon" title="Modifier" onClick={() => openEdit(e)}
-                  style={{ color: editingId === e.id ? '#F5C518' : undefined }}>✏️</button>
+                  style={{ color: editingId === e.id ? '#5B8DBF' : undefined }}>✏️</button>
                 <button className="btn-icon" onClick={() => setExpenses(p => p.filter(x => x.id !== e.id))} aria-label="Supprimer la dépense">✕</button>
               </div>
             ))}

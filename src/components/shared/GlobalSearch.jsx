@@ -44,7 +44,7 @@ export default function GlobalSearch({ tasks, devoirs, examens, projects, onNavi
   }
 
   const statusIcon = { 'À faire': '⭕', 'En cours': '🔵', 'Terminé': '✅' }
-  const priorityColor = { Critique: '#f87171', Important: '#F5C518', Optionnel: '#9ca3af' }
+  const priorityColor = { Critique: '#f87171', Important: '#5B8DBF', Optionnel: '#9ca3af' }
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -75,7 +75,7 @@ export default function GlobalSearch({ tasks, devoirs, examens, projects, onNavi
 
           {q && totalResults === 0 && (
             <p style={{ textAlign: 'center', color: 'var(--muted)', fontSize: 13, padding: '20px 0' }}>
-              Aucun resultat pour « {query} »
+              Rien trouvé pour « {query} »
             </p>
           )}
 
@@ -83,7 +83,7 @@ export default function GlobalSearch({ tasks, devoirs, examens, projects, onNavi
           {matchedTasks.length > 0 && (
             <div style={{ marginBottom: 12 }}>
               <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--gold)', textTransform: 'uppercase',
-                letterSpacing: 1, padding: '6px 8px', fontFamily: 'Syne' }}>
+                letterSpacing: 1, padding: '6px 8px', fontFamily: 'Fraunces' }}>
                 Taches ({matchedTasks.length})
               </p>
               {matchedTasks.map(t => (
@@ -114,7 +114,7 @@ export default function GlobalSearch({ tasks, devoirs, examens, projects, onNavi
           {matchedDevoirs.length > 0 && (
             <div style={{ marginBottom: 12 }}>
               <p style={{ fontSize: 11, fontWeight: 700, color: '#8b5cf6', textTransform: 'uppercase',
-                letterSpacing: 1, padding: '6px 8px', fontFamily: 'Syne' }}>
+                letterSpacing: 1, padding: '6px 8px', fontFamily: 'Fraunces' }}>
                 Devoirs ({matchedDevoirs.length})
               </p>
               {matchedDevoirs.map(d => (
@@ -138,7 +138,7 @@ export default function GlobalSearch({ tasks, devoirs, examens, projects, onNavi
           {matchedExamens.length > 0 && (
             <div style={{ marginBottom: 12 }}>
               <p style={{ fontSize: 11, fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase',
-                letterSpacing: 1, padding: '6px 8px', fontFamily: 'Syne' }}>
+                letterSpacing: 1, padding: '6px 8px', fontFamily: 'Fraunces' }}>
                 Examens ({matchedExamens.length})
               </p>
               {matchedExamens.map(e => (
@@ -162,7 +162,7 @@ export default function GlobalSearch({ tasks, devoirs, examens, projects, onNavi
           {matchedProjects.length > 0 && (
             <div>
               <p style={{ fontSize: 11, fontWeight: 700, color: '#4ade80', textTransform: 'uppercase',
-                letterSpacing: 1, padding: '6px 8px', fontFamily: 'Syne' }}>
+                letterSpacing: 1, padding: '6px 8px', fontFamily: 'Fraunces' }}>
                 Projets ({matchedProjects.length})
               </p>
               {matchedProjects.map(p => (

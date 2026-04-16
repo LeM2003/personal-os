@@ -137,7 +137,7 @@ export default function TextImport({ apiKey, onImport, onClose }) {
   }
 
   const priorityBadge = (p) => {
-    const colors = { Critique: '#f87171', Important: '#F5C518', Optionnel: '#9ca3af' }
+    const colors = { Critique: '#f87171', Important: '#5B8DBF', Optionnel: '#9ca3af' }
     const emoji = { Critique: '🔴', Important: '🟡', Optionnel: '⚪' }
     return (
       <span style={{ fontSize: 11, color: colors[p] || '#9ca3af' }}>
@@ -151,7 +151,7 @@ export default function TextImport({ apiKey, onImport, onClose }) {
       <div className="modal-box" onClick={e => e.stopPropagation()}
         style={{ maxWidth: 620, maxHeight: '85vh', overflow: 'auto' }}>
 
-        <h3 style={{ fontSize: 18, marginBottom: 4, color: '#F5C518' }}>
+        <h3 style={{ fontSize: 18, marginBottom: 4, color: '#5B8DBF' }}>
           📋 Import intelligent
         </h3>
         <p style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 16, lineHeight: 1.5 }}>
@@ -202,17 +202,17 @@ export default function TextImport({ apiKey, onImport, onClose }) {
                   {/* Taches */}
                   {preview.taches.length > 0 && (
                     <div style={{ marginBottom: 16 }}>
-                      <p style={{ fontSize: 13, fontWeight: 700, color: '#F5C518', marginBottom: 8, fontFamily: 'Syne' }}>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: '#5B8DBF', marginBottom: 8, fontFamily: 'Fraunces' }}>
                         ✅ Taches ({preview.taches.length})
                       </p>
                       {preview.taches.map((t, i) => (
                         <label key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '8px 12px',
-                          background: selected.taches.includes(i) ? 'rgba(245,197,24,.05)' : 'transparent',
-                          border: `1px solid ${selected.taches.includes(i) ? 'rgba(245,197,24,.2)' : 'var(--border)'}`,
+                          background: selected.taches.includes(i) ? 'rgba(91,141,191,.05)' : 'transparent',
+                          border: `1px solid ${selected.taches.includes(i) ? 'rgba(91,141,191,.2)' : 'var(--border)'}`,
                           borderRadius: 8, marginBottom: 6, cursor: 'pointer', transition: 'all .15s' }}>
                           <input type="checkbox" checked={selected.taches.includes(i)}
                             onChange={() => toggleItem('taches', i)}
-                            style={{ width: 'auto', marginTop: 2, accentColor: '#F5C518' }} />
+                            style={{ width: 'auto', marginTop: 2, accentColor: '#5B8DBF' }} />
                           <div style={{ flex: 1 }}>
                             <p style={{ fontSize: 14, margin: 0 }}>{t.name}</p>
                             <div style={{ display: 'flex', gap: 10, marginTop: 3, flexWrap: 'wrap' }}>
@@ -230,7 +230,7 @@ export default function TextImport({ apiKey, onImport, onClose }) {
                   {/* Devoirs */}
                   {preview.devoirs.length > 0 && (
                     <div style={{ marginBottom: 16 }}>
-                      <p style={{ fontSize: 13, fontWeight: 700, color: '#8b5cf6', marginBottom: 8, fontFamily: 'Syne' }}>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: '#8b5cf6', marginBottom: 8, fontFamily: 'Fraunces' }}>
                         📋 Devoirs ({preview.devoirs.length})
                       </p>
                       {preview.devoirs.map((d, i) => (
@@ -259,7 +259,7 @@ export default function TextImport({ apiKey, onImport, onClose }) {
                   {/* Examens */}
                   {preview.examens.length > 0 && (
                     <div style={{ marginBottom: 16 }}>
-                      <p style={{ fontSize: 13, fontWeight: 700, color: '#f59e0b', marginBottom: 8, fontFamily: 'Syne' }}>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: '#f59e0b', marginBottom: 8, fontFamily: 'Fraunces' }}>
                         🎓 Examens ({preview.examens.length})
                       </p>
                       {preview.examens.map((e, i) => (

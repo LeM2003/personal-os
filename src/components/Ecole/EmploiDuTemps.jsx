@@ -82,7 +82,7 @@ export default function EmploiDuTemps() {
 
       {/* ── Formulaire ajout / édition ── */}
       {showForm && (
-        <div className="card" style={{ padding: 20, marginBottom: 20, border: '1px solid rgba(245,197,24,.25)' }}>
+        <div className="card" style={{ padding: 20, marginBottom: 20, border: '1px solid rgba(91,141,191,.25)' }}>
           <h3 style={{ fontSize: 15, marginBottom: 14 }}>
             {editingId ? '✏️ Modifier le cours' : 'Nouveau cours'}
           </h3>
@@ -157,11 +157,11 @@ export default function EmploiDuTemps() {
           return (
             <div key={jour}>
               <div className={`cal-day-header${isToday ? ' today' : ''}`}>
-                <p style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 12,
-                  color: isToday ? '#F5C518' : 'var(--muted)', margin: 0, textTransform: 'uppercase', letterSpacing: .6 }}>
+                <p style={{ fontFamily: 'Fraunces', fontWeight: 700, fontSize: 12,
+                  color: isToday ? '#5B8DBF' : 'var(--muted)', margin: 0, textTransform: 'uppercase', letterSpacing: .6 }}>
                   {jour}
                 </p>
-                {isToday && <p style={{ fontSize: 10, color: '#F5C518', margin: '2px 0 0' }}>Aujourd'hui</p>}
+                {isToday && <p style={{ fontSize: 10, color: '#5B8DBF', margin: '2px 0 0' }}>Aujourd'hui</p>}
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -196,8 +196,8 @@ export default function EmploiDuTemps() {
                             {isToday && (
                               <button onClick={() => togglePresence(c.id)} aria-label="Marquer présence"
                                 style={{ fontSize: 11, padding: '5px 10px', borderRadius: 6, cursor: 'pointer', border: 'none',
-                                  background: present ? 'rgba(74,222,128,.2)' : 'rgba(245,197,24,.15)',
-                                  color: present ? '#4ade80' : '#F5C518', fontWeight: 600 }}>
+                                  background: present ? 'rgba(74,222,128,.2)' : 'rgba(91,141,191,.15)',
+                                  color: present ? '#4ade80' : '#5B8DBF', fontWeight: 600 }}>
                                 {present ? '✓ Présent' : '+ Présence'}
                               </button>
                             )}

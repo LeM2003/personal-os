@@ -21,7 +21,7 @@ export default function Ecole() {
         <h1 style={{ fontSize: 26, fontWeight: 800 }}>📚 École</h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <button className="btn-ghost" onClick={() => setShowImport(true)}
-            style={{ fontSize: 12, padding: '7px 13px', border: '1px solid rgba(245,197,24,.3)' }}>
+            style={{ fontSize: 12, padding: '7px 13px', border: '1px solid rgba(91,141,191,.3)' }}>
             📋 Import IA
           </button>
           <div className="subtab-bar">

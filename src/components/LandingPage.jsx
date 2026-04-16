@@ -1,40 +1,35 @@
 import { useState, useEffect } from 'react'
+import InstallPrompt from './shared/InstallPrompt'
 
 const PROBLEMS = [
-  { icon: '📱', text: 'Tes notes dans WhatsApp, tes cours sur papier, tes deadlines dans ta tête.' },
-  { icon: '💸', text: 'Ton argent part sans que tu saches où. Aucun suivi, aucun budget.' },
-  { icon: '🌀', text: 'Tu jongles entre 5 apps et tu finis par n\'utiliser aucune.' },
+  { icon: '📱', text: 'Tes notes dans WhatsApp. Tes deadlines dans ta tête. Ton budget, nulle part.' },
+  { icon: '💸', text: 'L\'argent part, tu ne sais pas où. La fin du mois arrive trop vite.' },
+  { icon: '🌀', text: 'Tu ouvres cinq apps. Tu n\'en utilises vraiment aucune.' },
 ]
 
 const FEATURES = [
-  { icon: '✅', title: 'Tâches intelligentes', desc: 'Priorités, deadlines, filtres, timer Pomodoro intégré. Ne rate plus rien.' },
-  { icon: '💰', title: 'Budget en FCFA', desc: 'Suis tes dépenses par catégorie, fixe des budgets, visualise où va ton argent.' },
-  { icon: '📚', title: 'Suivi scolaire', desc: 'Emploi du temps, devoirs, examens, révisions — tout au même endroit.' },
-  { icon: '🎯', title: 'Projets & Idées', desc: 'Transforme tes idées en projets avec étapes, notes et suivi de progression.' },
-  { icon: '📊', title: 'Score de productivité', desc: 'Vois ta performance sur 7 jours, tes habitudes, ta discipline — en un coup d\'œil.' },
-  { icon: '🤖', title: 'IA intégrée', desc: 'Analyse tes projets et importe tes tâches par texte grâce à l\'IA (gratuit).' },
+  { icon: '✅', title: 'Tâches & habitudes',  desc: 'Priorités, échéances, récurrences, timer Pomodoro. Ce qui doit être fait, et quand.' },
+  { icon: '💰', title: 'Budget clair',         desc: 'Tes dépenses par catégorie, tes budgets, tes abonnements. Tu vois enfin où ça part.' },
+  { icon: '📚', title: 'Côté études',          desc: 'Emploi du temps, devoirs, examens, révisions. Si tu étudies, tout est là.' },
+  { icon: '🎯', title: 'Idées & projets',      desc: 'Note tes idées. Transforme celles qui tiennent en projets avec étapes et suivi.' },
+  { icon: '📊', title: 'Ton tableau de bord',  desc: 'Ta semaine, ta discipline, ta performance. Un regard, et tu sais où tu en es.' },
+  { icon: '🤖', title: 'IA quand tu veux',     desc: 'Importe une liste, analyse un projet, accélère un tri. L\'IA aide, sans s\'imposer.' },
 ]
 
 const STATS = [
-  { value: '0 FCFA', label: 'Pour toujours' },
-  { value: '0', label: 'Téléchargement' },
-  { value: '30s', label: 'Pour commencer' },
-  { value: '∞', label: 'Hors connexion' },
-]
-
-const TESTIMONIALS = [
-  { text: "J'ai enfin un endroit où je vois mes cours, mes dépenses et mes projets sans jongler entre 5 apps.", author: 'Étudiant, UCAD', initials: 'AM' },
-  { text: "Le suivi budget en FCFA c'est ce qui manquait. Je sais enfin où passe mon argent chaque mois.", author: 'Entrepreneur, Dakar', initials: 'SD' },
-  { text: "Le Pomodoro intégré aux tâches c'est game changer. Je procrastine beaucoup moins.", author: 'Étudiante, ISM', initials: 'FK' },
+  { value: '0 FCFA', label: 'Pour commencer' },
+  { value: '0',      label: 'Téléchargement' },
+  { value: '30s',    label: 'Pour installer' },
+  { value: '∞',      label: 'Hors connexion' },
 ]
 
 const CTA_BTN = {
-  background: 'linear-gradient(135deg, #F5C518 0%, #d4a500 100%)',
-  color: '#0A0E1A', border: 'none', borderRadius: 12,
-  padding: '16px 40px', fontSize: 17, fontWeight: 800,
-  fontFamily: 'Syne', cursor: 'pointer',
-  transition: 'transform .15s, box-shadow .2s',
-  boxShadow: '0 4px 24px rgba(245,197,24,.35)',
+  background: '#5B8DBF',
+  color: '#0B1220', border: 'none', borderRadius: 12,
+  padding: '16px 40px', fontSize: 17, fontWeight: 700,
+  fontFamily: 'Fraunces', cursor: 'pointer',
+  transition: 'transform .15s, box-shadow .2s, background .2s',
+  boxShadow: '0 4px 24px rgba(91,141,191,.28)',
 }
 
 export default function LandingPage({ onStart }) {
@@ -44,7 +39,6 @@ export default function LandingPage({ onStart }) {
 
   const save = () => { if (!form.prenom.trim()) return; onStart(form) }
 
-  // Sticky CTA on mobile — appears after scrolling past hero
   useEffect(() => {
     const onScroll = () => setShowSticky(window.scrollY > 400)
     window.addEventListener('scroll', onScroll, { passive: true })
@@ -57,30 +51,33 @@ export default function LandingPage({ onStart }) {
       {/* ── HERO ── */}
       <header style={{ padding: 'clamp(36px, 6vw, 56px) 20px clamp(24px, 4vw, 40px)', textAlign: 'center', maxWidth: 700, margin: '0 auto' }}>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'var(--gold-dim)',
-          border: '1px solid rgba(245,197,24,.2)', borderRadius: 999, padding: '6px 16px', marginBottom: 24 }}>
-          <span style={{ fontSize: 12, color: 'var(--gold)', fontWeight: 600 }}>100% gratuit — aucun compte requis</span>
+          border: '1px solid rgba(91,141,191,.2)', borderRadius: 999, padding: '6px 16px', marginBottom: 24 }}>
+          <span style={{ fontSize: 12, color: 'var(--gold)', fontWeight: 600 }}>Gratuit. Pas de compte. Rien à télécharger.</span>
         </div>
 
-        <h1 style={{ fontFamily: 'Syne', fontSize: 'clamp(26px, 6vw, 48px)', fontWeight: 800,
-          lineHeight: 1.12, marginBottom: 18 }}>
-          Tes cours. Tes projets. Tes finances.{' '}
-          <span style={{ color: '#F5C518', display: 'inline-block' }}>Un seul système.</span>
+        <h1 style={{ fontFamily: 'Fraunces', fontSize: 'clamp(26px, 6vw, 48px)', fontWeight: 700,
+          lineHeight: 1.12, marginBottom: 18, letterSpacing: '-0.02em' }}>
+          Tu as du mal à gérer ta vie ?{' '}
+          <span style={{ color: '#5B8DBF', display: 'inline-block' }}>Reprends-la en main.</span>
         </h1>
 
         <p style={{ fontSize: 'clamp(14px, 3vw, 17px)', color: 'var(--muted)', lineHeight: 1.6,
-          maxWidth: 500, margin: '0 auto 28px' }}>
-          Personal OS est le dashboard conçu pour les étudiants qui construisent quelque chose.
-          Organise ta vie en 30 secondes — sans inscription, sans téléchargement.
+          maxWidth: 520, margin: '0 auto 28px' }}>
+          Un seul endroit pour tes tâches, ton argent, tes projets — et tes cours si tu étudies.
+          Peu importe ce que tu fais ou d'où tu viens. Si tu veux reprendre le contrôle, c'est pour toi.
         </p>
 
-        <button onClick={() => setShowSetup(true)} style={CTA_BTN}
-          onMouseOver={e => { e.target.style.transform = 'translateY(-2px)'; e.target.style.boxShadow = '0 6px 30px rgba(245,197,24,.45)' }}
-          onMouseOut={e => { e.target.style.transform = 'translateY(0)'; e.target.style.boxShadow = '0 4px 24px rgba(245,197,24,.35)' }}>
-          C'est gratuit, je commence →
-        </button>
+        <div style={{ display: 'inline-flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
+          <button onClick={() => setShowSetup(true)} style={CTA_BTN}
+            onMouseOver={e => { e.target.style.transform = 'translateY(-2px)'; e.target.style.boxShadow = '0 6px 30px rgba(91,141,191,.4)' }}
+            onMouseOut={e => { e.target.style.transform = 'translateY(0)'; e.target.style.boxShadow = '0 4px 24px rgba(91,141,191,.28)' }}>
+            Entrer
+          </button>
+          <InstallPrompt variant="button" />
+        </div>
 
         <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 14 }}>
-          Tes données restent dans ton navigateur. Rien n'est envoyé nulle part.
+          Tes données restent dans ton navigateur. Rien ne part ailleurs.
         </p>
       </header>
 
@@ -90,7 +87,7 @@ export default function LandingPage({ onStart }) {
         maxWidth: 600, margin: '0 auto' }}>
         {STATS.map(s => (
           <div key={s.label} style={{ textAlign: 'center' }}>
-            <p style={{ fontFamily: 'Syne', fontSize: 'clamp(18px, 4vw, 26px)', fontWeight: 800, color: '#F5C518', margin: 0 }}>
+            <p style={{ fontFamily: 'Fraunces', fontSize: 'clamp(18px, 4vw, 26px)', fontWeight: 700, color: '#5B8DBF', margin: 0 }}>
               {s.value}
             </p>
             <p style={{ fontSize: 11, color: 'var(--muted)', margin: '2px 0 0', textTransform: 'uppercase',
@@ -101,12 +98,12 @@ export default function LandingPage({ onStart }) {
 
       {/* ── LE PROBLÈME ── */}
       <section style={{ padding: 'clamp(28px, 5vw, 48px) 20px', maxWidth: 700, margin: '0 auto' }}>
-        <h2 style={{ fontFamily: 'Syne', fontSize: 'clamp(20px, 4vw, 28px)', fontWeight: 800,
-          textAlign: 'center', marginBottom: 8 }}>
-          On connaît le <span style={{ color: '#f87171' }}>chaos.</span>
+        <h2 style={{ fontFamily: 'Fraunces', fontSize: 'clamp(20px, 4vw, 28px)', fontWeight: 700,
+          textAlign: 'center', marginBottom: 8, letterSpacing: '-0.02em' }}>
+          Le <span style={{ color: '#f87171' }}>chaos</span>, on connaît.
         </h2>
         <p style={{ textAlign: 'center', color: 'var(--muted)', fontSize: 14, marginBottom: 32, maxWidth: 480, margin: '0 auto 32px' }}>
-          Être étudiant et entrepreneur en même temps, c'est gérer 10 trucs à la fois sans aucun système.
+          Gérer ses études, son travail, son argent, ses idées — sans système, c'est épuisant.
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -117,36 +114,36 @@ export default function LandingPage({ onStart }) {
               borderRadius: 12, padding: '16px 18px',
             }}>
               <span style={{ fontSize: 28, flexShrink: 0 }}>{p.icon}</span>
-              <p style={{ fontSize: 14, color: 'var(--text)', margin: 0, lineHeight: 1.6, opacity: .85 }}>{p.text}</p>
+              <p style={{ fontSize: 14, color: 'var(--text)', margin: 0, lineHeight: 1.6, opacity: .9 }}>{p.text}</p>
             </div>
           ))}
         </div>
 
         <div style={{ textAlign: 'center', marginTop: 28 }}>
-          <p style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 16, color: '#F5C518' }}>
-            Personal OS règle tout ça. En un seul endroit.
+          <p style={{ fontFamily: 'Fraunces', fontWeight: 600, fontSize: 16, color: '#5B8DBF' }}>
+            Personal OS, c'est un seul endroit pour tout ça.
           </p>
         </div>
       </section>
 
       {/* ── FEATURES ── */}
       <section style={{ padding: 'clamp(28px, 5vw, 48px) 20px', maxWidth: 900, margin: '0 auto' }}>
-        <h2 style={{ fontFamily: 'Syne', fontSize: 'clamp(20px, 4vw, 28px)', fontWeight: 800,
-          textAlign: 'center', marginBottom: 8 }}>
-          Tout ce qu'il te faut. <span style={{ color: '#F5C518' }}>Rien de plus.</span>
+        <h2 style={{ fontFamily: 'Fraunces', fontSize: 'clamp(20px, 4vw, 28px)', fontWeight: 700,
+          textAlign: 'center', marginBottom: 8, letterSpacing: '-0.02em' }}>
+          Ce qu'il te faut. <span style={{ color: '#5B8DBF' }}>Rien de plus.</span>
         </h2>
-        <p style={{ textAlign: 'center', color: 'var(--muted)', fontSize: 14, marginBottom: 36, maxWidth: 500, margin: '0 auto 36px' }}>
-          Pas besoin de 10 apps différentes. Personal OS combine tout dans une interface simple et rapide.
+        <p style={{ textAlign: 'center', color: 'var(--muted)', fontSize: 14, marginBottom: 36, maxWidth: 520, margin: '0 auto 36px' }}>
+          Pas dix apps. Une seule, qui regroupe ce qui compte vraiment au quotidien.
         </p>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 16 }}>
           {FEATURES.map(f => (
             <div key={f.title} style={{ background: 'var(--card)', border: '1px solid var(--border)',
               borderRadius: 14, padding: '22px 20px', transition: 'border-color .2s, transform .2s' }}
-              onMouseOver={e => { e.currentTarget.style.borderColor = 'rgba(245,197,24,.3)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
+              onMouseOver={e => { e.currentTarget.style.borderColor = 'rgba(91,141,191,.3)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
               onMouseOut={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.transform = 'translateY(0)' }}>
               <span style={{ fontSize: 30, display: 'block', marginBottom: 12 }}>{f.icon}</span>
-              <h3 style={{ fontFamily: 'Syne', fontSize: 15, fontWeight: 700, marginBottom: 6 }}>{f.title}</h3>
+              <h3 style={{ fontFamily: 'Fraunces', fontSize: 15, fontWeight: 600, marginBottom: 6 }}>{f.title}</h3>
               <p style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.6, margin: 0 }}>{f.desc}</p>
             </div>
           ))}
@@ -159,7 +156,7 @@ export default function LandingPage({ onStart }) {
           style={{ ...CTA_BTN, padding: '14px 36px', fontSize: 16 }}
           onMouseOver={e => e.target.style.transform = 'translateY(-2px)'}
           onMouseOut={e => e.target.style.transform = 'translateY(0)'}>
-          Commencer gratuitement →
+          Essayer
         </button>
       </section>
 
@@ -167,13 +164,16 @@ export default function LandingPage({ onStart }) {
       <section style={{ padding: 'clamp(24px, 4vw, 40px) 20px', background: 'var(--card)', borderTop: '1px solid var(--border)',
         borderBottom: '1px solid var(--border)' }}>
         <div style={{ maxWidth: 700, margin: '0 auto', textAlign: 'center' }}>
-          <h2 style={{ fontFamily: 'Syne', fontSize: 'clamp(18px, 4vw, 24px)', fontWeight: 800, marginBottom: 20 }}>
-            Créé pour toi si tu es...
+          <h2 style={{ fontFamily: 'Fraunces', fontSize: 'clamp(18px, 4vw, 24px)', fontWeight: 700, marginBottom: 8, letterSpacing: '-0.02em' }}>
+            Fait pour toi.
           </h2>
+          <p style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 20, maxWidth: 480, margin: '0 auto 20px' }}>
+            Peu importe ton rôle. Ce qui compte, c'est que tu veuilles reprendre la main.
+          </p>
           <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 10 }}>
-            {['Étudiant', 'Entrepreneur', 'Freelance', 'Étudiant-entrepreneur', 'Side-hustler', 'Auto-didacte'].map(r => (
-              <span key={r} style={{ background: 'var(--gold-dim)', border: '1px solid rgba(245,197,24,.2)',
-                borderRadius: 999, padding: '10px 20px', fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>
+            {['Étudiant', 'Entrepreneur', 'Cadre', 'Directeur', 'Freelance', 'Parent', 'Side-hustler', 'Autodidacte'].map(r => (
+              <span key={r} style={{ background: 'var(--gold-dim)', border: '1px solid rgba(91,141,191,.2)',
+                borderRadius: 999, padding: '10px 20px', fontSize: 14, fontWeight: 500, color: 'var(--text)' }}>
                 {r}
               </span>
             ))}
@@ -181,88 +181,92 @@ export default function LandingPage({ onStart }) {
         </div>
       </section>
 
-      {/* ── TÉMOIGNAGES ── */}
-      <section style={{ padding: 'clamp(28px, 5vw, 48px) 20px', maxWidth: 800, margin: '0 auto' }}>
-        <h2 style={{ fontFamily: 'Syne', fontSize: 'clamp(18px, 4vw, 24px)', fontWeight: 800,
-          textAlign: 'center', marginBottom: 24 }}>
-          Ce qu'ils en disent
-        </h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
-          {TESTIMONIALS.map((t, i) => (
-            <div key={i} style={{ background: 'var(--card)', border: '1px solid var(--border)',
-              borderRadius: 14, padding: '22px 20px' }}>
-              <p style={{ fontSize: 14, lineHeight: 1.7, margin: '0 0 16px', fontStyle: 'italic', opacity: .9 }}>
-                "{t.text}"
-              </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
-                  background: 'var(--gold-dim)', border: '1px solid rgba(245,197,24,.2)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontFamily: 'Syne', fontWeight: 700, fontSize: 13, color: '#F5C518' }}>
-                  {t.initials}
-                </div>
-                <p style={{ fontSize: 12, color: 'var(--muted)', margin: 0, fontWeight: 600 }}>{t.author}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* ── COMMENT ÇA MARCHE ── */}
-      <section style={{ padding: 'clamp(24px, 4vw, 40px) 20px', background: 'var(--card)', borderTop: '1px solid var(--border)',
-        borderBottom: '1px solid var(--border)' }}>
-        <div style={{ maxWidth: 600, margin: '0 auto' }}>
-          <h2 style={{ fontFamily: 'Syne', fontSize: 'clamp(18px, 4vw, 24px)', fontWeight: 800,
-            textAlign: 'center', marginBottom: 24 }}>
-            3 secondes pour commencer
-          </h2>
-          {[
-            { step: '1', title: 'Entre ton prénom', desc: 'Pas de compte. Pas d\'email. Pas de mot de passe. Juste ton prénom.' },
-            { step: '2', title: 'Explore le dashboard', desc: 'Tout est prêt avec des exemples. Modifie, supprime, ajoute comme tu veux.' },
-            { step: '3', title: 'Prends ta vie en main', desc: 'Tes données restent dans ton navigateur, disponibles même hors connexion.' },
-          ].map(s => (
-            <div key={s.step} style={{ display: 'flex', gap: 16, marginBottom: 22, alignItems: 'flex-start' }}>
-              <div style={{ width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
-                background: 'linear-gradient(135deg, #F5C518, #d4a500)', color: '#0A0E1A',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontFamily: 'Syne', fontWeight: 800, fontSize: 17 }}>
-                {s.step}
-              </div>
-              <div>
-                <p style={{ fontWeight: 700, fontSize: 15, margin: '0 0 4px' }}>{s.title}</p>
-                <p style={{ fontSize: 13, color: 'var(--muted)', margin: 0, lineHeight: 1.6 }}>{s.desc}</p>
-              </div>
+      <section style={{ padding: 'clamp(28px, 5vw, 48px) 20px', maxWidth: 600, margin: '0 auto' }}>
+        <h2 style={{ fontFamily: 'Fraunces', fontSize: 'clamp(18px, 4vw, 24px)', fontWeight: 700,
+          textAlign: 'center', marginBottom: 24, letterSpacing: '-0.02em' }}>
+          Trois étapes. C'est tout.
+        </h2>
+        {[
+          { step: '1', title: 'Ton prénom', desc: 'Pas d\'email, pas de mot de passe. Juste toi.' },
+          { step: '2', title: 'Ton dashboard', desc: 'Une page vide qui n\'attend que tes vraies tâches, tes vraies dépenses, tes vrais projets.' },
+          { step: '3', title: 'Ta vie, en main', desc: 'Tout reste dans ton navigateur. Même hors ligne. Même si tu changes d\'avis demain.' },
+        ].map(s => (
+          <div key={s.step} style={{ display: 'flex', gap: 16, marginBottom: 22, alignItems: 'flex-start' }}>
+            <div style={{ width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
+              background: '#5B8DBF', color: '#0B1220',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontFamily: 'Fraunces', fontWeight: 700, fontSize: 17 }}>
+              {s.step}
             </div>
-          ))}
-        </div>
+            <div>
+              <p style={{ fontWeight: 600, fontSize: 15, margin: '0 0 4px' }}>{s.title}</p>
+              <p style={{ fontSize: 13, color: 'var(--muted)', margin: 0, lineHeight: 1.6 }}>{s.desc}</p>
+            </div>
+          </div>
+        ))}
       </section>
 
       {/* ── CTA FINAL ── */}
       <section style={{ padding: 'clamp(36px, 6vw, 64px) 20px', textAlign: 'center' }}>
-        <h2 style={{ fontFamily: 'Syne', fontSize: 'clamp(20px, 5vw, 32px)', fontWeight: 800, marginBottom: 12 }}>
-          Prêt à reprendre le contrôle ?
+        <h2 style={{ fontFamily: 'Fraunces', fontSize: 'clamp(20px, 5vw, 32px)', fontWeight: 700, marginBottom: 12, letterSpacing: '-0.02em' }}>
+          Prêt à reprendre la main ?
         </h2>
         <p style={{ color: 'var(--muted)', fontSize: 15, marginBottom: 28, maxWidth: 420, margin: '0 auto 28px', lineHeight: 1.6 }}>
-          Rejoins les étudiants-entrepreneurs qui organisent leur vie avec Personal OS.
-          C'est gratuit. C'est rapide. C'est maintenant.
+          Gratuit. Rapide. Sans condition.
         </p>
         <button onClick={() => setShowSetup(true)} style={CTA_BTN}
-          onMouseOver={e => { e.target.style.transform = 'translateY(-2px)'; e.target.style.boxShadow = '0 6px 30px rgba(245,197,24,.45)' }}
-          onMouseOut={e => { e.target.style.transform = 'translateY(0)'; e.target.style.boxShadow = '0 4px 24px rgba(245,197,24,.35)' }}>
-          C'est gratuit, je commence →
+          onMouseOver={e => { e.target.style.transform = 'translateY(-2px)'; e.target.style.boxShadow = '0 6px 30px rgba(91,141,191,.4)' }}
+          onMouseOut={e => { e.target.style.transform = 'translateY(0)'; e.target.style.boxShadow = '0 4px 24px rgba(91,141,191,.28)' }}>
+          Entrer
         </button>
         <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 14 }}>
-          Pas de carte bancaire. Pas de spam. Juste toi et ton dashboard.
+          Pas de carte. Pas de spam. Juste toi et ton tableau.
+        </p>
+      </section>
+
+      {/* ── CRÉATEUR ── */}
+      <section style={{ padding: 'clamp(28px, 5vw, 48px) 20px', background: 'var(--card)',
+        borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
+        <div style={{ maxWidth: 560, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap' }}>
+          <div style={{
+            width: 64, height: 64, borderRadius: '50%', flexShrink: 0,
+            background: '#5B8DBF', color: '#0B1220',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontFamily: 'Fraunces', fontWeight: 700, fontSize: 22,
+            boxShadow: '0 4px 16px rgba(91,141,191,.25)',
+          }}>
+            MD
+          </div>
+          <div style={{ flex: 1, minWidth: 240 }}>
+            <p style={{ fontFamily: 'Fraunces', fontWeight: 700, fontSize: 16, margin: '0 0 6px' }}>
+              Mouhamadou Diouf
+            </p>
+            <p style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.6, margin: '0 0 10px' }}>
+              Étudiant en master IA, entrepreneur. J'ai construit Personal OS parce que
+              j'avais moi-même besoin de reprendre la main. Si ça t'aide aussi, dis-le moi.
+            </p>
+            <a href="https://www.linkedin.com/in/mouhamadou-diouf-364309276" target="_blank" rel="noopener noreferrer"
+              style={{ fontSize: 12, color: '#5B8DBF', textDecoration: 'none', fontWeight: 600,
+                display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              Me joindre sur LinkedIn →
+            </a>
+          </div>
+        </div>
+        <p style={{ maxWidth: 560, margin: '24px auto 0', fontSize: 12, color: 'var(--muted)',
+          textAlign: 'center', lineHeight: 1.6, fontStyle: 'italic' }}>
+          Gratuit pendant que je construis. Quand ce sera mûr, certaines fonctionnalités
+          deviendront payantes — mais ce qui est là aujourd'hui restera accessible.
         </p>
       </section>
 
       {/* ── FOOTER ── */}
       <footer style={{ padding: '28px 20px', borderTop: '1px solid var(--border)', textAlign: 'center' }}>
-        <p style={{ fontFamily: 'Syne', fontWeight: 800, color: '#F5C518', fontSize: 16, marginBottom: 4 }}>
+        <p style={{ fontFamily: 'Fraunces', fontWeight: 700, color: '#5B8DBF', fontSize: 16, marginBottom: 4 }}>
           Personal OS
         </p>
         <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 0 }}>
-          Fait avec passion à Dakar — par un étudiant, pour les étudiants.
+          Un projet indépendant · Fait à Dakar · 2026
         </p>
       </footer>
 
@@ -278,7 +282,7 @@ export default function LandingPage({ onStart }) {
       }}>
         <button onClick={() => setShowSetup(true)}
           style={{ ...CTA_BTN, width: '100%', maxWidth: 400, padding: '14px 20px', fontSize: 15 }}>
-          C'est gratuit, je commence →
+          Entrer
         </button>
       </div>
 
@@ -289,11 +293,11 @@ export default function LandingPage({ onStart }) {
           onClick={() => setShowSetup(false)}>
           <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 16,
             padding: 28, width: '100%', maxWidth: 400 }} onClick={e => e.stopPropagation()}>
-            <h3 style={{ fontFamily: 'Syne', fontSize: 22, marginBottom: 4, color: '#F5C518' }}>
-              Bienvenue !
+            <h3 style={{ fontFamily: 'Fraunces', fontSize: 22, marginBottom: 4, color: '#5B8DBF' }}>
+              Content de te voir.
             </h3>
             <p style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 20, lineHeight: 1.6 }}>
-              Juste ton prénom pour personnaliser ton dashboard. Rien d'autre.
+              Juste ton prénom pour commencer. Rien d'autre, rien ne part ailleurs.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <input value={form.prenom} onChange={e => setForm({ ...form, prenom: e.target.value })}
@@ -304,15 +308,16 @@ export default function LandingPage({ onStart }) {
                 onKeyDown={e => e.key === 'Enter' && save()} />
               <select value={form.role} onChange={e => setForm({ ...form, role: e.target.value })}>
                 <option>Étudiant-entrepreneur</option><option>Étudiant</option>
-                <option>Entrepreneur</option><option>Freelance</option><option>Autre</option>
+                <option>Entrepreneur</option><option>Cadre</option><option>Directeur</option>
+                <option>Freelance</option><option>Parent</option><option>Autre</option>
               </select>
             </div>
             <button onClick={save} disabled={!form.prenom.trim()}
-              style={{ width: '100%', marginTop: 20, background: 'linear-gradient(135deg, #F5C518 0%, #d4a500 100%)',
-                color: '#0A0E1A', border: 'none', borderRadius: 10, padding: '14px 20px', fontSize: 15,
-                fontWeight: 800, fontFamily: 'Syne', cursor: 'pointer',
+              style={{ width: '100%', marginTop: 20, background: '#5B8DBF',
+                color: '#0B1220', border: 'none', borderRadius: 10, padding: '14px 20px', fontSize: 15,
+                fontWeight: 700, fontFamily: 'Fraunces', cursor: 'pointer',
                 opacity: form.prenom.trim() ? 1 : .5, transition: 'opacity .2s' }}>
-              Commencer →
+              On y va
             </button>
           </div>
         </div>

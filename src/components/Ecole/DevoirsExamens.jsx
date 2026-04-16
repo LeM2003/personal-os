@@ -68,7 +68,7 @@ export default function DevoirsExamens() {
         </div>
 
         {showDForm && (
-          <div className="card" style={{ padding: 16, marginBottom: 14, border: '1px solid rgba(245,197,24,.25)' }}>
+          <div className="card" style={{ padding: 16, marginBottom: 14, border: '1px solid rgba(91,141,191,.25)' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <input value={dForm.matiere} onChange={e => setDForm({ ...dForm, matiere: e.target.value })} placeholder="Matière *" autoFocus />
               <input value={dForm.description} onChange={e => setDForm({ ...dForm, description: e.target.value })} placeholder="Description du devoir" />
@@ -79,10 +79,10 @@ export default function DevoirsExamens() {
 
               {/* Liaison tâche */}
               <label style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--muted)', fontSize: 13,
-                cursor: 'pointer', background: 'rgba(245,197,24,.05)', border: '1px solid rgba(245,197,24,.2)',
+                cursor: 'pointer', background: 'rgba(91,141,191,.05)', border: '1px solid rgba(91,141,191,.2)',
                 borderRadius: 8, padding: '9px 12px' }}>
                 <input type="checkbox" checked={createTask} onChange={e => setCreateTask(e.target.checked)}
-                  style={{ width: 'auto', accentColor: '#F5C518' }} />
+                  style={{ width: 'auto', accentColor: '#5B8DBF' }} />
                 ✅ Créer une tâche associée dans mes Tâches
               </label>
 
@@ -95,11 +95,11 @@ export default function DevoirsExamens() {
         )}
 
         {sortedDevoirs.length === 0
-          ? <EmptyState icon="🎉" msg="Aucun devoir enregistré." sub="Profitez-en !" />
+          ? <EmptyState icon="✨" msg="Aucun devoir. Profite." sub="Ça ne durera pas." />
           : sortedDevoirs.map(d => {
             const due = daysUntil(d.dateRendu)
             const isLinked = tasks?.some(t => t.linkedDevoirId === d.id)
-            const borderColor = due < 0 ? '#f87171' : due <= 2 ? '#f87171' : due <= 7 ? '#F5C518' : 'var(--border)'
+            const borderColor = due < 0 ? '#f87171' : due <= 2 ? '#f87171' : due <= 7 ? '#5B8DBF' : 'var(--border)'
             return (
               <div key={d.id} className="card" style={{ padding: '12px 14px', marginBottom: 8, borderLeft: `3px solid ${borderColor}` }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
@@ -163,7 +163,7 @@ export default function DevoirsExamens() {
         )}
 
         {sortedExamens.length === 0
-          ? <EmptyState icon="📖" msg="Aucun examen planifié." sub="Bonne période !" />
+          ? <EmptyState icon="📖" msg="Pas d'examen en vue." sub="Bonne période pour prendre de l'avance." />
           : sortedExamens.map(e => {
             const due = daysUntil(e.date)
             const total = +e.totalChapitres || 1
@@ -174,9 +174,9 @@ export default function DevoirsExamens() {
             const isTomorrow = due === 1
             const isUrgent = due >= 0 && due <= 3
 
-            const countdownBg = isToday ? 'rgba(239,68,68,.12)' : isTomorrow ? 'rgba(249,115,22,.1)' : isUrgent ? 'rgba(245,197,24,.07)' : 'var(--surface-deep)'
-            const countdownBorder = isToday ? 'rgba(239,68,68,.4)' : isTomorrow ? 'rgba(249,115,22,.3)' : isUrgent ? 'rgba(245,197,24,.2)' : 'var(--border)'
-            const countdownColor = isToday ? '#f87171' : isTomorrow ? '#f97316' : isUrgent ? '#F5C518' : 'var(--muted)'
+            const countdownBg = isToday ? 'rgba(239,68,68,.12)' : isTomorrow ? 'rgba(249,115,22,.1)' : isUrgent ? 'rgba(91,141,191,.07)' : 'var(--surface-deep)'
+            const countdownBorder = isToday ? 'rgba(239,68,68,.4)' : isTomorrow ? 'rgba(249,115,22,.3)' : isUrgent ? 'rgba(91,141,191,.2)' : 'var(--border)'
+            const countdownColor = isToday ? '#f87171' : isTomorrow ? '#f97316' : isUrgent ? '#5B8DBF' : 'var(--muted)'
 
             return (
               <div key={e.id} className="card" style={{ padding: '13px 14px', marginBottom: 8,
@@ -223,7 +223,7 @@ export default function DevoirsExamens() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <button className="btn-icon" style={{ width: 32, height: 32, background: 'var(--hover-bg)', fontSize: 14, borderRadius: 6 }}
                         onClick={() => setExamens(p => p.map(x => x.id === e.id ? { ...x, chapitresRevises: Math.max(0, revus - 1) } : x))}>−</button>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: pct === 100 ? '#4ade80' : '#F5C518', minWidth: 40, textAlign: 'center' }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: pct === 100 ? '#4ade80' : '#5B8DBF', minWidth: 40, textAlign: 'center' }}>
                         {revus}/{total}
                       </span>
                       <button className="btn-icon" style={{ width: 32, height: 32, background: 'var(--hover-bg)', fontSize: 14, borderRadius: 6 }}

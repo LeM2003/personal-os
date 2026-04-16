@@ -38,7 +38,7 @@ function ScoreRing({ score, size = 90 }) {
   const r = (size - 14) / 2
   const circ = 2 * Math.PI * r
   const dash = (score / 100) * circ
-  const color = score >= 75 ? '#4ade80' : score >= 50 ? '#F5C518' : score >= 30 ? '#f97316' : '#f87171'
+  const color = score >= 75 ? '#4ade80' : score >= 50 ? '#5B8DBF' : score >= 30 ? '#f97316' : '#f87171'
   return (
     <svg width={size} height={size} style={{ transform: 'rotate(-90deg)', flexShrink: 0 }}>
       <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--bar-bg)" strokeWidth={7} />
@@ -162,7 +162,7 @@ export default function Stats() {
     const totalW = scores.reduce((s, x) => s + x.w, 0)
     return Math.round(scores.reduce((s, x) => s + x.v * x.w, 0) / totalW)
   })()
-  const scoreColor = scoreGlobal >= 75 ? '#4ade80' : scoreGlobal >= 50 ? '#F5C518' : scoreGlobal >= 30 ? '#f97316' : '#f87171'
+  const scoreColor = scoreGlobal >= 75 ? '#4ade80' : scoreGlobal >= 50 ? '#5B8DBF' : scoreGlobal >= 30 ? '#f97316' : '#f87171'
   const scoreLabel = scoreGlobal >= 80 ? '🏆 Excellent' : scoreGlobal >= 60 ? '💪 Bien' : scoreGlobal >= 40 ? '⚡ À améliorer' : '🔄 Relance-toi'
 
   const dimensions = [
@@ -194,7 +194,7 @@ export default function Stats() {
             </div>
           </div>
           <div style={{ flex: 1 }}>
-            <p style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 15, color: scoreColor, margin: 0 }}>{scoreLabel}</p>
+            <p style={{ fontFamily: 'Fraunces', fontWeight: 700, fontSize: 15, color: scoreColor, margin: 0 }}>{scoreLabel}</p>
             <p style={{ fontSize: 12, color: 'var(--muted)', margin: '4px 0 12px', lineHeight: 1.5 }}>
               Score global — tâches, habitudes, école, discipline
             </p>
@@ -202,7 +202,7 @@ export default function Stats() {
               {dimensions.map(x => (
                 <div key={x.label} style={{ background: 'var(--surface-deep)', borderRadius: 8, padding: '5px 10px', textAlign: 'center' }}>
                   <p style={{ fontSize: 14, fontWeight: 700, margin: 0,
-                    color: x.value >= 70 ? '#4ade80' : x.value >= 40 ? '#F5C518' : '#f87171' }}>{x.value}%</p>
+                    color: x.value >= 70 ? '#4ade80' : x.value >= 40 ? '#5B8DBF' : '#f87171' }}>{x.value}%</p>
                   <p style={{ fontSize: 10, color: 'var(--muted)', margin: 0 }}>{x.label}</p>
                 </div>
               ))}
@@ -218,7 +218,7 @@ export default function Stats() {
         <StatCard icon="🔥" value={`${habitsDoneToday}/${todayHabits.length}`}
           label="Habitudes aujourd'hui" color="#f97316" />
         <StatCard icon="🎯" value={activeProjects.length}
-          label="Projets actifs" color="#F5C518" />
+          label="Projets actifs" color="#5B8DBF" />
         <StatCard icon="💳" value={`${Math.round(monthlySubsCost).toLocaleString('fr-FR')} F`}
           label="Abonnements/mois" color="#60a5fa" />
       </div>
@@ -228,18 +228,18 @@ export default function Stats() {
 
         <div className="card" style={{ padding: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-            <p style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, margin: 0 }}>
+            <p style={{ fontFamily: 'Fraunces', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, margin: 0 }}>
               ✅ Tâches — 7 jours
             </p>
             <span style={{ fontSize: 20, fontWeight: 800,
-              color: completionRate >= 70 ? '#4ade80' : completionRate >= 40 ? '#F5C518' : '#f87171' }}>
+              color: completionRate >= 70 ? '#4ade80' : completionRate >= 40 ? '#5B8DBF' : '#f87171' }}>
               {completionRate}%
             </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
             <button className="btn-icon" onClick={() => setWeekOffset(o => o - 1)}
               style={{ fontSize: 14, padding: '2px 8px' }} aria-label="Semaine précédente">←</button>
-            <span style={{ fontSize: 12, color: isCurrentWeek ? '#F5C518' : 'var(--muted)', fontWeight: 600 }}>
+            <span style={{ fontSize: 12, color: isCurrentWeek ? '#5B8DBF' : 'var(--muted)', fontWeight: 600 }}>
               {isCurrentWeek ? 'Cette semaine' : weekRangeLabel}
             </span>
             <div style={{ display: 'flex', gap: 4 }}>
@@ -255,7 +255,7 @@ export default function Stats() {
           <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
             {last7.map(d => (
               <MiniBar key={d.date} value={d.created} max={maxCreated}
-                color={d.date === today ? '#F5C518' : '#3b82f6'}
+                color={d.date === today ? '#5B8DBF' : '#3b82f6'}
                 label={d.label} sublabel={d.created > 0 ? `${d.done}/${d.created}` : '—'} />
             ))}
           </div>
@@ -268,7 +268,7 @@ export default function Stats() {
         </div>
 
         <div className="card" style={{ padding: 20 }}>
-          <p style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, marginBottom: 16 }}>
+          <p style={{ fontFamily: 'Fraunces', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, marginBottom: 16 }}>
             🔥 Habitudes récurrentes
           </p>
           {allHabits.length === 0 ? (
@@ -323,7 +323,7 @@ export default function Stats() {
 
         <div className="card" style={{ padding: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <p style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8 }}>
+            <p style={{ fontFamily: 'Fraunces', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8 }}>
               💸 Dépenses — 4 semaines
             </p>
             {weekTrend !== null && (
@@ -335,7 +335,7 @@ export default function Stats() {
           <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
             {weeks.map((w, i) => (
               <MiniBar key={w.start} value={w.total} max={maxWeek}
-                color={i === 3 ? '#F5C518' : '#3b82f6'}
+                color={i === 3 ? '#5B8DBF' : '#3b82f6'}
                 label={w.label} sublabel={w.total > 0 ? `${Math.round(w.total / 1000)}k F` : '0'} />
             ))}
           </div>
@@ -360,7 +360,7 @@ export default function Stats() {
         </div>
 
         <div className="card" style={{ padding: 20 }}>
-          <p style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, marginBottom: 16 }}>
+          <p style={{ fontFamily: 'Fraunces', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, marginBottom: 16 }}>
             🎯 Tâches par priorité
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 20 }}>
@@ -389,7 +389,7 @@ export default function Stats() {
               { label: 'Total tâches', value: totalTasks, color: 'var(--muted)' },
               { label: 'Terminées',    value: totalDone,  color: '#4ade80' },
               { label: 'En cours',     value: tasks.filter(t => t.status === 'En cours').length, color: '#60a5fa' },
-              { label: 'À faire',      value: tasks.filter(t => t.status === 'À faire').length,  color: '#F5C518' },
+              { label: 'À faire',      value: tasks.filter(t => t.status === 'À faire').length,  color: '#5B8DBF' },
             ].map(s => (
               <div key={s.label} style={{ background: 'var(--surface-deep)', borderRadius: 8, padding: '10px 12px' }}>
                 <p style={{ fontSize: 18, fontWeight: 800, color: s.color, margin: 0 }}>{s.value}</p>
@@ -405,7 +405,7 @@ export default function Stats() {
 
         {/* École */}
         <div className="card" style={{ padding: 20 }}>
-          <p style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, marginBottom: 16 }}>
+          <p style={{ fontFamily: 'Fraunces', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, marginBottom: 16 }}>
             📚 École
           </p>
           {devoirsTotal === 0 && examens.length === 0 ? (
@@ -421,13 +421,13 @@ export default function Stats() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
                     <span style={{ fontSize: 13, fontWeight: 600 }}>Devoirs rendus</span>
                     <span style={{ fontSize: 13, fontWeight: 700,
-                      color: devoirsRate >= 70 ? '#4ade80' : devoirsRate >= 40 ? '#F5C518' : '#f87171' }}>
+                      color: devoirsRate >= 70 ? '#4ade80' : devoirsRate >= 40 ? '#5B8DBF' : '#f87171' }}>
                       {devoirsRendus}/{devoirsTotal} — {devoirsRate}%
                     </span>
                   </div>
                   <div style={{ background: 'var(--bar-bg)', borderRadius: 999, height: 8, overflow: 'hidden', marginBottom: 8 }}>
                     <div style={{ width: `${devoirsRate}%`, height: '100%',
-                      background: devoirsRate >= 70 ? '#4ade80' : '#F5C518',
+                      background: devoirsRate >= 70 ? '#4ade80' : '#5B8DBF',
                       borderRadius: 999, transition: 'width .5s ease' }} />
                   </div>
                   {devoirsUrgents > 0 && (
@@ -454,7 +454,7 @@ export default function Stats() {
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
                             <span style={{ fontSize: 13, fontWeight: 600 }}>{e.matiere}</span>
                             <span style={{ fontSize: 12, fontWeight: 700,
-                              color: j <= 3 ? '#f87171' : j <= 7 ? '#F5C518' : '#4ade80' }}>
+                              color: j <= 3 ? '#f87171' : j <= 7 ? '#5B8DBF' : '#4ade80' }}>
                               J-{j}
                             </span>
                           </div>
@@ -467,7 +467,7 @@ export default function Stats() {
                               </div>
                               <div style={{ background: 'var(--bar-bg)', borderRadius: 999, height: 5, overflow: 'hidden' }}>
                                 <div style={{ width: `${revPct}%`, height: '100%',
-                                  background: revPct >= 70 ? '#4ade80' : revPct >= 40 ? '#F5C518' : '#f87171',
+                                  background: revPct >= 70 ? '#4ade80' : revPct >= 40 ? '#5B8DBF' : '#f87171',
                                   borderRadius: 999, transition: 'width .5s ease' }} />
                               </div>
                             </>
@@ -484,7 +484,7 @@ export default function Stats() {
                   borderTop: '1px solid var(--border)', paddingTop: 12 }}>
                   <span style={{ fontSize: 12, color: 'var(--muted)' }}>Révisions globales (tous examens)</span>
                   <span style={{ fontSize: 13, fontWeight: 700,
-                    color: revisionRate >= 70 ? '#4ade80' : '#F5C518' }}>{revisionRate}%</span>
+                    color: revisionRate >= 70 ? '#4ade80' : '#5B8DBF' }}>{revisionRate}%</span>
                 </div>
               )}
             </>
@@ -494,7 +494,7 @@ export default function Stats() {
         {/* Projets */}
         <div className="card" style={{ padding: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <p style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8 }}>
+            <p style={{ fontFamily: 'Fraunces', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8 }}>
               🚀 Projets actifs
             </p>
             {projectsWithProgress.length > 0 && (
@@ -516,15 +516,15 @@ export default function Stats() {
                     <span style={{ fontSize: 13, fontWeight: 600, flex: 1, overflow: 'hidden',
                       textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginRight: 8 }}>{proj.name}</span>
                     <span style={{ fontSize: 12, fontWeight: 700, flexShrink: 0,
-                      color: proj.progress >= 70 ? '#4ade80' : proj.progress >= 40 ? '#F5C518' : '#f97316' }}>
+                      color: proj.progress >= 70 ? '#4ade80' : proj.progress >= 40 ? '#5B8DBF' : '#f97316' }}>
                       {proj.progress}%
                     </span>
                   </div>
                   <div style={{ background: 'var(--bar-bg)', borderRadius: 999, height: 7, overflow: 'hidden', marginBottom: 4 }}>
                     <div style={{ width: `${proj.progress}%`, height: '100%',
-                      background: proj.progress >= 70 ? '#4ade80' : proj.progress >= 40 ? '#F5C518' : '#f97316',
+                      background: proj.progress >= 70 ? '#4ade80' : proj.progress >= 40 ? '#5B8DBF' : '#f97316',
                       borderRadius: 999, transition: 'width .6s ease',
-                      boxShadow: `0 0 6px ${proj.progress >= 70 ? '#4ade8060' : '#F5C51860'}` }} />
+                      boxShadow: `0 0 6px ${proj.progress >= 70 ? '#4ade8060' : '#5B8DBF60'}` }} />
                   </div>
                   <p style={{ fontSize: 11, color: 'var(--muted)', margin: 0 }}>
                     {proj.taskDone}/{proj.taskCount} tâche{proj.taskCount !== 1 ? 's' : ''}
@@ -538,12 +538,12 @@ export default function Stats() {
           <div style={{ borderTop: '1px solid var(--border)', paddingTop: 14, marginTop: 16,
             display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             <div style={{ background: 'var(--surface-deep)', borderRadius: 8, padding: '10px 12px' }}>
-              <p style={{ fontSize: 18, fontWeight: 800, color: '#F5C518', margin: 0 }}>{activeProjects.length}</p>
+              <p style={{ fontSize: 18, fontWeight: 800, color: '#5B8DBF', margin: 0 }}>{activeProjects.length}</p>
               <p style={{ fontSize: 11, color: 'var(--muted)', margin: '3px 0 0' }}>Projets actifs</p>
             </div>
             <div style={{ background: 'var(--surface-deep)', borderRadius: 8, padding: '10px 12px' }}>
               <p style={{ fontSize: 18, fontWeight: 800, margin: 0,
-                color: disciplineRate >= 80 ? '#4ade80' : disciplineRate >= 60 ? '#F5C518' : '#f87171' }}>
+                color: disciplineRate >= 80 ? '#4ade80' : disciplineRate >= 60 ? '#5B8DBF' : '#f87171' }}>
                 {disciplineRate}%
               </p>
               <p style={{ fontSize: 11, color: 'var(--muted)', margin: '3px 0 0' }}>Taux de discipline</p>

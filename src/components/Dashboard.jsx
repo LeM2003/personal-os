@@ -53,12 +53,12 @@ export default function Dashboard() {
   const devoirsUrgCount = devoirs.filter(d => { const j = daysUntil(d.dateRendu); return d.statut !== 'Rendu' && j >= 0 && j <= 1 }).length
   const chargeScore     = todayCourses.length + tasksDueToday + devoirsUrgCount * 2
   const meteo = chargeScore === 0
-    ? { label: 'Calme',   icon: <MoonIcon size={28} />, color: '#9ca3af', sub: 'Profite pour avancer' }
+    ? { label: 'Calme',   icon: <MoonIcon size={28} />, color: '#9ca3af', sub: 'Tu peux prendre de l\'avance' }
     : chargeScore <= 2
     ? { label: 'Légère',  icon: <CloudSun size={28} />, color: '#4ade80', sub: `${todayCourses.length + tasksDueToday} élément(s)` }
     : chargeScore <= 5
-    ? { label: 'Normale', icon: <Cloud size={28} />, color: '#F5C518', sub: `${todayCourses.length + tasksDueToday} élément(s)` }
-    : { label: 'Chargée', icon: <CloudLightning size={28} />, color: '#f87171', sub: 'Organise-toi maintenant' }
+    ? { label: 'Normale', icon: <Cloud size={28} />, color: '#5B8DBF', sub: `${todayCourses.length + tasksDueToday} élément(s)` }
+    : { label: 'Chargée', icon: <CloudLightning size={28} />, color: '#f87171', sub: 'Priorise maintenant' }
 
   /* ── Score de la semaine (7 derniers jours) ── */
   const weekScore = (() => {
@@ -109,7 +109,7 @@ export default function Dashboard() {
       <div style={{ marginBottom: 20 }}>
         <p style={{ color: 'var(--muted)', fontSize: 13, textTransform: 'capitalize', marginBottom: 6 }}>{todayLabel()}</p>
         <h1 style={{ fontSize: 30, fontWeight: 800, lineHeight: 1.2 }}>
-          {greeting()}, <span style={{ color: '#F5C518' }}>{profile?.prenom || 'toi'}</span>
+          {greeting()}, <span style={{ color: '#5B8DBF' }}>{profile?.prenom || 'toi'}</span>
         </h1>
       </div>
 
@@ -131,20 +131,20 @@ export default function Dashboard() {
               {streak} jour{streak !== 1 ? 's' : ''}
             </p>
             <p style={{ fontSize: 10, color: 'var(--muted)', margin: 0 }}>
-              {streak === 0 ? 'Commence aujourd\'hui' : streak >= 7 ? 'En feu !' : 'Continue comme ça'}
+              {streak === 0 ? 'On commence aujourd\'hui' : streak >= 7 ? 'Tu tiens la cadence' : 'Garde le rythme'}
             </p>
           </div>
         </div>
         <div className="card" style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
-          <TrendingUp size={28} style={{ color: weekScore >= 70 ? '#4ade80' : weekScore >= 40 ? '#F5C518' : '#f87171' }} />
+          <TrendingUp size={28} style={{ color: weekScore >= 70 ? '#4ade80' : weekScore >= 40 ? '#5B8DBF' : '#f87171' }} />
           <div>
             <p style={{ fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: .7, margin: 0 }}>Score 7 jours</p>
             <p style={{ fontSize: 16, fontWeight: 700, margin: '2px 0 1px',
-              color: weekScore >= 70 ? '#4ade80' : weekScore >= 40 ? '#F5C518' : '#f87171' }}>
+              color: weekScore >= 70 ? '#4ade80' : weekScore >= 40 ? '#5B8DBF' : '#f87171' }}>
               {weekScore}%
             </p>
             <p style={{ fontSize: 10, color: 'var(--muted)', margin: 0 }}>
-              {weekScore >= 70 ? 'Excellente semaine' : weekScore >= 40 ? 'Peut mieux faire' : 'Reprends le rythme'}
+              {weekScore >= 70 ? 'Belle semaine' : weekScore >= 40 ? 'Correct, on peut mieux' : 'On se remet dedans'}
             </p>
           </div>
         </div>
@@ -153,22 +153,22 @@ export default function Dashboard() {
       {/* ── Objectif ── */}
       <div className="card card-gold" style={{ padding: '16px 20px', marginBottom: 24 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-          <p style={{ color: '#F5C518', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, margin: 0 }}>
-            <Target size={12} style={{ display: 'inline', verticalAlign: -1, marginRight: 4 }} /> Objectif principal du moment
+          <p style={{ color: '#5B8DBF', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, margin: 0 }}>
+            <Target size={12} style={{ display: 'inline', verticalAlign: -1, marginRight: 4 }} /> Ce qui compte en ce moment
           </p>
-          {objectif && <span style={{ fontSize: 10, color: '#4ade80', fontWeight: 500 }}>Sauvegardé automatiquement</span>}
+          {objectif && <span style={{ fontSize: 10, color: '#4ade80', fontWeight: 500 }}>Enregistré</span>}
         </div>
         <input value={objectif} onChange={e => setObjectif(e.target.value)}
           style={{ background: 'transparent', border: 'none', color: 'var(--text)', fontSize: 16,
-            fontWeight: 500, fontFamily: 'Syne', padding: 0, boxShadow: 'none' }}
-          placeholder="Ex: Valider mon semestre et lancer mon projet…" />
+            fontWeight: 500, fontFamily: 'Fraunces', padding: 0, boxShadow: 'none' }}
+          placeholder="Une phrase. Celle que tu n'as pas envie d'oublier." />
       </div>
 
       {/* ── KPI Cards ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 24 }} className="grid-3">
-        <StatCard icon={<ClipboardList size={24} color="#F5C518" />} value={`${createdToday.length}`} label="Tâches du jour" color="#F5C518" />
+        <StatCard icon={<ClipboardList size={24} color="#5B8DBF" />} value={`${createdToday.length}`} label="Tâches du jour" color="#5B8DBF" />
         <StatCard icon={<CheckCircle2 size={24} color="#4ade80" />} value={`${completedToday}`} label="Terminées" color="#4ade80" />
-        <StatCard icon={<Receipt size={24} color="#60a5fa" />} value={`${todayExpTotal.toLocaleString('fr-FR')} F`} label="Dépensé today" color="#60a5fa" />
+        <StatCard icon={<Receipt size={24} color="#60a5fa" />} value={`${todayExpTotal.toLocaleString('fr-FR')} F`} label="Dépensé aujourd'hui" color="#60a5fa" />
         <StatCard icon={nextExam ? <GraduationCap size={24} color="#f87171" /> : <BookOpen size={24} color="#9ca3af" />}
           value={nextExam ? `J-${daysUntil(nextExam.date)}` : '—'}
           label={nextExam ? nextExam.matiere : 'Pas d\'examen'} color={nextExam ? '#f87171' : '#9ca3af'} />
@@ -188,16 +188,16 @@ export default function Dashboard() {
         {/* Habitudes */}
         <div className="card" style={{ padding: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-            <p style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, margin: 0 }}>
+            <p style={{ fontFamily: 'Fraunces', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, margin: 0 }}>
               <Repeat size={13} style={{ display: 'inline', verticalAlign: -2, marginRight: 4 }} /> Habitudes du jour
             </p>
             <span style={{ fontSize: 14, fontWeight: 700,
-              color: habitsPct >= 80 ? '#4ade80' : habitsPct >= 50 ? '#F5C518' : '#f87171' }}>
+              color: habitsPct >= 80 ? '#4ade80' : habitsPct >= 50 ? '#5B8DBF' : '#f87171' }}>
               {habitsPct}%
             </span>
           </div>
           {todayHabits.length === 0
-            ? <EmptyState icon="😴" msg="Pas d'habitudes aujourd'hui." />
+            ? <EmptyState icon="😌" msg="Pas d'habitudes prévues. Repos." />
             : todayHabits.map(t => (
               <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0',
                 borderBottom: '1px solid var(--border)' }}>
@@ -207,7 +207,7 @@ export default function Dashboard() {
                   textDecoration: t.status === 'Terminé' && t.lastCompletedAt === now ? 'line-through' : 'none' }}>
                   {t.name}
                 </span>
-                {t.recurrenceTime && <span style={{ fontSize: 11, color: '#F5C518', display: 'flex', alignItems: 'center', gap: 3 }}><Clock size={11} /> {t.recurrenceTime}</span>}
+                {t.recurrenceTime && <span style={{ fontSize: 11, color: '#5B8DBF', display: 'flex', alignItems: 'center', gap: 3 }}><Clock size={11} /> {t.recurrenceTime}</span>}
               </div>
             ))
           }
@@ -215,16 +215,16 @@ export default function Dashboard() {
 
         {/* Top 3 */}
         <div className="card" style={{ padding: 20 }}>
-          <p style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, marginBottom: 14 }}>
+          <p style={{ fontFamily: 'Fraunces', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, marginBottom: 14 }}>
             <Zap size={13} style={{ display: 'inline', verticalAlign: -2, marginRight: 4 }} /> Top priorités
           </p>
           {top3.length === 0
-            ? <EmptyState icon="🎉" msg="Toutes les tâches sont terminées !" />
+            ? <EmptyState icon="✨" msg="Tout est terminé. Profite." />
             : top3.map((t, i) => (
               <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0',
                 borderBottom: '1px solid var(--border)', cursor: 'pointer' }}
                 onClick={() => setTab('taches')}>
-                <span style={{ color: '#F5C518', fontFamily: 'Syne', fontWeight: 700, fontSize: 14 }}>{i + 1}</span>
+                <span style={{ color: '#5B8DBF', fontFamily: 'Fraunces', fontWeight: 700, fontSize: 14 }}>{i + 1}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontSize: 13, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</p>
                   <div style={{ display: 'flex', gap: 8, marginTop: 2 }}>
@@ -241,11 +241,11 @@ export default function Dashboard() {
       {/* ── Cours du jour + Dépenses ── */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }} className="grid-2">
         <div className="card" style={{ padding: 20 }}>
-          <p style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, marginBottom: 14 }}>
+          <p style={{ fontFamily: 'Fraunces', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, marginBottom: 14 }}>
             <BookOpen size={13} style={{ display: 'inline', verticalAlign: -2, marginRight: 4 }} /> Cours aujourd'hui
           </p>
           {todayCourses.length === 0
-            ? <EmptyState icon="🎉" msg="Pas de cours aujourd'hui !" />
+            ? <EmptyState icon="☕" msg="Pas de cours. Journée à toi." />
             : todayCourses.map(c => (
               <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0',
                 borderBottom: '1px solid var(--border)' }}>
@@ -263,21 +263,21 @@ export default function Dashboard() {
 
         <div className="card" style={{ padding: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-            <p style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, margin: 0 }}>
+            <p style={{ fontFamily: 'Fraunces', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, margin: 0 }}>
               <Receipt size={13} style={{ display: 'inline', verticalAlign: -2, marginRight: 4 }} /> Dépenses du jour
             </p>
-            <span style={{ fontSize: 14, fontWeight: 700, color: '#F5C518' }}>
+            <span style={{ fontSize: 14, fontWeight: 700, color: '#5B8DBF' }}>
               {todayExpTotal.toLocaleString('fr-FR')} F
             </span>
           </div>
           {todayExpenses.length === 0
-            ? <EmptyState icon="💰" msg="Aucune dépense aujourd'hui." />
+            ? <EmptyState icon="💰" msg="Rien dépensé aujourd'hui. Rare, profite." />
             : todayExpenses.slice(0, 5).map(e => (
               <div key={e.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0',
                 borderBottom: '1px solid var(--border)' }}>
                 <div style={{ width: 8, height: 8, borderRadius: '50%', background: CAT_COLORS[e.category] || '#6b7280' }} />
                 <span style={{ flex: 1, fontSize: 13 }}>{e.note || e.category}</span>
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#F5C518' }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#5B8DBF' }}>
                   {e.amount.toLocaleString('fr-FR')} F
                 </span>
               </div>
@@ -289,7 +289,7 @@ export default function Dashboard() {
       {/* ── Abonnements à venir ── */}
       {upcomingSubs.length > 0 && (
         <div className="card" style={{ padding: 20 }}>
-          <p style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, marginBottom: 14 }}>
+          <p style={{ fontFamily: 'Fraunces', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, marginBottom: 14 }}>
             <CreditCard size={13} style={{ display: 'inline', verticalAlign: -2, marginRight: 4 }} /> Prochains paiements (30j)
           </p>
           {upcomingSubs.slice(0, 5).map(s => (
@@ -302,7 +302,7 @@ export default function Dashboard() {
                   {fmtDate(s._next)} — J-{daysUntil(s._next)}
                 </p>
               </div>
-              <span style={{ fontWeight: 700, color: '#F5C518', fontSize: 13 }}>
+              <span style={{ fontWeight: 700, color: '#5B8DBF', fontSize: 13 }}>
                 {s.amount.toLocaleString('fr-FR')} F
               </span>
             </div>

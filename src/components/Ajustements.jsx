@@ -27,14 +27,14 @@ export default function Ajustements() {
     <div>
       <PageHeader
         title="🔄 Ajustements"
-        sub={`${adjustments.length} tâche${adjustments.length !== 1 ? 's' : ''} en attente de reprogrammation`}
+        sub={`${adjustments.length} tâche${adjustments.length !== 1 ? 's' : ''} à reprogrammer`}
       />
 
       {adjustments.length === 0
         ? <div style={{ textAlign: 'center', padding: '80px 20px' }}>
             <div style={{ fontSize: 72, marginBottom: 16 }}>🏆</div>
-            <h2 style={{ fontFamily: 'Syne', color: '#4ade80', fontSize: 22, marginBottom: 8 }}>Aucun ajustement nécessaire !</h2>
-            <p style={{ color: 'var(--muted)', fontSize: 15 }}>Vous êtes à jour sur toutes vos tâches. Continuez comme ça !</p>
+            <h2 style={{ fontFamily: 'Fraunces', color: '#4ade80', fontSize: 22, marginBottom: 8 }}>Rien à réajuster.</h2>
+            <p style={{ color: 'var(--muted)', fontSize: 15 }}>Tu es à jour. Garde cette cadence.</p>
           </div>
         : <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {adjustments.map(adj => (

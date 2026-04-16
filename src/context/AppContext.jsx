@@ -14,6 +14,8 @@ export function AppProvider({ children }) {
   const [projects,      setProjects]      = useLS('pos_projects',      [])
   const [expenses,      setExpenses]      = useLS('pos_expenses',      [])
   const [subscriptions, setSubscriptions] = useLS('pos_subscriptions', [])
+  const [debts,         setDebts]         = useLS('pos_debts',         [])
+  const [savings,       setSavings]       = useLS('pos_savings',       [])
   const [budgets,       setBudgets]       = useLS('pos_budgets',       {})
   const [objectif,      setObjectif]      = useLS('pos_objectif',      '')
   const [adjustments,   setAdjustments]   = useLS('pos_adjustments',   [])
@@ -225,6 +227,7 @@ export function AppProvider({ children }) {
       version: 1, exportedAt: new Date().toISOString(),
       profile, tasks, projects, expenses, subscriptions, budgets,
       objectif, adjustments, courses, devoirs, examens,
+      debts, savings,
     }
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
@@ -253,6 +256,8 @@ export function AppProvider({ children }) {
         if (data.projects)      setProjects(data.projects)
         if (data.expenses)      setExpenses(data.expenses)
         if (data.subscriptions) setSubscriptions(data.subscriptions)
+        if (data.debts)         setDebts(data.debts)
+        if (data.savings)       setSavings(data.savings)
         if (data.objectif)      setObjectif(data.objectif)
         if (data.adjustments)   setAdjustments(data.adjustments)
         if (data.courses)       setCourses(data.courses)
@@ -275,6 +280,8 @@ export function AppProvider({ children }) {
     projects, setProjects,
     expenses, setExpenses,
     subscriptions, setSubscriptions,
+    debts, setDebts,
+    savings, setSavings,
     budgets, setBudgets,
     objectif, setObjectif,
     adjustments, setAdjustments,

@@ -26,11 +26,11 @@ function SmallRing({ pct, size = 56, strokeWidth = 5, color }) {
   )
 }
 
-function StatBox({ label, value, sub, color = '#F5C518' }) {
+function StatBox({ label, value, sub, color = '#5B8DBF' }) {
   return (
     <div style={{ background: 'var(--surface-deep)', borderRadius: 10, padding: '12px 14px', flex: 1, minWidth: 0 }}>
       <p style={{ fontSize: 11, color: '#6b7280', margin: 0, marginBottom: 4 }}>{label}</p>
-      <p style={{ fontSize: 22, fontWeight: 800, color, margin: 0, fontFamily: 'Syne' }}>{value}</p>
+      <p style={{ fontSize: 22, fontWeight: 800, color, margin: 0, fontFamily: 'Fraunces' }}>{value}</p>
       {sub && <p style={{ fontSize: 11, color: '#6b7280', margin: '3px 0 0' }}>{sub}</p>}
     </div>
   )
@@ -99,7 +99,7 @@ export default function WeeklyReport({ tasks, expenses, subscriptions, projects,
   const globalScore = Math.round(
     (completionRate * 0.35) + (habitsPct * 0.25) + (devoirsRate * 0.2) + (revisionRate * 0.2)
   )
-  const scoreColor = globalScore >= 75 ? '#4ade80' : globalScore >= 50 ? '#F5C518' : globalScore >= 30 ? '#f97316' : '#f87171'
+  const scoreColor = globalScore >= 75 ? '#4ade80' : globalScore >= 50 ? '#5B8DBF' : globalScore >= 30 ? '#f97316' : '#f87171'
 
   const maxBar = Math.max(...last7.map(d => d.created), 1)
 
@@ -108,7 +108,7 @@ export default function WeeklyReport({ tasks, expenses, subscriptions, projects,
     setExporting(true)
     try {
       const canvas = await html2canvas(reportRef.current, {
-        backgroundColor: '#0A0E1A',
+        backgroundColor: '#0B1220',
         scale: 2,
         useCORS: true,
         logging: false,
@@ -147,15 +147,15 @@ export default function WeeklyReport({ tasks, expenses, subscriptions, projects,
 
         {/* Exportable report card */}
         <div ref={reportRef} style={{
-          background: '#0A0E1A', borderRadius: 16, overflow: 'hidden',
+          background: '#0B1220', borderRadius: 16, overflow: 'hidden',
           fontFamily: "'DM Sans', sans-serif", color: '#f0f4f8',
         }}>
           {/* Header */}
-          <div style={{ background: 'linear-gradient(135deg, #F5C518 0%, #d4a500 100%)',
-            padding: '20px 24px', color: '#0A0E1A' }}>
+          <div style={{ background: 'linear-gradient(135deg, #5B8DBF 0%, #4A7AAC 100%)',
+            padding: '20px 24px', color: '#0B1220' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <h2 style={{ fontSize: 20, fontWeight: 800, margin: 0, fontFamily: 'Syne' }}>
+                <h2 style={{ fontSize: 20, fontWeight: 800, margin: 0, fontFamily: 'Fraunces' }}>
                   Rapport Hebdo
                 </h2>
                 <p style={{ fontSize: 13, margin: '4px 0 0', opacity: 0.8 }}>
@@ -163,7 +163,7 @@ export default function WeeklyReport({ tasks, expenses, subscriptions, projects,
                 </p>
               </div>
               <div style={{ textAlign: 'center' }}>
-                <SmallRing pct={globalScore} size={52} strokeWidth={4} color={globalScore >= 60 ? '#0A0E1A' : '#f87171'} />
+                <SmallRing pct={globalScore} size={52} strokeWidth={4} color={globalScore >= 60 ? '#0B1220' : '#f87171'} />
               </div>
             </div>
           </div>
@@ -175,7 +175,7 @@ export default function WeeklyReport({ tasks, expenses, subscriptions, projects,
             <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
               <StatBox label="Taches terminees" value={`${totalDone}/${totalCreated}`}
                 sub={`${completionRate}% de completion`}
-                color={completionRate >= 70 ? '#4ade80' : completionRate >= 40 ? '#F5C518' : '#f87171'} />
+                color={completionRate >= 70 ? '#4ade80' : completionRate >= 40 ? '#5B8DBF' : '#f87171'} />
               <StatBox label="Streak" value={`${streakData?.count || 0}j`}
                 sub="jours consecutifs" color="#f59e0b" />
               <StatBox label="Depenses" value={fmtFCFA(weekTotal)}
@@ -191,12 +191,12 @@ export default function WeeklyReport({ tasks, expenses, subscriptions, projects,
                     <div style={{ width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', height: 40 }}>
                       <div style={{
                         width: '100%', borderRadius: '3px 3px 0 0',
-                        background: d.done > 0 ? '#4ade80' : d.created > 0 ? '#F5C518' : 'var(--bar-bg)',
+                        background: d.done > 0 ? '#4ade80' : d.created > 0 ? '#5B8DBF' : 'var(--bar-bg)',
                         height: `${Math.max((d.created / maxBar) * 100, 4)}%`,
                         minHeight: 3,
                       }} />
                     </div>
-                    <span style={{ fontSize: 9, color: d.date === today ? '#F5C518' : '#6b7280', fontWeight: d.date === today ? 700 : 400 }}>
+                    <span style={{ fontSize: 9, color: d.date === today ? '#5B8DBF' : '#6b7280', fontWeight: d.date === today ? 700 : 400 }}>
                       {d.label}
                     </span>
                   </div>
@@ -211,7 +211,7 @@ export default function WeeklyReport({ tasks, expenses, subscriptions, projects,
                 <p style={{ fontSize: 11, color: '#6b7280', marginBottom: 8, fontWeight: 600 }}>DISCIPLINE</p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <SmallRing pct={habitsPct} size={44} strokeWidth={4}
-                    color={habitsPct >= 75 ? '#4ade80' : habitsPct >= 50 ? '#F5C518' : '#f87171'} />
+                    color={habitsPct >= 75 ? '#4ade80' : habitsPct >= 50 ? '#5B8DBF' : '#f87171'} />
                   <div>
                     <p style={{ fontSize: 13, margin: 0, fontWeight: 600 }}>
                       {habitsDoneToday}/{todayHabits.length}
@@ -273,9 +273,9 @@ export default function WeeklyReport({ tasks, expenses, subscriptions, projects,
                         </p>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
                           <div style={{ flex: 1, background: 'var(--bar-bg)', borderRadius: 3, height: 5 }}>
-                            <div style={{ width: `${pct}%`, height: '100%', background: '#F5C518', borderRadius: 3 }} />
+                            <div style={{ width: `${pct}%`, height: '100%', background: '#5B8DBF', borderRadius: 3 }} />
                           </div>
-                          <span style={{ fontSize: 10, color: '#F5C518' }}>{pct}%</span>
+                          <span style={{ fontSize: 10, color: '#5B8DBF' }}>{pct}%</span>
                         </div>
                       </div>
                     )

@@ -1,9 +1,9 @@
 export const PRIORITY_ORDER = { Critique: 0, Important: 1, Optionnel: 2 }
-export const PRIORITY_COLOR = { Critique: '#f87171', Important: '#F5C518', Optionnel: '#9ca3af' }
+export const PRIORITY_COLOR = { Critique: '#f87171', Important: '#5B8DBF', Optionnel: '#9ca3af' }
 export const PRIORITY_EMOJI = { Critique: '🔴', Important: '🟡', Optionnel: '⚪' }
 
 export const CAT_COLORS = {
-  Nourriture: '#f59e0b', Transport: '#3b82f6', Business: '#F5C518',
+  Nourriture: '#f59e0b', Transport: '#3b82f6', Business: '#5B8DBF',
   École: '#8b5cf6', Loisirs: '#ec4899', Autre: '#6b7280',
 }
 

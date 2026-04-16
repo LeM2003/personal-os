@@ -6,7 +6,7 @@ function TimerRing({ timeLeft, total, size = 180 }) {
   const circ = 2 * Math.PI * r
   const pct  = total > 0 ? timeLeft / total : 0
   const dash = pct * circ
-  const color = pct > 0.5 ? '#4ade80' : pct > 0.2 ? '#F5C518' : '#f87171'
+  const color = pct > 0.5 ? '#4ade80' : pct > 0.2 ? '#5B8DBF' : '#f87171'
   return (
     <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
       <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--bar-bg)" strokeWidth={8} />
@@ -20,7 +20,7 @@ function TimerRing({ timeLeft, total, size = 180 }) {
 export default function PomodoroModal({ pomo, onPause, onStop, onDone }) {
   const { task, total, timeLeft, running, finished } = pomo
   const pct   = total > 0 ? timeLeft / total : 0
-  const color = pct > 0.5 ? '#4ade80' : pct > 0.2 ? '#F5C518' : '#f87171'
+  const color = pct > 0.5 ? '#4ade80' : pct > 0.2 ? '#5B8DBF' : '#f87171'
 
   const durLabel = (() => {
     const m = task.duration || 0

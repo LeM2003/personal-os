@@ -34,9 +34,9 @@ function SetupModal({ onSave }) {
   return (
     <div className="modal-overlay" style={{ zIndex: 9999 }}>
       <div className="modal-box">
-        <h3 style={{ fontSize: 22, marginBottom: 4, color: '#F5C518' }}>👋 Bienvenue sur Personal OS</h3>
+        <h3 style={{ fontSize: 22, marginBottom: 4, color: '#5B8DBF' }}>👋 Content de te voir.</h3>
         <p style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 24, lineHeight: 1.6 }}>
-          Commence par te présenter. Ces infos restent dans ton navigateur.
+          Juste ton prénom pour commencer. Tout reste dans ton navigateur, rien ne part ailleurs.
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <input value={form.prenom} onChange={e => setForm({ ...form, prenom: e.target.value })}
@@ -49,7 +49,7 @@ function SetupModal({ onSave }) {
           </select>
         </div>
         <button className="btn-gold" style={{ width: '100%', marginTop: 20 }} onClick={save}
-          disabled={!form.prenom.trim()}>Commencer →</button>
+          disabled={!form.prenom.trim()}>On y va</button>
       </div>
     </div>
   )
@@ -60,7 +60,7 @@ function ProfileModal({ profile, onSave, onClose }) {
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-box" onClick={e => e.stopPropagation()}>
-        <h3 style={{ fontSize: 18, marginBottom: 16, color: '#F5C518' }}>👤 Mon profil</h3>
+        <h3 style={{ fontSize: 18, marginBottom: 16, color: '#5B8DBF' }}>👤 Toi</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <input value={form.prenom} onChange={e => setForm({ ...form, prenom: e.target.value })} placeholder="Prénom *" autoFocus />
           <input value={form.nom} onChange={e => setForm({ ...form, nom: e.target.value })} placeholder="Nom (optionnel)" />
@@ -115,7 +115,7 @@ export default function App() {
       {/* SIDEBAR */}
       <aside className="sidebar">
         <div style={{ paddingLeft: 8, marginBottom: 28 }}>
-          <h1 style={{ fontSize: 20, fontWeight: 800, color: '#F5C518', letterSpacing: '-0.5px' }}>Personal OS</h1>
+          <h1 style={{ fontSize: 20, fontWeight: 800, color: '#5B8DBF', letterSpacing: '-0.5px' }}>Personal OS</h1>
           <p style={{ color: 'var(--muted)', fontSize: 11, marginTop: 3 }}>Dashboard Pro · Dakar</p>
         </div>
 
@@ -200,7 +200,7 @@ export default function App() {
           <button key={t.id} onClick={() => { setTab(t.id); setMobileMore(false) }} aria-label={t.label}
             style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column',
               alignItems: 'center', gap: 2, padding: '4px 6px', flex: 1,
-              color: tab === t.id ? '#F5C518' : 'var(--muted)' }}>
+              color: tab === t.id ? '#5B8DBF' : 'var(--muted)' }}>
             <span>{t.icon}</span>
             <span style={{ fontSize: 9, fontFamily: 'DM Sans', fontWeight: 500 }}>{t.label.split(' ')[0]}</span>
           </button>
@@ -208,7 +208,7 @@ export default function App() {
         <button onClick={() => setMobileMore(m => !m)} aria-label="Plus d'options"
           style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column',
             alignItems: 'center', gap: 2, padding: '4px 6px', flex: 1, position: 'relative',
-            color: ['ecole', 'ajustements'].includes(tab) ? '#F5C518' : 'var(--muted)' }}>
+            color: ['ecole', 'ajustements'].includes(tab) ? '#5B8DBF' : 'var(--muted)' }}>
           <MoreHorizontal size={20} />
           <span style={{ fontSize: 9, fontFamily: 'DM Sans', fontWeight: 500 }}>Plus</span>
           {adjustments.length > 0 && (
@@ -232,7 +232,7 @@ export default function App() {
               <button key={t.id} onClick={() => { setTab(t.id); setMobileMore(false) }}
                 style={{ background: tab === t.id ? 'var(--gold-dim)' : 'none', border: 'none', cursor: 'pointer',
                   display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 8,
-                  color: tab === t.id ? '#F5C518' : 'var(--text)', fontFamily: 'DM Sans', fontSize: 14,
+                  color: tab === t.id ? '#5B8DBF' : 'var(--text)', fontFamily: 'DM Sans', fontSize: 14,
                   fontWeight: tab === t.id ? 600 : 400, width: '100%', textAlign: 'left' }}>
                 <span>{t.icon}</span>
                 {t.label}
@@ -304,21 +304,21 @@ export default function App() {
       {backupModal && (
         <div className="modal-overlay" onClick={() => setBackupModal(false)}>
           <div className="modal-box" onClick={e => e.stopPropagation()}>
-            <h3 style={{ fontSize: 18, marginBottom: 8, color: '#F5C518' }}>💾 Sauvegarde & Restauration</h3>
+            <h3 style={{ fontSize: 18, marginBottom: 8, color: '#5B8DBF' }}>💾 Tes données, en sécurité</h3>
             <p style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 20, lineHeight: 1.6 }}>
-              Toutes tes données sont dans le navigateur. Exporte régulièrement pour ne rien perdre.
+              Tout vit dans ton navigateur. Fais un export de temps en temps — on ne sait jamais.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <button className="btn-gold" onClick={exportData} style={{ textAlign: 'left', padding: '12px 16px' }}>
-                ⬇️ Exporter mes données (JSON)
+                ⬇️ Télécharger tout (JSON)
                 <span style={{ display: 'block', fontSize: 11, fontWeight: 400, marginTop: 2, color: 'rgba(15,23,42,.7)' }}>
                   Tâches, projets, finances, école, profil
                 </span>
               </button>
               <button className="btn-ghost" onClick={() => importRef.current?.click()} style={{ textAlign: 'left', padding: '12px 16px' }}>
-                ⬆️ Restaurer depuis un fichier
+                ⬆️ Restaurer un fichier
                 <span style={{ display: 'block', fontSize: 11, fontWeight: 400, marginTop: 2, color: 'var(--muted)' }}>
-                  Remplace toutes les données actuelles
+                  Attention : ça remplace ce que tu as là
                 </span>
               </button>
               <input ref={importRef} type="file" accept=".json" onChange={importData} style={{ display: 'none' }} />
@@ -343,17 +343,17 @@ export default function App() {
       {apiModal && (
         <div className="modal-overlay" onClick={() => setApiModal(false)}>
           <div className="modal-box" onClick={e => e.stopPropagation()}>
-            <h3 style={{ fontSize: 18, marginBottom: 8, color: '#F5C518' }}>🔑 Clé API Gemini (gratuit)</h3>
+            <h3 style={{ fontSize: 18, marginBottom: 8, color: '#5B8DBF' }}>🔑 Clé Gemini — c'est gratuit, prends-la</h3>
             <p style={{ color: 'var(--muted)', fontSize: 14, marginBottom: 16, lineHeight: 1.6 }}>
-              Clé 100% gratuite, stockée uniquement dans ton navigateur.<br />
-              Obtiens-la sur <strong style={{ color: 'var(--text)' }}>aistudio.google.com/apikey</strong>
+              Elle reste chez toi, dans ce navigateur.<br />
+              Pour l'obtenir : <strong style={{ color: 'var(--text)' }}>aistudio.google.com/apikey</strong>
             </p>
             <input type="password" value={apiKey} onChange={e => setApiKey(e.target.value)}
               placeholder="AIzaSy..." style={{ marginBottom: 10 }} />
             <p style={{ fontSize: 11, color: '#f97316', margin: '0 0 14px', lineHeight: 1.5,
               background: 'rgba(249,115,22,.06)', border: '1px solid rgba(249,115,22,.2)',
               borderRadius: 6, padding: '8px 10px' }}>
-              🔒 Ta clé est stockée localement. Ne partage pas ce navigateur et ne l'utilise pas sur un appareil public.
+              🔒 Stockée sur ton appareil uniquement. Évite sur un ordi public.
             </p>
             <div style={{ display: 'flex', gap: 8 }}>
               <button className="btn-gold" onClick={() => setApiModal(false)}>Enregistrer</button>

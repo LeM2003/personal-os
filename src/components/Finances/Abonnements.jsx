@@ -52,7 +52,7 @@ export default function Abonnements() {
         <div className="stat-card">
           <span className="stat-icon">💳</span>
           <div>
-            <div className="stat-value" style={{ color: '#F5C518' }}>{Math.round(monthlyTotal).toLocaleString('fr-FR')} FCFA</div>
+            <div className="stat-value" style={{ color: '#5B8DBF' }}>{Math.round(monthlyTotal).toLocaleString('fr-FR')} FCFA</div>
             <div className="stat-label">Équivalent mensuel total</div>
           </div>
         </div>
@@ -79,7 +79,7 @@ export default function Abonnements() {
       </div>
 
       {showForm && (
-        <div className="card" style={{ padding: 20, marginBottom: 20, border: '1px solid rgba(245,197,24,.3)' }}>
+        <div className="card" style={{ padding: 20, marginBottom: 20, border: '1px solid rgba(91,141,191,.3)' }}>
           <h3 style={{ fontSize: 15, marginBottom: 14 }}>
             {editingId ? "✏️ Modifier l'abonnement" : 'Nouvel abonnement'}
           </h3>
@@ -105,7 +105,7 @@ export default function Abonnements() {
               <option>Business</option><option>Loisirs</option><option>École</option><option>Autre</option>
             </select>
             {form.startDate && (
-              <div style={{ background: 'rgba(245,197,24,.07)', border: '1px solid rgba(245,197,24,.2)',
+              <div style={{ background: 'rgba(91,141,191,.07)', border: '1px solid rgba(91,141,191,.2)',
                 borderRadius: 8, padding: '8px 12px', fontSize: 12, color: '#fde68a', display: 'flex', alignItems: 'center', gap: 6 }}>
                 📅 Prochain paiement : <strong>{fmtDate(computeNextRenewal(form.startDate, form.cycle))}</strong>
               </div>
@@ -119,7 +119,7 @@ export default function Abonnements() {
       )}
 
       {sorted.length === 0
-        ? <EmptyState icon="📋" msg="Aucun abonnement enregistré." sub="Suivez vos abonnements pour ne jamais être surpris." />
+        ? <EmptyState icon="📋" msg="Aucun abonnement suivi." sub="Ajoute-les ici pour ne plus jamais être surpris en fin de mois." />
         : <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {sorted.map(sub => {
               const nextR = sub.nextRenewal || computeNextRenewal(sub.startDate || todayISO(), sub.cycle || 'Mensuel')
@@ -133,8 +133,8 @@ export default function Abonnements() {
 
               return (
                 <div key={sub.id} className="card" style={{ padding: '16px 18px',
-                  borderLeft: `3px solid ${isUrgent ? '#f87171' : isEditing ? '#F5C518' : 'var(--border)'}`,
-                  background: isEditing ? 'rgba(245,197,24,.03)' : undefined }}>
+                  borderLeft: `3px solid ${isUrgent ? '#f87171' : isEditing ? '#5B8DBF' : 'var(--border)'}`,
+                  background: isEditing ? 'rgba(91,141,191,.03)' : undefined }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
                     <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 6 }}>
@@ -164,12 +164,12 @@ export default function Abonnements() {
                       )}
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, flexShrink: 0 }}>
-                      <span style={{ fontWeight: 700, fontSize: 17, color: '#F5C518', whiteSpace: 'nowrap' }}>
+                      <span style={{ fontWeight: 700, fontSize: 17, color: '#5B8DBF', whiteSpace: 'nowrap' }}>
                         {sub.amount.toLocaleString('fr-FR')} FCFA
                       </span>
                       <div style={{ display: 'flex', gap: 6 }}>
                         <button className="btn-gold" style={{ fontSize: 11, padding: '5px 11px' }} onClick={() => markPaid(sub)}>✅ Payé</button>
-                        <button className="btn-icon" title="Modifier" onClick={() => openEdit(sub)} style={{ color: isEditing ? '#F5C518' : undefined }}>✏️</button>
+                        <button className="btn-icon" title="Modifier" onClick={() => openEdit(sub)} style={{ color: isEditing ? '#5B8DBF' : undefined }}>✏️</button>
                         <button className="btn-icon" title="Supprimer" aria-label="Supprimer l'abonnement" onClick={() => setSubscriptions(p => p.filter(x => x.id !== sub.id))}>✕</button>
                       </div>
                     </div>

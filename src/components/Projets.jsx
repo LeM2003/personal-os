@@ -211,7 +211,7 @@ export default function Projets() {
 
       {/* Formulaire */}
       {showForm && (
-        <div className="card" style={{ padding: 20, marginBottom: 20, border: '1px solid rgba(245,197,24,.3)' }}>
+        <div className="card" style={{ padding: 20, marginBottom: 20, border: '1px solid rgba(91,141,191,.3)' }}>
           <h3 style={{ fontSize: 16, marginBottom: 16 }}>
             {editingId ? '✏️ Modifier' : form.type === 'idee' ? '💡 Nouvelle idée' : '🎯 Nouveau projet'}
           </h3>
@@ -241,15 +241,15 @@ export default function Projets() {
       {sorted.length === 0
         ? <EmptyState
             icon={viewTab === 'idees' ? '💡' : '🚀'}
-            msg={viewTab === 'idees' ? "Aucune idée pour l'instant." : "Aucun projet pour l'instant."}
-            sub={viewTab === 'idees' ? "Note tes idées ici, tu pourras les promouvoir en projet plus tard !" : "Crée ton premier projet ou promeus une idée !"} />
+            msg={viewTab === 'idees' ? "Pas encore d'idée notée." : "Aucun projet ouvert."}
+            sub={viewTab === 'idees' ? "Dépose tes pensées ici — tu les transformeras en projet quand elles seront mûres." : "C'est peut-être le moment d'en lancer un."} />
         : sorted.map(proj => {
           const pct = calcProgress(proj)
           const linked = tasks.filter(t => t.project === proj.name)
           const steps = proj.steps || []
           const ai = proj.aiAnalysis
           const isAnalyzing = analyzing === proj.id
-          const scoreColor = !ai ? null : ai.score_faisabilite >= 7 ? '#4ade80' : ai.score_faisabilite >= 4 ? '#F5C518' : '#f87171'
+          const scoreColor = !ai ? null : ai.score_faisabilite >= 7 ? '#4ade80' : ai.score_faisabilite >= 4 ? '#5B8DBF' : '#f87171'
           const isExpanded = expandedId === proj.id
           const isIdee = (proj.type || 'projet') === 'idee'
           const stepsDone = steps.filter(s => s.done).length
@@ -258,8 +258,8 @@ export default function Projets() {
           return (
             <div key={proj.id} className="card" style={{
               padding: 20, marginBottom: 16,
-              borderLeft: `3px solid ${isIdee ? '#a78bfa' : pct === 100 ? '#4ade80' : '#F5C518'}`,
-              background: isEditing ? 'rgba(245,197,24,.03)' : undefined,
+              borderLeft: `3px solid ${isIdee ? '#a78bfa' : pct === 100 ? '#4ade80' : '#5B8DBF'}`,
+              background: isEditing ? 'rgba(91,141,191,.03)' : undefined,
             }}>
               {/* Header */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 12 }}>
@@ -302,7 +302,7 @@ export default function Projets() {
                     {linked.length > 0 && `${linked.filter(t => t.status === 'Terminé').length}/${linked.length} tâches`}
                     {steps.length === 0 && linked.length === 0 && 'Aucune étape ni tâche'}
                   </span>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: pct === 100 ? '#4ade80' : '#F5C518' }}>{pct}%</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: pct === 100 ? '#4ade80' : '#5B8DBF' }}>{pct}%</span>
                 </div>
                 <div className="progress-track">
                   <div className={`progress-fill${pct === 100 ? ' green' : ''}`} style={{ width: `${pct}%` }} />
@@ -321,7 +321,7 @@ export default function Projets() {
 
                   {/* Steps / Workflow */}
                   <div style={{ marginBottom: 18 }}>
-                    <p style={{ fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: .8, marginBottom: 10, fontFamily: 'Syne', fontWeight: 700 }}>
+                    <p style={{ fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: .8, marginBottom: 10, fontFamily: 'Fraunces', fontWeight: 700 }}>
                       📋 Étapes du workflow
                     </p>
 
@@ -333,7 +333,7 @@ export default function Projets() {
                       {steps.map((step, idx) => (
                         <div key={step.id} style={{
                           display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderRadius: 8,
-                          background: step.done ? 'rgba(74,222,128,.06)' : 'rgba(245,197,24,.03)',
+                          background: step.done ? 'rgba(74,222,128,.06)' : 'rgba(91,141,191,.03)',
                           border: `1px solid ${step.done ? 'rgba(74,222,128,.2)' : 'var(--border)'}`,
                         }}>
                           <button onClick={() => toggleStep(proj.id, step.id)}
@@ -374,7 +374,7 @@ export default function Projets() {
 
                   {/* Notes */}
                   <div style={{ marginBottom: 18 }}>
-                    <p style={{ fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: .8, marginBottom: 8, fontFamily: 'Syne', fontWeight: 700 }}>
+                    <p style={{ fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: .8, marginBottom: 8, fontFamily: 'Fraunces', fontWeight: 700 }}>
                       📝 Notes / Plan
                     </p>
                     <textarea
@@ -389,7 +389,7 @@ export default function Projets() {
                   {/* Linked tasks */}
                   {linked.length > 0 && (
                     <div style={{ marginBottom: 18 }}>
-                      <p style={{ fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: .8, marginBottom: 8, fontFamily: 'Syne', fontWeight: 700 }}>
+                      <p style={{ fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: .8, marginBottom: 8, fontFamily: 'Fraunces', fontWeight: 700 }}>
                         ✅ Tâches liées ({linked.filter(t => t.status === 'Terminé').length}/{linked.length})
                       </p>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
@@ -413,14 +413,14 @@ export default function Projets() {
                   {/* AI Analysis */}
                   {ai && (
                     <div className="ai-block">
-                      <p style={{ color: '#F5C518', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 14 }}>
+                      <p style={{ color: '#5B8DBF', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 14 }}>
                         🤖 Analyse IA
                       </p>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }} className="grid-2">
                         <div>
                           <p style={{ fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: .8, marginBottom: 5 }}>Score de faisabilité</p>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <span style={{ fontFamily: 'Syne', fontWeight: 800, fontSize: 28, color: scoreColor }}>{ai.score_faisabilite}</span>
+                            <span style={{ fontFamily: 'Fraunces', fontWeight: 800, fontSize: 28, color: scoreColor }}>{ai.score_faisabilite}</span>
                             <span style={{ color: 'var(--muted)', fontSize: 16 }}>/10</span>
                           </div>
                         </div>
@@ -434,7 +434,7 @@ export default function Projets() {
                           <p style={{ fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: .8, marginBottom: 10 }}>Prochaines étapes suggérées</p>
                           {ai.prochaines_etapes.map((step, i) => (
                             <div key={i} style={{ display: 'flex', gap: 10, marginBottom: 8, alignItems: 'flex-start' }}>
-                              <span style={{ color: '#F5C518', fontFamily: 'Syne', fontWeight: 700, fontSize: 13, flexShrink: 0, marginTop: 1 }}>{i + 1}.</span>
+                              <span style={{ color: '#5B8DBF', fontFamily: 'Fraunces', fontWeight: 700, fontSize: 13, flexShrink: 0, marginTop: 1 }}>{i + 1}.</span>
                               <span style={{ fontSize: 13, color: 'var(--text)', lineHeight: 1.5 }}>{step}</span>
                             </div>
                           ))}

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useApp } from '../context/AppContext'
-import { genId, todayISO, fmtDate, daysUntil, nextOccurrenceDate } from '../utils/dates'
+import { genId, todayISO, todayDay, fmtDate, daysUntil, nextOccurrenceDate } from '../utils/dates'
 import { PRIORITY_ORDER, PRIORITY_COLOR, PRIORITY_EMOJI } from '../utils/constants'
 import PageHeader from './shared/PageHeader'
 import EmptyState from './shared/EmptyState'
@@ -39,8 +39,18 @@ export default function Taches() {
   const projectNames = projects ? [...new Set(projects.map(p => p.name).filter(Boolean))] : []
 
   const today = todayISO()
+  const dayName = todayDay()
   const weekEnd = (() => { const d = new Date(); d.setDate(d.getDate() + 7); return d.toISOString().split('T')[0] })()
   const monthEnd = (() => { const d = new Date(); d.setMonth(d.getMonth() + 1, 0); return d.toISOString().split('T')[0] })()
+
+  // Est-ce qu'une tâche récurrente est prévue pour aujourd'hui ?
+  const recurringDueToday = (t) => {
+    if (!t.recurring) return false
+    if (t.recurrence === 'daily') return true
+    if (t.recurrence === 'weekly') return (t.recurrenceDays || []).includes(dayName)
+    if (t.recurrence === 'monthly') return t.deadline === today
+    return false
+  }
 
   const openAdd  = () => { setEditingId(null); setForm(blank); setShowForm(true) }
   const openEdit = task => {
@@ -98,7 +108,10 @@ export default function Taches() {
     if (fDate === 'Tout') return true
     if (!t.deadline && !t.recurring) return fDate === 'Tout'
     const dl = t.deadline || ''
-    if (fDate === "Aujourd'hui") return dl === today || (t.recurring && t.status !== 'Terminé')
+    if (fDate === "Aujourd'hui") {
+      if (t.recurring) return recurringDueToday(t) && t.status !== 'Terminé'
+      return dl === today
+    }
     if (fDate === 'Semaine') return dl <= weekEnd || (t.recurring && t.status !== 'Terminé')
     if (fDate === 'Mois') return dl <= monthEnd || (t.recurring && t.status !== 'Terminé')
     return true
@@ -145,7 +158,7 @@ export default function Taches() {
         <div style={{ display: 'flex', gap: 8 }}>
           {apiKey ? (
             <button className="btn-ghost" onClick={() => setShowImport(true)}
-              style={{ fontSize: 13, padding: '8px 14px', border: '1px solid rgba(245,197,24,.3)' }}>
+              style={{ fontSize: 13, padding: '8px 14px', border: '1px solid rgba(91,141,191,.3)' }}>
               Import IA
             </button>
           ) : (
@@ -160,7 +173,7 @@ export default function Taches() {
 
       {/* ── Formulaire ── */}
       {showForm && (
-        <div className="card" style={{ padding: 20, marginBottom: 20, border: '1px solid rgba(245,197,24,.3)' }}>
+        <div className="card" style={{ padding: 20, marginBottom: 20, border: '1px solid rgba(91,141,191,.3)' }}>
           <h3 style={{ fontSize: 16, marginBottom: 16 }}>
             {editingId ? '✏️ Modifier la tâche' : 'Nouvelle tâche'}
           </h3>
@@ -191,7 +204,7 @@ export default function Taches() {
                   onChange={e => setForm({ ...form, durationM: Math.max(0, +e.target.value) })}
                   style={{ width: 72 }} />
                 <span style={{ color: 'var(--muted)', fontSize: 14, whiteSpace: 'nowrap' }}>min</span>
-                <span style={{ fontSize: 13, color: '#F5C518', marginLeft: 4 }}>
+                <span style={{ fontSize: 13, color: '#5B8DBF', marginLeft: 4 }}>
                   {formatDur(form.durationH * 60 + form.durationM) || '—'}
                 </span>
               </div>
@@ -203,7 +216,7 @@ export default function Taches() {
               background: 'var(--surface-deep)', border: '1px solid var(--input-border)', borderRadius: 8, padding: '9px 12px' }}>
               <input type="checkbox" checked={form.flexible}
                 onChange={e => setForm({ ...form, flexible: e.target.checked })}
-                style={{ width: 'auto', accentColor: '#F5C518' }} />
+                style={{ width: 'auto', accentColor: '#5B8DBF' }} />
               Tâche flexible
             </label>
 
@@ -214,12 +227,12 @@ export default function Taches() {
                 marginBottom: form.recurring ? 10 : 0 }}>
                 <input type="checkbox" checked={form.recurring}
                   onChange={e => setForm({ ...form, recurring: e.target.checked })}
-                  style={{ width: 'auto', accentColor: '#F5C518' }} />
+                  style={{ width: 'auto', accentColor: '#5B8DBF' }} />
                 ♻️ Tâche récurrente (se répète automatiquement)
               </label>
 
               {form.recurring && (
-                <div style={{ background: 'rgba(245,197,24,.05)', border: '1px solid rgba(245,197,24,.2)', borderRadius: 8, padding: 14 }}>
+                <div style={{ background: 'rgba(91,141,191,.05)', border: '1px solid rgba(91,141,191,.2)', borderRadius: 8, padding: 14 }}>
                   <div style={{ marginBottom: 12 }}>
                     <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 6 }}>Fréquence</p>
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -227,7 +240,7 @@ export default function Taches() {
                         .map(opt => (
                           <button key={opt.val} type="button" onClick={() => setForm({ ...form, recurrence: opt.val })}
                             style={{ padding: '6px 14px', borderRadius: 6, fontSize: 13, cursor: 'pointer', border: 'none',
-                              background: form.recurrence === opt.val ? '#F5C518' : 'var(--hover-bg)',
+                              background: form.recurrence === opt.val ? '#5B8DBF' : 'var(--hover-bg)',
                               color: form.recurrence === opt.val ? 'var(--bg)' : 'var(--muted)',
                               fontWeight: form.recurrence === opt.val ? 700 : 400 }}>
                             {opt.label}
@@ -243,7 +256,7 @@ export default function Taches() {
                         {JOURS.map((jour, i) => (
                           <button key={jour} type="button" onClick={() => toggleDay(jour)}
                             style={{ width: 38, height: 38, borderRadius: '50%', fontSize: 11, cursor: 'pointer', border: 'none',
-                              background: form.recurrenceDays.includes(jour) ? '#F5C518' : 'var(--hover-bg)',
+                              background: form.recurrenceDays.includes(jour) ? '#5B8DBF' : 'var(--hover-bg)',
                               color: form.recurrenceDays.includes(jour) ? 'var(--bg)' : 'var(--muted)',
                               fontWeight: form.recurrenceDays.includes(jour) ? 700 : 400 }}>
                             {JOURS_SHORT[i]}
@@ -297,7 +310,7 @@ export default function Taches() {
               <select value={fProject} onChange={e => setFProject(e.target.value)}
                 style={{ padding: '5px 10px', fontSize: 12, borderRadius: 999, width: 'auto',
                   background: fProject !== 'Tous' ? 'var(--gold)' : 'var(--pill-bg)',
-                  color: fProject !== 'Tous' ? '#0A0E1A' : 'var(--muted)',
+                  color: fProject !== 'Tous' ? '#0B1220' : 'var(--muted)',
                   border: 'none', fontWeight: fProject !== 'Tous' ? 700 : 500, cursor: 'pointer' }}>
                 <option value="Tous">Tous les projets</option>
                 {projectNames.map(p => <option key={p} value={p}>{p}</option>)}
@@ -309,7 +322,7 @@ export default function Taches() {
         <div style={{ display: 'flex', gap: 12, fontSize: 12, color: 'var(--muted)' }}>
           <span>{activeTasks.length} active{activeTasks.length !== 1 ? 's' : ''}</span>
           {countCritique > 0 && <span style={{ color: '#f87171' }}>{countCritique} critique{countCritique > 1 ? 's' : ''}</span>}
-          {countImportant > 0 && <span style={{ color: '#F5C518' }}>{countImportant} important{countImportant > 1 ? 'es' : 'e'}</span>}
+          {countImportant > 0 && <span style={{ color: '#5B8DBF' }}>{countImportant} important{countImportant > 1 ? 'es' : 'e'}</span>}
           {countOptionnel > 0 && <span style={{ color: 'var(--muted)' }}>{countOptionnel} optionnel{countOptionnel > 1 ? 'les' : 'le'}</span>}
           {doneTasks.length > 0 && <span style={{ color: '#4ade80' }}>{doneTasks.length} terminee{doneTasks.length > 1 ? 's' : ''}</span>}
         </div>
@@ -317,7 +330,7 @@ export default function Taches() {
 
       {/* ── Liste active ── */}
       {activeTasks.length === 0 && doneTasks.length === 0
-        ? <EmptyState icon="📝" msg="Aucune tâche ici." sub="Cliquez sur « + Nouvelle tâche » pour commencer." />
+        ? <EmptyState icon="📝" msg="Rien à faire. Profite — ou ajoute quelque chose." sub="« + Nouvelle tâche » pour commencer." />
         : <>
           {activeTasks.length === 0 && !showDone
             ? <div style={{ textAlign: 'center', padding: '30px 0', color: 'var(--muted)', fontSize: 14 }}>
@@ -327,7 +340,7 @@ export default function Taches() {
               <div key={priority} style={{ marginBottom: 24 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
                   <span>{PRIORITY_EMOJI[priority]}</span>
-                  <span style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 12, color: PRIORITY_COLOR[priority],
+                  <span style={{ fontFamily: 'Fraunces', fontWeight: 700, fontSize: 12, color: PRIORITY_COLOR[priority],
                     textTransform: 'uppercase', letterSpacing: 1 }}>{priority}</span>
                   <span style={{ background: 'var(--hover-bg)', color: 'var(--muted)', borderRadius: '50%', width: 20, height: 20,
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11 }}>{list.length}</span>
@@ -410,8 +423,8 @@ function TaskRow({ task, cycleStatus, del, toAdjust, onEdit, isEditing, onPomo, 
   return (
     <div className={`task-card${task.status === 'Terminé' ? ' done' : ''}`}
       style={{
-        borderLeft: `3px solid ${isEditing ? '#F5C518' : isRunning ? '#f97316' : task.status === 'Terminé' ? '#4ade80' : task.recurring ? 'rgba(245,197,24,.4)' : 'transparent'}`,
-        background: isEditing ? 'rgba(245,197,24,.04)' : isRunning ? 'rgba(249,115,22,.04)' : undefined
+        borderLeft: `3px solid ${isEditing ? '#5B8DBF' : isRunning ? '#f97316' : task.status === 'Terminé' ? '#4ade80' : task.recurring ? 'rgba(91,141,191,.4)' : 'transparent'}`,
+        background: isEditing ? 'rgba(91,141,191,.04)' : isRunning ? 'rgba(249,115,22,.04)' : undefined
       }}>
 
       <button className="status-btn" onClick={() => cycleStatus(task.id)}
@@ -429,10 +442,10 @@ function TaskRow({ task, cycleStatus, del, toAdjust, onEdit, isEditing, onPomo, 
         <div style={{ display: 'flex', gap: 10, marginTop: 3, flexWrap: 'wrap' }}>
           {task.project        && <span style={{ fontSize: 11, color: 'var(--muted)' }}>📁 {task.project}</span>}
           {durLabel            && <span style={{ fontSize: 11, color: 'var(--muted)' }}>⏱ {durLabel}</span>}
-          {task.recurrenceTime && <span style={{ fontSize: 11, color: '#F5C518' }}>🕐 {task.recurrenceTime}</span>}
-          {task.recurring      && <span style={{ fontSize: 11, color: 'rgba(245,197,24,.8)' }}>{recurringLabel(task)}</span>}
+          {task.recurrenceTime && <span style={{ fontSize: 11, color: '#5B8DBF' }}>🕐 {task.recurrenceTime}</span>}
+          {task.recurring      && <span style={{ fontSize: 11, color: 'rgba(91,141,191,.8)' }}>{recurringLabel(task)}</span>}
           {task.deadline && !task.recurring && (
-            <span style={{ fontSize: 11, color: overdue ? '#f87171' : urgent ? '#F5C518' : 'var(--muted)' }}>
+            <span style={{ fontSize: 11, color: overdue ? '#f87171' : urgent ? '#5B8DBF' : 'var(--muted)' }}>
               {overdue ? '⚠️ Retard:' : '📅'} {fmtDate(task.deadline)}
             </span>
           )}
@@ -445,10 +458,10 @@ function TaskRow({ task, cycleStatus, del, toAdjust, onEdit, isEditing, onPomo, 
       <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
         {canPomo && (
           <button onClick={() => onPomo(task)} title="Démarrer un timer"
-            style={{ background: isRunning ? 'rgba(249,115,22,.2)' : 'rgba(245,197,24,.1)',
-              border: `1px solid ${isRunning ? 'rgba(249,115,22,.4)' : 'rgba(245,197,24,.3)'}`,
+            style={{ background: isRunning ? 'rgba(249,115,22,.2)' : 'rgba(91,141,191,.1)',
+              border: `1px solid ${isRunning ? 'rgba(249,115,22,.4)' : 'rgba(91,141,191,.3)'}`,
               borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontSize: 13,
-              color: isRunning ? '#f97316' : '#F5C518', fontWeight: 600 }}>
+              color: isRunning ? '#f97316' : '#5B8DBF', fontWeight: 600 }}>
             {isRunning ? '⏱' : '▶'}
           </button>
         )}
@@ -456,7 +469,7 @@ function TaskRow({ task, cycleStatus, del, toAdjust, onEdit, isEditing, onPomo, 
           {task.status}
         </span>
         <button className="btn-icon" title="Modifier" onClick={() => onEdit(task)}
-          style={{ color: isEditing ? '#F5C518' : undefined }}>✏️</button>
+          style={{ color: isEditing ? '#5B8DBF' : undefined }}>✏️</button>
         {!task.recurring && (
           <button className="btn-icon" title="Déplacer en ajustements" onClick={() => toAdjust(task)}>🔄</button>
         )}
