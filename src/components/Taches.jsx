@@ -10,7 +10,7 @@ const JOURS       = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'
 const JOURS_SHORT = ['Lun',   'Mar',   'Mer',      'Jeu',   'Ven',      'Sam',    'Dim']
 
 const blank = {
-  name: '', project: '', priority: 'Important',
+  name: '', details: '', project: '', priority: 'Important',
   durationH: 0, durationM: 25,
   deadline: '', flexible: false,
   recurring: false, recurrence: 'daily', recurrenceDays: [], recurrenceTime: ''
@@ -32,7 +32,7 @@ export default function Taches() {
   const [editingId, setEditingId] = useState(null)
   const [fStatus,   setFStatus]   = useState('Tous')
   const [fPriority, setFPriority] = useState('Tous')
-  const [fDate,     setFDate]     = useState('Tout')
+  const [fDate,     setFDate]     = useState("Aujourd'hui")
   const [fProject,  setFProject]  = useState('Tous')
   const [showDone,  setShowDone]  = useState(false)
 
@@ -56,7 +56,7 @@ export default function Taches() {
   const openEdit = task => {
     setEditingId(task.id)
     setForm({
-      name: task.name, project: task.project || '', priority: task.priority,
+      name: task.name, details: task.details || '', project: task.project || '', priority: task.priority,
       durationH: Math.floor((task.duration || 0) / 60),
       durationM: (task.duration || 0) % 60,
       deadline: task.deadline || '', flexible: !!task.flexible,
@@ -181,6 +181,11 @@ export default function Taches() {
             <div style={{ gridColumn: '1/-1' }}>
               <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
                 placeholder="Nom de la tâche *" autoFocus />
+            </div>
+            <div style={{ gridColumn: '1/-1' }}>
+              <textarea value={form.details} onChange={e => setForm({ ...form, details: e.target.value })}
+                placeholder="Détails (optionnel) — ex : 30 min course, 20 pompes..."
+                rows={2} style={{ resize: 'vertical', minHeight: 44 }} />
             </div>
             <select value={form.project} onChange={e => setForm({ ...form, project: e.target.value })}>
               <option value="">— Aucun projet —</option>
@@ -439,6 +444,12 @@ function TaskRow({ task, cycleStatus, del, toAdjust, onEdit, isEditing, onPomo, 
           {task.recurring && <span style={{ marginRight: 5 }}>♻️</span>}
           {task.name}
         </p>
+        {task.details && (
+          <p style={{ fontSize: 12, color: 'var(--muted)', margin: '3px 0 0', lineHeight: 1.5,
+            whiteSpace: 'pre-line' }}>
+            {task.details}
+          </p>
+        )}
         <div style={{ display: 'flex', gap: 10, marginTop: 3, flexWrap: 'wrap' }}>
           {task.project        && <span style={{ fontSize: 11, color: 'var(--muted)' }}>📁 {task.project}</span>}
           {durLabel            && <span style={{ fontSize: 11, color: 'var(--muted)' }}>⏱ {durLabel}</span>}

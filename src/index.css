@@ -175,6 +175,15 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   padding: 20px 10px;
   z-index: 200;
   overflow-y: auto;
+  transition: width .25s var(--ease-ios);
+}
+.sidebar.collapsed {
+  width: 68px;
+  padding: 20px 8px;
+  align-items: center;
+}
+.sidebar.collapsed .nav-item {
+  position: relative;
 }
 .nav-item {
   display: flex;
@@ -201,6 +210,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   min-height: 100vh;
   padding: 28px 32px 48px;
   max-width: 1400px;
+  transition: margin-left .25s var(--ease-ios);
 }
 
 /* ---- page transition ---- */

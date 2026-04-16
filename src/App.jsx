@@ -14,7 +14,7 @@ import InstallPrompt from './components/shared/InstallPrompt'
 import {
   LayoutDashboard, CheckSquare, Target, GraduationCap, Wallet,
   BarChart3, RefreshCw, Search, User, Bell, BellOff, Save,
-  KeyRound, Sun, Moon, LogOut, MoreHorizontal
+  KeyRound, Sun, Moon, LogOut, MoreHorizontal, PanelLeftClose, PanelLeftOpen
 } from 'lucide-react'
 
 const ICON_SIZE = 18
@@ -92,6 +92,7 @@ export default function App() {
   } = app
   const [mobileMore, setMobileMore] = useState(false)
   const [loggedOut, setLoggedOut] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(true)
 
   const logout = () => setLoggedOut(true)
   const handleStart = (formData) => {
@@ -114,76 +115,115 @@ export default function App() {
   return (
     <div>
       {/* SIDEBAR */}
-      <aside className="sidebar">
-        <div style={{ paddingLeft: 8, marginBottom: 28 }}>
-          <h1 style={{ fontSize: 20, fontWeight: 800, color: '#5B8DBF', letterSpacing: '-0.5px' }}>Personal OS</h1>
-          <p style={{ color: 'var(--muted)', fontSize: 11, marginTop: 3 }}>Dashboard Pro · Dakar</p>
+      <aside className={`sidebar${sidebarOpen ? '' : ' collapsed'}`}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingLeft: 8, marginBottom: 28 }}>
+          {sidebarOpen ? (
+            <div>
+              <h1 style={{ fontSize: 20, fontWeight: 800, color: '#5B8DBF', letterSpacing: '-0.5px' }}>Personal OS</h1>
+              <p style={{ color: 'var(--muted)', fontSize: 11, marginTop: 3 }}>Dashboard Pro · Dakar</p>
+            </div>
+          ) : (
+            <span style={{ fontSize: 20, fontWeight: 800, color: '#5B8DBF' }}>P</span>
+          )}
+          <button className="btn-icon" onClick={() => setSidebarOpen(s => !s)}
+            title={sidebarOpen ? 'Réduire' : 'Ouvrir'} style={{ flexShrink: 0 }}>
+            {sidebarOpen ? <PanelLeftClose size={16} /> : <PanelLeftOpen size={16} />}
+          </button>
         </div>
 
-        <button onClick={() => setSearchOpen(true)} aria-label="Rechercher"
-          style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 12px',
-            background: 'var(--input-bg)', border: '1px solid var(--border)', borderRadius: 8,
-            color: 'var(--muted)', fontSize: 13, cursor: 'pointer', marginBottom: 16,
-            fontFamily: 'DM Sans', transition: 'border-color .2s' }}>
-          <Search size={14} />
-          <span style={{ flex: 1, textAlign: 'left' }}>Rechercher...</span>
-          <kbd style={{ background: 'var(--bar-bg)', border: '1px solid var(--border)', borderRadius: 4,
-            padding: '1px 6px', fontSize: 10 }}>⌘K</kbd>
-        </button>
+        {sidebarOpen ? (
+          <button onClick={() => setSearchOpen(true)} aria-label="Rechercher"
+            style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 12px',
+              background: 'var(--input-bg)', border: '1px solid var(--border)', borderRadius: 8,
+              color: 'var(--muted)', fontSize: 13, cursor: 'pointer', marginBottom: 16,
+              fontFamily: 'DM Sans', transition: 'border-color .2s' }}>
+            <Search size={14} />
+            <span style={{ flex: 1, textAlign: 'left' }}>Rechercher...</span>
+            <kbd style={{ background: 'var(--bar-bg)', border: '1px solid var(--border)', borderRadius: 4,
+              padding: '1px 6px', fontSize: 10 }}>⌘K</kbd>
+          </button>
+        ) : (
+          <button onClick={() => setSearchOpen(true)} className="btn-icon"
+            style={{ width: '100%', marginBottom: 12 }} title="Rechercher">
+            <Search size={16} />
+          </button>
+        )}
 
         <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 3 }}>
           {TABS.map(t => (
-            <div key={t.id} className={`nav-item${tab === t.id ? ' active' : ''}`} onClick={() => setTab(t.id)}>
+            <div key={t.id} className={`nav-item${tab === t.id ? ' active' : ''}`} onClick={() => setTab(t.id)}
+              title={!sidebarOpen ? t.label : undefined}
+              style={!sidebarOpen ? { justifyContent: 'center', padding: '10px 0' } : undefined}>
               <span className="nav-icon">{t.icon}</span>
-              <span style={{ flex: 1 }}>{t.label}</span>
-              {t.id === 'ajustements' && adjustments.length > 0 && adjBadge}
+              {sidebarOpen && <span style={{ flex: 1 }}>{t.label}</span>}
+              {sidebarOpen && t.id === 'ajustements' && adjustments.length > 0 && adjBadge}
+              {!sidebarOpen && t.id === 'ajustements' && adjustments.length > 0 && (
+                <span style={{ position: 'absolute', top: 2, right: 2, background: '#f87171', color: '#fff',
+                  borderRadius: '50%', width: 14, height: 14, fontSize: 9,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
+                  {adjustments.length}
+                </span>
+              )}
             </div>
           ))}
         </nav>
 
         <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16, marginTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {profile && (
-            <button className="btn-ghost" style={{ width: '100%', fontSize: 12, padding: '8px 12px', textAlign: 'left' }}
-              onClick={() => setProfileModal(true)}>
-              <User size={13} style={{ display: 'inline', verticalAlign: -2, marginRight: 4 }} /> {profile.prenom} {profile.nom || ''} <span style={{ color: 'var(--muted)', fontSize: 11 }}>— Modifier</span>
-            </button>
+          {sidebarOpen ? (
+            <>
+              {profile && (
+                <button className="btn-ghost" style={{ width: '100%', fontSize: 12, padding: '8px 12px', textAlign: 'left' }}
+                  onClick={() => setProfileModal(true)}>
+                  <User size={13} style={{ display: 'inline', verticalAlign: -2, marginRight: 4 }} /> {profile.prenom} {profile.nom || ''} <span style={{ color: 'var(--muted)', fontSize: 11 }}>— Modifier</span>
+                </button>
+              )}
+              <button className="btn-ghost" style={{ width: '100%', fontSize: 12, padding: '8px 12px',
+                color: notifEnabled ? '#4ade80' : undefined }}
+                onClick={notifEnabled ? () => setNotifEnabled(false) : enableNotifications}>
+                {notifEnabled
+                  ? <><Bell size={13} style={{ display: 'inline', verticalAlign: -2, marginRight: 4 }} /> Notifications activées</>
+                  : <><BellOff size={13} style={{ display: 'inline', verticalAlign: -2, marginRight: 4 }} /> Activer les notifications</>}
+              </button>
+              {notifEnabled && (
+                <p style={{ fontSize: 10, color: 'var(--muted)', padding: '0 12px', margin: 0, lineHeight: 1.4 }}>
+                  Fonctionne uniquement quand l'app est ouverte. Pour les rappels hors-ligne, ajoute l'app à ton écran d'accueil.
+                </p>
+              )}
+              <button className="btn-ghost" style={{ width: '100%', fontSize: 12, padding: '8px 12px' }}
+                onClick={() => setBackupModal(true)}>
+                <Save size={13} style={{ display: 'inline', verticalAlign: -2, marginRight: 4 }} /> Sauvegarde / Restauration
+              </button>
+              <button className="btn-ghost" style={{ width: '100%', fontSize: 12, padding: '8px 12px' }}
+                onClick={() => setApiModal(true)}>
+                <KeyRound size={13} style={{ display: 'inline', verticalAlign: -2, marginRight: 4 }} /> Clé API Gemini (gratuit)
+              </button>
+              <button className="btn-ghost" style={{ width: '100%', fontSize: 12, padding: '8px 12px' }}
+                onClick={toggleTheme}>
+                {theme === 'dark'
+                  ? <><Sun size={13} style={{ display: 'inline', verticalAlign: -2, marginRight: 4 }} /> Thème clair</>
+                  : <><Moon size={13} style={{ display: 'inline', verticalAlign: -2, marginRight: 4 }} /> Thème sombre</>}
+              </button>
+              <button className="btn-ghost" style={{ width: '100%', fontSize: 12, padding: '8px 12px',
+                color: '#f87171', borderColor: 'rgba(248,113,113,.25)', marginTop: 4 }}
+                onClick={logout}>
+                <LogOut size={13} style={{ display: 'inline', verticalAlign: -2, marginRight: 4 }} /> Déconnexion
+              </button>
+            </>
+          ) : (
+            <>
+              <button className="btn-icon" onClick={() => setProfileModal(true)} title="Profil"><User size={16} /></button>
+              <button className="btn-icon" onClick={toggleTheme} title={theme === 'dark' ? 'Thème clair' : 'Thème sombre'}>
+                {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+              </button>
+              <button className="btn-icon" onClick={() => setBackupModal(true)} title="Sauvegarde"><Save size={16} /></button>
+              <button className="btn-icon" onClick={logout} title="Déconnexion" style={{ color: '#f87171' }}><LogOut size={16} /></button>
+            </>
           )}
-          <button className="btn-ghost" style={{ width: '100%', fontSize: 12, padding: '8px 12px',
-            color: notifEnabled ? '#4ade80' : undefined }}
-            onClick={notifEnabled ? () => setNotifEnabled(false) : enableNotifications}>
-            {notifEnabled
-              ? <><Bell size={13} style={{ display: 'inline', verticalAlign: -2, marginRight: 4 }} /> Notifications activées</>
-              : <><BellOff size={13} style={{ display: 'inline', verticalAlign: -2, marginRight: 4 }} /> Activer les notifications</>}
-          </button>
-          {notifEnabled && (
-            <p style={{ fontSize: 10, color: 'var(--muted)', padding: '0 12px', margin: 0, lineHeight: 1.4 }}>
-              Fonctionne uniquement quand l'app est ouverte. Pour les rappels hors-ligne, ajoute l'app à ton écran d'accueil.
-            </p>
-          )}
-          <button className="btn-ghost" style={{ width: '100%', fontSize: 12, padding: '8px 12px' }}
-            onClick={() => setBackupModal(true)}>
-            <Save size={13} style={{ display: 'inline', verticalAlign: -2, marginRight: 4 }} /> Sauvegarde / Restauration
-          </button>
-          <button className="btn-ghost" style={{ width: '100%', fontSize: 12, padding: '8px 12px' }}
-            onClick={() => setApiModal(true)}>
-            <KeyRound size={13} style={{ display: 'inline', verticalAlign: -2, marginRight: 4 }} /> Clé API Gemini (gratuit)
-          </button>
-          <button className="btn-ghost" style={{ width: '100%', fontSize: 12, padding: '8px 12px' }}
-            onClick={toggleTheme}>
-            {theme === 'dark'
-              ? <><Sun size={13} style={{ display: 'inline', verticalAlign: -2, marginRight: 4 }} /> Thème clair</>
-              : <><Moon size={13} style={{ display: 'inline', verticalAlign: -2, marginRight: 4 }} /> Thème sombre</>}
-          </button>
-          <button className="btn-ghost" style={{ width: '100%', fontSize: 12, padding: '8px 12px',
-            color: '#f87171', borderColor: 'rgba(248,113,113,.25)', marginTop: 4 }}
-            onClick={logout}>
-            <LogOut size={13} style={{ display: 'inline', verticalAlign: -2, marginRight: 4 }} /> Déconnexion
-          </button>
         </div>
       </aside>
 
       {/* MAIN */}
-      <main className="main-content">
+      <main className="main-content" style={!sidebarOpen ? { marginLeft: 68 } : undefined}>
         <div className="page-enter" key={tab}>
           {tab === 'dashboard'   && <Dashboard />}
           {tab === 'taches'      && <Taches />}
