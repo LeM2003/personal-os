@@ -10,6 +10,7 @@ import Ajustements from './components/Ajustements'
 import Stats from './components/Stats'
 import PomodoroModal from './components/shared/PomodoroModal'
 import GlobalSearch from './components/shared/GlobalSearch'
+import InstallPrompt from './components/shared/InstallPrompt'
 import {
   LayoutDashboard, CheckSquare, Target, GraduationCap, Wallet,
   BarChart3, RefreshCw, Search, User, Bell, BellOff, Save,
@@ -350,7 +351,7 @@ export default function App() {
             </p>
             <input type="password" value={apiKey} onChange={e => setApiKey(e.target.value)}
               placeholder="AIzaSy..." style={{ marginBottom: 10 }} />
-            <p style={{ fontSize: 11, color: '#f97316', margin: '0 0 14px', lineHeight: 1.5,
+            <p style={{ fontSize: 11, color: '#f97916', margin: '0 0 14px', lineHeight: 1.5,
               background: 'rgba(249,115,22,.06)', border: '1px solid rgba(249,115,22,.2)',
               borderRadius: 6, padding: '8px 10px' }}>
               🔒 Stockée sur ton appareil uniquement. Évite sur un ordi public.
@@ -362,6 +363,8 @@ export default function App() {
           </div>
         </div>
       )}
+
+      <InstallPrompt />
     </div>
   )
 }
