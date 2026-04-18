@@ -47,7 +47,10 @@ export default function Dashboard() {
   const habitsPct       = todayHabits.length > 0 ? Math.round((habitsCompleted / todayHabits.length) * 100) : 0
 
   const top3         = [...tasks].filter(t => t.status !== 'Terminé').sort((a, b) => PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority]).slice(0, 3)
-  const todayCourses = courses.filter(c => c.jour === dayName).sort((a, b) => a.heureDebut.localeCompare(b.heureDebut))
+  const todayCourses = courses
+    .filter(c => c.jour === dayName)
+    .filter(c => (!c.dateDebut || now >= c.dateDebut) && (!c.dateFin || now <= c.dateFin))
+    .sort((a, b) => a.heureDebut.localeCompare(b.heureDebut))
   const todayExpenses= expenses.filter(e => e.date === now).sort((a, b) => b.amount - a.amount)
   const upcomingSubs = subscriptions
     .map(s => ({ ...s, _next: s.nextRenewal || computeNextRenewal(s.startDate || now, s.cycle || 'Mensuel') }))

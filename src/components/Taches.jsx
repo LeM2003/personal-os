@@ -11,7 +11,7 @@ const JOURS_SHORT = ['Lun',   'Mar',   'Mer',      'Jeu',   'Ven',      'Sam',  
 
 const blank = {
   name: '', details: '', project: '', priority: 'Important',
-  durationH: 0, durationM: 25,
+  durationH: 0, durationM: 0,
   deadline: '', flexible: false,
   recurring: false, recurrence: 'daily', recurrenceDays: [], recurrenceTime: '',
   subtasks: [],
@@ -37,6 +37,7 @@ export default function Taches() {
   const [fProject,  setFProject]  = useState('Tous')
   const [showDone,  setShowDone]  = useState(false)
   const [newSubtask, setNewSubtask] = useState('')
+  const [showDetails, setShowDetails] = useState(false)
   const [expandedTaskId, setExpandedTaskId] = useState(null)
   const [snoozeForId, setSnoozeForId] = useState(null)
 
@@ -56,7 +57,7 @@ export default function Taches() {
     return false
   }
 
-  const openAdd  = () => { setEditingId(null); setForm(blank); setShowForm(true) }
+  const openAdd  = () => { setEditingId(null); setForm({ ...blank, deadline: todayISO() }); setShowDetails(false); setShowForm(true) }
   const openEdit = task => {
     setEditingId(task.id)
     setForm({
@@ -210,9 +211,18 @@ export default function Taches() {
                 placeholder="Nom de la tâche *" autoFocus />
             </div>
             <div style={{ gridColumn: '1/-1' }}>
-              <textarea value={form.details} onChange={e => setForm({ ...form, details: e.target.value })}
-                placeholder="Détails (optionnel) — ex : 30 min course, 20 pompes..."
-                rows={2} style={{ resize: 'vertical', minHeight: 44 }} />
+              {(showDetails || form.details) ? (
+                <textarea value={form.details} onChange={e => setForm({ ...form, details: e.target.value })}
+                  placeholder="Note (contexte, rappel, où, pourquoi...)"
+                  rows={2} style={{ resize: 'vertical', minHeight: 44 }} autoFocus />
+              ) : (
+                <button type="button" className="btn-ghost"
+                  onClick={() => setShowDetails(true)}
+                  style={{ width: '100%', fontSize: 12, padding: '8px 12px', textAlign: 'left',
+                    color: 'var(--muted)' }}>
+                  + Ajouter une note
+                </button>
+              )}
             </div>
             <div style={{ gridColumn: '1/-1' }}>
               <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 6 }}>☑ Sous-tâches (optionnel)</p>

@@ -5,7 +5,7 @@ import { COURSE_PALETTE } from '../../utils/constants'
 
 const JOURS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
 
-const blankForm = { nom: '', jours: ['Lundi'], heureDebut: '08:00', heureFin: '10:00', salle: '', professeur: '', color: '#6366f1' }
+const blankForm = { nom: '', jours: ['Lundi'], heureDebut: '08:00', heureFin: '10:00', salle: '', professeur: '', color: '#6366f1', dateDebut: '', dateFin: '' }
 
 export default function EmploiDuTemps() {
   const { courses, setCourses } = useApp()
@@ -19,7 +19,8 @@ export default function EmploiDuTemps() {
   const openEdit = (c) => {
     setEditingId(c.id)
     setForm({ nom: c.nom, jours: [c.jour], heureDebut: c.heureDebut, heureFin: c.heureFin,
-      salle: c.salle || '', professeur: c.professeur || '', color: c.color })
+      salle: c.salle || '', professeur: c.professeur || '', color: c.color,
+      dateDebut: c.dateDebut || '', dateFin: c.dateFin || '' })
     setShowForm(true)
   }
   const closeForm = () => { setShowForm(false); setEditingId(null); setForm(blankForm) }
@@ -38,13 +39,15 @@ export default function EmploiDuTemps() {
       // Edit: update existing course (single day)
       setCourses(p => p.map(c => c.id === editingId
         ? { ...c, nom: form.nom, jour: form.jours[0], heureDebut: form.heureDebut, heureFin: form.heureFin,
-            salle: form.salle, professeur: form.professeur, color: form.color }
+            salle: form.salle, professeur: form.professeur, color: form.color,
+            dateDebut: form.dateDebut || null, dateFin: form.dateFin || null }
         : c))
     } else {
       // Add: create one course per selected day
       const newCourses = form.jours.map(jour => ({
         nom: form.nom, jour, heureDebut: form.heureDebut, heureFin: form.heureFin,
         salle: form.salle, professeur: form.professeur, color: form.color,
+        dateDebut: form.dateDebut || null, dateFin: form.dateFin || null,
         id: genId(), attended: []
       }))
       setCourses(p => [...p, ...newCourses])
@@ -67,6 +70,13 @@ export default function EmploiDuTemps() {
   }
 
   const isPresent = (c) => (c.attended || []).includes(today)
+
+  // Un cours n'apparait que si aujourd'hui est dans sa periode (ou s'il n'a pas de periode)
+  const isActiveToday = (c) => {
+    if (c.dateDebut && today < c.dateDebut) return false
+    if (c.dateFin && today > c.dateFin) return false
+    return true
+  }
 
   // Mobile: show today first, then other days
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
@@ -126,6 +136,23 @@ export default function EmploiDuTemps() {
               <input value={form.salle} onChange={e => setForm({ ...form, salle: e.target.value })} placeholder="Salle / Lieu" />
               <input value={form.professeur} onChange={e => setForm({ ...form, professeur: e.target.value })} placeholder="Professeur" />
             </div>
+            <div>
+              <p style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 4 }}>
+                📅 Période (optionnel — laisser vide = toute l'année)
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                <div>
+                  <p style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 3 }}>Date début</p>
+                  <input type="date" value={form.dateDebut}
+                    onChange={e => setForm({ ...form, dateDebut: e.target.value })} />
+                </div>
+                <div>
+                  <p style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 3 }}>Date fin</p>
+                  <input type="date" value={form.dateFin}
+                    onChange={e => setForm({ ...form, dateFin: e.target.value })} />
+                </div>
+              </div>
+            </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
               <span style={{ fontSize: 13, color: 'var(--muted)' }}>Couleur :</span>
               {COURSE_PALETTE.map(c => (
@@ -152,7 +179,7 @@ export default function EmploiDuTemps() {
       {/* ── Grille hebdomadaire (desktop) / Liste (mobile) ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', gap: 12 }} className="grid-6">
         {sortedJours.filter(j => JOURS.includes(j)).map(jour => {
-          const dayCourses = courses.filter(c => c.jour === jour).sort((a, b) => a.heureDebut.localeCompare(b.heureDebut))
+          const dayCourses = courses.filter(c => c.jour === jour && isActiveToday(c)).sort((a, b) => a.heureDebut.localeCompare(b.heureDebut))
           const isToday = jour === dayNow
           return (
             <div key={jour}>
