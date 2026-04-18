@@ -9,7 +9,7 @@ const blankProject = {
 }
 
 export default function Projets() {
-  const { tasks, projects, setProjects, apiKey } = useApp()
+  const { tasks, setTasks, projects, setProjects, apiKey } = useApp()
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState(blankProject)
   const [editingId, setEditingId] = useState(null)

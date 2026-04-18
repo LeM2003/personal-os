@@ -391,7 +391,7 @@ export default function App() {
             </p>
             <input type="password" value={apiKey} onChange={e => setApiKey(e.target.value)}
               placeholder="AIzaSy..." style={{ marginBottom: 10 }} />
-            <p style={{ fontSize: 11, color: '#f97916', margin: '0 0 14px', lineHeight: 1.5,
+            <p style={{ fontSize: 11, color: '#f97316', margin: '0 0 14px', lineHeight: 1.5,
               background: 'rgba(249,115,22,.06)', border: '1px solid rgba(249,115,22,.2)',
               borderRadius: 6, padding: '8px 10px' }}>
               🔒 Stockée sur ton appareil uniquement. Évite sur un ordi public.

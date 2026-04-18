@@ -19,7 +19,8 @@ function isoMinusDays(n) {
 
 export default function Dashboard() {
   const { tasks, objectif, setObjectif, expenses, subscriptions,
-    devoirs, examens, adjustments, courses, setTab, profile, streakData, setStreakData } = useApp()
+    devoirs, examens, adjustments, courses, setTab, profile, streakData, setStreakData,
+    budgets, setBudgets } = useApp()
 
   const now     = todayISO()
   const dayName = todayDay()
@@ -27,6 +28,11 @@ export default function Dashboard() {
   const createdToday   = tasks.filter(t => t.createdAt === now)
   const completedToday = createdToday.filter(t => t.status === 'Terminé').length
   const todayExpTotal  = expenses.filter(e => e.date === now).reduce((s, e) => s + e.amount, 0)
+  const monthKey       = now.slice(0, 7) // YYYY-MM
+  const monthExpTotal  = expenses.filter(e => (e.date || '').startsWith(monthKey)).reduce((s, e) => s + e.amount, 0)
+  const monthBudget    = budgets?.monthly || 0
+  const budgetPct      = monthBudget > 0 ? Math.min(100, Math.round((monthExpTotal / monthBudget) * 100)) : 0
+  const budgetRemaining= monthBudget - monthExpTotal
   const nextExam       = [...examens].filter(e => daysUntil(e.date) >= 0).sort((a, b) => new Date(a.date) - new Date(b.date))[0]
 
   // Habitudes du jour
@@ -172,6 +178,51 @@ export default function Dashboard() {
         <StatCard icon={nextExam ? <GraduationCap size={24} color="#f87171" /> : <BookOpen size={24} color="#9ca3af" />}
           value={nextExam ? `J-${daysUntil(nextExam.date)}` : '—'}
           label={nextExam ? nextExam.matiere : 'Pas d\'examen'} color={nextExam ? '#f87171' : '#9ca3af'} />
+      </div>
+
+      {/* ── Budget du mois ── */}
+      <div className="card" style={{ padding: '16px 20px', marginBottom: 24 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, gap: 10, flexWrap: 'wrap' }}>
+          <p style={{ fontFamily: 'Fraunces', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, margin: 0 }}>
+            <CreditCard size={13} style={{ display: 'inline', verticalAlign: -2, marginRight: 4 }} /> Budget du mois
+          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 11, color: 'var(--muted)' }}>Budget :</span>
+            <input type="number" value={monthBudget || ''}
+              onChange={e => setBudgets(b => ({ ...b, monthly: e.target.value ? +e.target.value : 0 }))}
+              placeholder="0" min={0} step={1000}
+              style={{ width: 110, padding: '4px 8px', fontSize: 12 }} />
+            <span style={{ fontSize: 11, color: 'var(--muted)' }}>F</span>
+          </div>
+        </div>
+        {monthBudget > 0 ? (
+          <>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6, gap: 8, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 20, fontWeight: 700, fontFamily: 'Fraunces',
+                color: budgetPct >= 100 ? '#f87171' : budgetPct >= 80 ? '#fb923c' : '#4ade80' }}>
+                {monthExpTotal.toLocaleString('fr-FR')} F
+              </span>
+              <span style={{ fontSize: 12, color: 'var(--muted)' }}>
+                sur {monthBudget.toLocaleString('fr-FR')} F ({budgetPct}%)
+              </span>
+            </div>
+            <div className="progress-track" style={{ marginBottom: 6 }}>
+              <div className="progress-fill" style={{
+                width: `${budgetPct}%`,
+                background: budgetPct >= 100 ? '#f87171' : budgetPct >= 80 ? '#fb923c' : '#4ade80'
+              }} />
+            </div>
+            <p style={{ fontSize: 12, color: 'var(--muted)', margin: 0 }}>
+              {budgetRemaining >= 0
+                ? <>Il te reste <strong style={{ color: 'var(--text)' }}>{budgetRemaining.toLocaleString('fr-FR')} F</strong> ce mois</>
+                : <>Tu as dépassé de <strong style={{ color: '#f87171' }}>{Math.abs(budgetRemaining).toLocaleString('fr-FR')} F</strong></>}
+            </p>
+          </>
+        ) : (
+          <p style={{ fontSize: 12, color: 'var(--muted)', margin: 0 }}>
+            Fixe un budget mensuel pour suivre tes dépenses. Total ce mois : <strong style={{ color: 'var(--text)' }}>{monthExpTotal.toLocaleString('fr-FR')} F</strong>
+          </p>
+        )}
       </div>
 
       {/* ── Alertes ── */}

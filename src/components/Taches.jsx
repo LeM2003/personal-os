@@ -13,7 +13,8 @@ const blank = {
   name: '', details: '', project: '', priority: 'Important',
   durationH: 0, durationM: 25,
   deadline: '', flexible: false,
-  recurring: false, recurrence: 'daily', recurrenceDays: [], recurrenceTime: ''
+  recurring: false, recurrence: 'daily', recurrenceDays: [], recurrenceTime: '',
+  subtasks: [],
 }
 
 const formatDur = (mins) => {
@@ -35,6 +36,9 @@ export default function Taches() {
   const [fDate,     setFDate]     = useState("Aujourd'hui")
   const [fProject,  setFProject]  = useState('Tous')
   const [showDone,  setShowDone]  = useState(false)
+  const [newSubtask, setNewSubtask] = useState('')
+  const [expandedTaskId, setExpandedTaskId] = useState(null)
+  const [snoozeForId, setSnoozeForId] = useState(null)
 
   const projectNames = projects ? [...new Set(projects.map(p => p.name).filter(Boolean))] : []
 
@@ -61,7 +65,8 @@ export default function Taches() {
       durationM: (task.duration || 0) % 60,
       deadline: task.deadline || '', flexible: !!task.flexible,
       recurring: !!task.recurring, recurrence: task.recurrence || 'daily',
-      recurrenceDays: task.recurrenceDays || [], recurrenceTime: task.recurrenceTime || ''
+      recurrenceDays: task.recurrenceDays || [], recurrenceTime: task.recurrenceTime || '',
+      subtasks: task.subtasks || [],
     })
     setShowForm(true)
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -85,6 +90,28 @@ export default function Taches() {
       setTasks(p => [...p, { ...form, duration, deadline, id: genId(), status: 'À faire', createdAt: todayISO(), lastCompletedAt: null }])
     }
     closeForm()
+  }
+
+  // Sous-taches dans le formulaire
+  const addSubtaskToForm = (title) => {
+    if (!title.trim()) return
+    setForm(f => ({ ...f, subtasks: [...(f.subtasks || []), { id: genId(), title: title.trim(), done: false }] }))
+  }
+  const removeSubtaskFromForm = (sid) => {
+    setForm(f => ({ ...f, subtasks: (f.subtasks || []).filter(s => s.id !== sid) }))
+  }
+
+  // Sous-taches sur une tache existante (toggle done)
+  const toggleSubtask = (taskId, sid) => setTasks(p => p.map(t => {
+    if (t.id !== taskId) return t
+    return { ...t, subtasks: (t.subtasks || []).map(s => s.id === sid ? { ...s, done: !s.done } : s) }
+  }))
+
+  // Snooze : repousser la deadline de N jours a partir d'aujourd'hui
+  const snoozeTask = (taskId, days) => {
+    const d = new Date(); d.setDate(d.getDate() + days)
+    const newDeadline = d.toISOString().split('T')[0]
+    setTasks(p => p.map(t => t.id === taskId ? { ...t, deadline: newDeadline } : t))
   }
 
   const cycleStatus = id => setTasks(p => p.map(t => {
@@ -186,6 +213,28 @@ export default function Taches() {
               <textarea value={form.details} onChange={e => setForm({ ...form, details: e.target.value })}
                 placeholder="Détails (optionnel) — ex : 30 min course, 20 pompes..."
                 rows={2} style={{ resize: 'vertical', minHeight: 44 }} />
+            </div>
+            <div style={{ gridColumn: '1/-1' }}>
+              <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 6 }}>☑ Sous-tâches (optionnel)</p>
+              {(form.subtasks || []).length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 8 }}>
+                  {form.subtasks.map(s => (
+                    <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8,
+                      background: 'var(--surface-deep)', padding: '6px 10px', borderRadius: 6 }}>
+                      <span style={{ flex: 1, fontSize: 13 }}>{s.title}</span>
+                      <button type="button" className="btn-icon" onClick={() => removeSubtaskFromForm(s.id)} title="Retirer">✕</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: 6 }}>
+                <input value={newSubtask} onChange={e => setNewSubtask(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addSubtaskToForm(newSubtask); setNewSubtask('') } }}
+                  placeholder="Ajouter une sous-tâche puis Entrée" style={{ flex: 1 }} />
+                <button type="button" className="btn-ghost"
+                  onClick={() => { addSubtaskToForm(newSubtask); setNewSubtask('') }}
+                  disabled={!newSubtask.trim()}>+ Ajouter</button>
+              </div>
             </div>
             <select value={form.project} onChange={e => setForm({ ...form, project: e.target.value })}>
               <option value="">— Aucun projet —</option>
@@ -356,7 +405,13 @@ export default function Taches() {
                       cycleStatus={cycleStatus} del={del} toAdjust={toAdjust}
                       onEdit={openEdit} isEditing={editingId === t.id}
                       onPomo={startPomo}
-                      isRunning={pomo?.task?.id === t.id} />
+                      isRunning={pomo?.task?.id === t.id}
+                      expanded={expandedTaskId === t.id}
+                      onToggleExpand={() => setExpandedTaskId(id => id === t.id ? null : t.id)}
+                      onToggleSubtask={(sid) => toggleSubtask(t.id, sid)}
+                      snoozeOpen={snoozeForId === t.id}
+                      onOpenSnooze={() => setSnoozeForId(id => id === t.id ? null : t.id)}
+                      onSnooze={(days) => { snoozeTask(t.id, days); setSnoozeForId(null) }} />
                   ))}
                 </div>
               </div>
@@ -414,7 +469,9 @@ function recurringLabel(task) {
   return ''
 }
 
-function TaskRow({ task, cycleStatus, del, toAdjust, onEdit, isEditing, onPomo, isRunning }) {
+function TaskRow({ task, cycleStatus, del, toAdjust, onEdit, isEditing, onPomo, isRunning,
+  expanded, onToggleExpand, onToggleSubtask,
+  snoozeOpen, onOpenSnooze, onSnooze }) {
   const due         = daysUntil(task.deadline)
   const overdue     = due < 0
   const urgent      = due >= 0 && due <= 2
@@ -424,12 +481,16 @@ function TaskRow({ task, cycleStatus, del, toAdjust, onEdit, isEditing, onPomo, 
   const statusColor = { 'À faire': 'var(--muted)', 'En cours': '#60a5fa', 'Terminé': '#4ade80' }[task.status]
   const nextDate    = task.recurring && task.status === 'Terminé' ? nextOccurrenceDate(task, task.lastCompletedAt) : null
   const durLabel    = formatDur(task.duration)
+  const subs        = task.subtasks || []
+  const subsDone    = subs.filter(s => s.done).length
+  const canSnooze   = !task.recurring && task.status !== 'Terminé'
 
   return (
     <div className={`task-card${task.status === 'Terminé' ? ' done' : ''}`}
       style={{
         borderLeft: `3px solid ${isEditing ? '#5B8DBF' : isRunning ? '#f97316' : task.status === 'Terminé' ? '#4ade80' : task.recurring ? 'rgba(91,141,191,.4)' : 'transparent'}`,
-        background: isEditing ? 'rgba(91,141,191,.04)' : isRunning ? 'rgba(249,115,22,.04)' : undefined
+        background: isEditing ? 'rgba(91,141,191,.04)' : isRunning ? 'rgba(249,115,22,.04)' : undefined,
+        flexWrap: 'wrap'
       }}>
 
       <button className="status-btn" onClick={() => cycleStatus(task.id)}
@@ -462,6 +523,14 @@ function TaskRow({ task, cycleStatus, del, toAdjust, onEdit, isEditing, onPomo, 
           )}
           {nextDate  && <span style={{ fontSize: 11, color: '#4ade80' }}>🔄 Reprend le {fmtDate(nextDate)}</span>}
           {task.flexible && <span style={{ fontSize: 11, color: 'var(--muted)' }}>🔀 Flexible</span>}
+          {subs.length > 0 && (
+            <button onClick={onToggleExpand} type="button"
+              style={{ fontSize: 11, color: subsDone === subs.length ? '#4ade80' : '#5B8DBF',
+                background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontWeight: 600 }}
+              title={expanded ? 'Masquer' : 'Voir'}>
+              ☑ {subsDone}/{subs.length} {expanded ? '▴' : '▾'}
+            </button>
+          )}
           {isRunning && <span style={{ fontSize: 11, color: '#f97316', fontWeight: 600 }}>🍅 Timer en cours…</span>}
         </div>
       </div>
@@ -479,6 +548,31 @@ function TaskRow({ task, cycleStatus, del, toAdjust, onEdit, isEditing, onPomo, 
         <span style={{ background: statusBg, color: statusColor, padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 600 }}>
           {task.status}
         </span>
+        {canSnooze && (
+          <div style={{ position: 'relative' }}>
+            <button className="btn-icon" title="Repousser" onClick={onOpenSnooze}
+              style={{ color: snoozeOpen ? '#5B8DBF' : undefined }}>💤</button>
+            {snoozeOpen && (
+              <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 4, zIndex: 50,
+                background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8,
+                padding: 6, boxShadow: '0 4px 16px rgba(0,0,0,.25)', minWidth: 140,
+                display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {[
+                  { label: 'Demain', days: 1 },
+                  { label: 'Dans 3 jours', days: 3 },
+                  { label: 'Semaine prochaine', days: 7 },
+                ].map(opt => (
+                  <button key={opt.days} onClick={() => onSnooze(opt.days)} type="button"
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px 10px',
+                      borderRadius: 6, fontSize: 12, textAlign: 'left', color: 'var(--text)',
+                      fontFamily: 'DM Sans' }}>
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
         <button className="btn-icon" title="Modifier" onClick={() => onEdit(task)}
           style={{ color: isEditing ? '#5B8DBF' : undefined }}>✏️</button>
         {!task.recurring && (
@@ -486,6 +580,21 @@ function TaskRow({ task, cycleStatus, del, toAdjust, onEdit, isEditing, onPomo, 
         )}
         <button className="btn-icon" title="Supprimer" onClick={() => del(task.id)}>✕</button>
       </div>
+
+      {expanded && subs.length > 0 && (
+        <div style={{ flexBasis: '100%', marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--border)',
+          display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {subs.map(s => (
+            <label key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer',
+              fontSize: 13, color: s.done ? 'var(--muted)' : 'var(--text)',
+              textDecoration: s.done ? 'line-through' : 'none' }}>
+              <input type="checkbox" checked={s.done} onChange={() => onToggleSubtask(s.id)}
+                style={{ width: 'auto', accentColor: '#5B8DBF' }} />
+              {s.title}
+            </label>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
