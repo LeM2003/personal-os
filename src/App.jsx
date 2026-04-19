@@ -12,6 +12,7 @@ import PomodoroModal from './components/shared/PomodoroModal'
 import GlobalSearch from './components/shared/GlobalSearch'
 import InstallPrompt from './components/shared/InstallPrompt'
 import MissedReminders from './components/shared/MissedReminders'
+import BottomSheet from './components/shared/BottomSheet'
 import { downloadICS, countICSItems } from './utils/icsExport'
 import {
   LayoutDashboard, CheckSquare, Target, GraduationCap, Wallet,
@@ -81,7 +82,7 @@ function ProfileModal({ profile, onSave, onClose }) {
   )
 }
 
-function CalendarExportModal({ data, onClose }) {
+function CalendarExportModal({ open, data, onClose }) {
   const counts = countICSItems(data)
   const [inc, setInc] = useState({
     recurringTasks: counts.recurringTasks > 0,
@@ -107,44 +108,41 @@ function CalendarExportModal({ data, onClose }) {
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-box" onClick={e => e.stopPropagation()}>
-        <h3 style={{ fontSize: 18, marginBottom: 8, color: '#5B8DBF' }}>📅 Export Calendrier</h3>
-        <p style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 18, lineHeight: 1.6 }}>
-          Choisis ce qui part dans ton agenda. Les tâches récurrentes sont plafonnées à 1 an pour éviter le spam.
-        </p>
+    <BottomSheet open={open} onClose={onClose} title="📅 Export Calendrier">
+      <p style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 18, lineHeight: 1.6 }}>
+        Choisis ce qui part dans ton agenda. Les tâches récurrentes sont plafonnées à 1 an pour éviter le spam.
+      </p>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
-          {ROWS.map(r => {
-            const n = counts[r.key]
-            const disabled = n === 0
-            return (
-              <label key={r.key}
-                style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px',
-                  borderRadius: 8, border: '1px solid var(--border)', cursor: disabled ? 'not-allowed' : 'pointer',
-                  opacity: disabled ? 0.4 : 1, background: inc[r.key] ? 'rgba(91,141,191,.06)' : 'transparent' }}>
-                <input type="checkbox" checked={inc[r.key]} disabled={disabled}
-                  onChange={e => setInc({ ...inc, [r.key]: e.target.checked })}
-                  style={{ marginTop: 3, flexShrink: 0 }} />
-                <div style={{ flex: 1 }}>
-                  <p style={{ fontSize: 14, fontWeight: 600, margin: 0, color: 'var(--text)' }}>
-                    {r.label} <span style={{ color: 'var(--muted)', fontWeight: 400 }}>({n})</span>
-                  </p>
-                  <p style={{ fontSize: 11, color: 'var(--muted)', margin: '2px 0 0' }}>{r.hint}</p>
-                </div>
-              </label>
-            )
-          })}
-        </div>
-
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn-gold" onClick={handleDownload} disabled={totalSelected === 0}>
-            ⬇️ Télécharger ({totalSelected})
-          </button>
-          <button className="btn-ghost" onClick={onClose}>Annuler</button>
-        </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+        {ROWS.map(r => {
+          const n = counts[r.key]
+          const disabled = n === 0
+          return (
+            <label key={r.key}
+              style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px',
+                borderRadius: 8, border: '1px solid var(--border)', cursor: disabled ? 'not-allowed' : 'pointer',
+                opacity: disabled ? 0.4 : 1, background: inc[r.key] ? 'rgba(91,141,191,.06)' : 'transparent' }}>
+              <input type="checkbox" checked={inc[r.key]} disabled={disabled}
+                onChange={e => setInc({ ...inc, [r.key]: e.target.checked })}
+                style={{ marginTop: 3, flexShrink: 0 }} />
+              <div style={{ flex: 1 }}>
+                <p style={{ fontSize: 14, fontWeight: 600, margin: 0, color: 'var(--text)' }}>
+                  {r.label} <span style={{ color: 'var(--muted)', fontWeight: 400 }}>({n})</span>
+                </p>
+                <p style={{ fontSize: 11, color: 'var(--muted)', margin: '2px 0 0' }}>{r.hint}</p>
+              </div>
+            </label>
+          )
+        })}
       </div>
-    </div>
+
+      <div style={{ display: 'flex', gap: 8 }}>
+        <button className="btn-gold" onClick={handleDownload} disabled={totalSelected === 0}>
+          ⬇️ Télécharger ({totalSelected})
+        </button>
+        <button className="btn-ghost" onClick={onClose}>Annuler</button>
+      </div>
+    </BottomSheet>
   )
 }
 
@@ -484,12 +482,11 @@ export default function App() {
       )}
 
       {/* EXPORT CALENDRIER (.ICS) */}
-      {icsModal && (
-        <CalendarExportModal
-          data={{ tasks, examens, devoirs, subscriptions }}
-          onClose={() => setIcsModal(false)}
-        />
-      )}
+      <CalendarExportModal
+        open={icsModal}
+        data={{ tasks, examens, devoirs, subscriptions }}
+        onClose={() => setIcsModal(false)}
+      />
 
       <InstallPrompt />
     </div>

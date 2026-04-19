@@ -4,6 +4,7 @@ import { CAT_COLORS, PRIORITY_COLOR } from '../utils/constants'
 import { todayISO, todayDay, daysUntil, fmtDateRange } from '../utils/dates'
 import StatCard from './shared/StatCard'
 import WeeklyReport from './shared/WeeklyReport'
+import PageHeader from './shared/PageHeader'
 
 const JOURS_FR = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
 
@@ -174,12 +175,12 @@ export default function Stats() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 800 }}>📊 Statistiques</h1>
-        <button className="btn-gold" onClick={() => setShowReport(true)} style={{ fontSize: 13 }}>
-          📤 Rapport hebdo
-        </button>
-      </div>
+      <PageHeader title="Statistiques" sub="Ta progression, en chiffres"
+        action={
+          <button className="btn-gold" onClick={() => setShowReport(true)} style={{ fontSize: 13 }}>
+            📤 Rapport hebdo
+          </button>
+        } />
 
       {/* ── Score global ── */}
       <div className="card" style={{ padding: 20, marginBottom: 20,

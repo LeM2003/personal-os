@@ -5,6 +5,8 @@ import { PRIORITY_ORDER, PRIORITY_COLOR, PRIORITY_EMOJI } from '../utils/constan
 import PageHeader from './shared/PageHeader'
 import EmptyState from './shared/EmptyState'
 import TextImport from './shared/TextImport'
+import SwipeRow from './shared/SwipeRow'
+import { haptic, hapticSuccess } from '../utils/haptics'
 
 const JOURS       = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
 const JOURS_SHORT = ['Lun',   'Mar',   'Mer',      'Jeu',   'Ven',      'Sam',    'Dim']
@@ -115,11 +117,24 @@ export default function Taches() {
     setTasks(p => p.map(t => t.id === taskId ? { ...t, deadline: newDeadline } : t))
   }
 
-  const cycleStatus = id => setTasks(p => p.map(t => {
-    if (t.id !== id) return t
-    const next = { 'À faire': 'En cours', 'En cours': 'Terminé', 'Terminé': 'À faire' }[t.status]
-    if (next === 'Terminé' && t.recurring) return { ...t, status: 'Terminé', lastCompletedAt: todayISO() }
-    return { ...t, status: next }
+  const cycleStatus = id => {
+    haptic(8)
+    setTasks(p => p.map(t => {
+      if (t.id !== id) return t
+      const next = { 'À faire': 'En cours', 'En cours': 'Terminé', 'Terminé': 'À faire' }[t.status]
+      if (next === 'Terminé') {
+        hapticSuccess()
+        if (t.recurring) return { ...t, status: 'Terminé', lastCompletedAt: todayISO() }
+      }
+      return { ...t, status: next }
+    }))
+  }
+
+  // Valide directement une tâche (swipe droite) — ne cycle pas
+  const completeTask = id => setTasks(p => p.map(t => {
+    if (t.id !== id || t.status === 'Terminé') return t
+    if (t.recurring) return { ...t, status: 'Terminé', lastCompletedAt: todayISO() }
+    return { ...t, status: 'Terminé' }
   }))
 
   const del      = id => setTasks(p => p.filter(t => t.id !== id))
@@ -182,7 +197,7 @@ export default function Taches() {
 
   return (
     <div>
-      <PageHeader title="Tâches" action={
+      <PageHeader title="Tâches" sub="Tout ce que tu veux faire, au bon moment" action={
         <div style={{ display: 'flex', gap: 8 }}>
           {apiKey ? (
             <button className="btn-ghost" onClick={() => setShowImport(true)}
@@ -413,6 +428,7 @@ export default function Taches() {
                   {list.map(t => (
                     <TaskRow key={t.id} task={t}
                       cycleStatus={cycleStatus} del={del} toAdjust={toAdjust}
+                      onComplete={completeTask}
                       onEdit={openEdit} isEditing={editingId === t.id}
                       onPomo={startPomo}
                       isRunning={pomo?.task?.id === t.id}
@@ -479,7 +495,7 @@ function recurringLabel(task) {
   return ''
 }
 
-function TaskRow({ task, cycleStatus, del, toAdjust, onEdit, isEditing, onPomo, isRunning,
+function TaskRow({ task, cycleStatus, del, toAdjust, onComplete, onEdit, isEditing, onPomo, isRunning,
   expanded, onToggleExpand, onToggleSubtask,
   snoozeOpen, onOpenSnooze, onSnooze }) {
   const due         = daysUntil(task.deadline)
@@ -495,10 +511,19 @@ function TaskRow({ task, cycleStatus, del, toAdjust, onEdit, isEditing, onPomo, 
   const subsDone    = subs.filter(s => s.done).length
   const canSnooze   = !task.recurring && task.status !== 'Terminé'
 
+  const isDone = task.status === 'Terminé'
+
   return (
-    <div className={`task-card${task.status === 'Terminé' ? ' done' : ''}`}
+    <SwipeRow
+      disabled={isDone}
+      onSwipeRight={onComplete ? () => onComplete(task.id) : undefined}
+      onSwipeLeft={() => del(task.id)}
+      rightLabel="Terminer"
+      leftLabel="Supprimer"
+    >
+    <div className={`task-card${isDone ? ' done' : ''}`}
       style={{
-        borderLeft: `3px solid ${isEditing ? '#5B8DBF' : isRunning ? '#f97316' : task.status === 'Terminé' ? '#4ade80' : task.recurring ? 'rgba(91,141,191,.4)' : 'transparent'}`,
+        borderLeft: `3px solid ${isEditing ? '#5B8DBF' : isRunning ? '#f97316' : isDone ? '#4ade80' : task.recurring ? 'rgba(91,141,191,.4)' : 'transparent'}`,
         background: isEditing ? 'rgba(91,141,191,.04)' : isRunning ? 'rgba(249,115,22,.04)' : undefined,
         flexWrap: 'wrap'
       }}>
@@ -606,5 +631,6 @@ function TaskRow({ task, cycleStatus, del, toAdjust, onEdit, isEditing, onPomo, 
         </div>
       )}
     </div>
+    </SwipeRow>
   )
 }

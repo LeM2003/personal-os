@@ -1,10 +1,12 @@
 import { useEffect } from 'react'
 import { useApp } from '../context/AppContext'
+import { useLS } from '../hooks/useLocalStorage'
 import { todayISO, todayLabel, todayDay, greeting, fmtDate, daysUntil } from '../utils/dates'
 import { PRIORITY_ORDER, PRIORITY_COLOR, CAT_COLORS } from '../utils/constants'
 import { computeNextRenewal } from '../utils/subscriptions'
 import StatCard from './shared/StatCard'
 import EmptyState from './shared/EmptyState'
+import SegmentedControl from './shared/SegmentedControl'
 import {
   CloudSun, Cloud, CloudLightning, Moon as MoonIcon,
   Flame, TrendingUp, Target, ClipboardList, CheckCircle2,
@@ -21,9 +23,14 @@ export default function Dashboard() {
   const { tasks, objectif, setObjectif, expenses, subscriptions,
     devoirs, examens, adjustments, courses, setTab, profile, streakData, setStreakData,
     budgets, setBudgets } = useApp()
+  const [view, setView] = useLS('pos_dashboard_view', 'today')
 
   const now     = todayISO()
   const dayName = todayDay()
+  const JOURS_FR_LIST = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
+  const tomorrowDate = new Date(); tomorrowDate.setDate(tomorrowDate.getDate() + 1)
+  const tomorrow     = tomorrowDate.toISOString().split('T')[0]
+  const tomorrowDay  = JOURS_FR_LIST[tomorrowDate.getDay()]
 
   const createdToday   = tasks.filter(t => t.createdAt === now)
   const completedToday = createdToday.filter(t => t.status === 'Terminé').length
@@ -52,6 +59,23 @@ export default function Dashboard() {
     .filter(c => (!c.dateDebut || now >= c.dateDebut) && (!c.dateFin || now <= c.dateFin))
     .sort((a, b) => a.heureDebut.localeCompare(b.heureDebut))
   const todayExpenses= expenses.filter(e => e.date === now).sort((a, b) => b.amount - a.amount)
+  // ── Données "Demain" ──
+  const tomorrowCourses = courses
+    .filter(c => c.jour === tomorrowDay)
+    .filter(c => (!c.dateDebut || tomorrow >= c.dateDebut) && (!c.dateFin || tomorrow <= c.dateFin))
+    .sort((a, b) => a.heureDebut.localeCompare(b.heureDebut))
+  const tomorrowTasks = tasks.filter(t => !t.recurring && t.deadline === tomorrow && t.status !== 'Terminé')
+  const tomorrowHabits = tasks.filter(t => {
+    if (!t.recurring) return false
+    if (t.recurrence === 'daily')   return true
+    if (t.recurrence === 'weekly')  return (t.recurrenceDays || []).includes(tomorrowDay)
+    if (t.recurrence === 'monthly') return t.deadline === tomorrow
+    return false
+  }).sort((a, b) => (a.recurrenceTime || '').localeCompare(b.recurrenceTime || ''))
+  const tomorrowExamens = examens.filter(e => e.date === tomorrow)
+  const tomorrowDevoirs = devoirs.filter(d => d.dateRendu === tomorrow && d.statut !== 'Rendu')
+  const tomorrowTotal = tomorrowCourses.length + tomorrowTasks.length + tomorrowHabits.length + tomorrowExamens.length + tomorrowDevoirs.length
+
   const upcomingSubs = subscriptions
     .map(s => ({ ...s, _next: s.nextRenewal || computeNextRenewal(s.startDate || now, s.cycle || 'Mensuel') }))
     .filter(s => { const d = daysUntil(s._next); return d >= 0 && d <= 30 })
@@ -114,14 +138,27 @@ export default function Dashboard() {
 
   return (
     <div>
-      {/* ── En-tête ── */}
-      <div style={{ marginBottom: 20 }}>
-        <p style={{ color: 'var(--muted)', fontSize: 13, textTransform: 'capitalize', marginBottom: 6 }}>{todayLabel()}</p>
-        <h1 style={{ fontSize: 30, fontWeight: 800, lineHeight: 1.2 }}>
-          {greeting()}, <span style={{ color: '#5B8DBF' }}>{profile?.prenom || 'toi'}</span>
-        </h1>
+      {/* ── En-tête large-title ── */}
+      <header className="page-header">
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ color: 'var(--muted)', fontSize: 13, textTransform: 'capitalize', margin: '0 0 6px' }}>{todayLabel()}</p>
+          <h1 className="page-title">
+            {greeting()}, <span style={{ color: '#5B8DBF' }}>{profile?.prenom || 'toi'}</span>
+          </h1>
+        </div>
+      </header>
+
+      {/* ── Switch de vue ── */}
+      <div style={{ marginBottom: 20, display: 'flex', justifyContent: 'center' }}>
+        <SegmentedControl value={view} onChange={setView}
+          options={[
+            { value: 'today',    label: "Aujourd'hui" },
+            { value: 'tomorrow', label: 'Demain', count: tomorrowTotal },
+            { value: 'week',     label: 'Semaine' },
+          ]} />
       </div>
 
+      {view === 'today' && (<>
       {/* ── Bannière Météo / Streak / Score ── */}
       <div className="grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 20 }}>
         <div className="card" style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -339,8 +376,202 @@ export default function Dashboard() {
           }
         </div>
       </div>
+      </>)}
 
-      {/* ── Abonnements à venir ── */}
+      {view === 'tomorrow' && (
+      <div className="card" style={{ padding: 20, marginBottom: 24 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 8 }}>
+          <p style={{ fontFamily: 'Fraunces', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, margin: 0 }}>
+            <Calendar size={13} style={{ display: 'inline', verticalAlign: -2, marginRight: 4 }} /> Demain — {tomorrowDay.toLowerCase()} {fmtDate(tomorrow)}
+          </p>
+          {tomorrowTotal > 0 && (
+            <span style={{ fontSize: 11, color: 'var(--muted)' }}>
+              {tomorrowTotal} élément{tomorrowTotal > 1 ? 's' : ''}
+            </span>
+          )}
+        </div>
+
+        {tomorrowTotal === 0 ? (
+          <EmptyState icon="🌙" msg="Demain, rien de prévu. Profites-en pour prendre de l'avance." />
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }} className="grid-2">
+            {/* Cours */}
+            {tomorrowCourses.length > 0 && (
+              <div>
+                <p style={{ fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: .6, marginBottom: 6 }}>
+                  <BookOpen size={11} style={{ display: 'inline', verticalAlign: -1, marginRight: 3 }} /> Cours ({tomorrowCourses.length})
+                </p>
+                {tomorrowCourses.map(c => (
+                  <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0', fontSize: 12 }}>
+                    <div style={{ width: 3, height: 18, borderRadius: 2, background: c.color, flexShrink: 0 }} />
+                    <span style={{ color: c.color, fontWeight: 600, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.nom}</span>
+                    <span style={{ color: 'var(--muted)', fontSize: 11 }}>{c.heureDebut}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Tâches à deadline */}
+            {tomorrowTasks.length > 0 && (
+              <div>
+                <p style={{ fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: .6, marginBottom: 6 }}>
+                  <ClipboardList size={11} style={{ display: 'inline', verticalAlign: -1, marginRight: 3 }} /> Tâches à rendre ({tomorrowTasks.length})
+                </p>
+                {tomorrowTasks.map(t => (
+                  <div key={t.id} onClick={() => setTab('taches')} style={{ cursor: 'pointer', padding: '5px 0', fontSize: 12 }}>
+                    <span style={{ color: PRIORITY_COLOR[t.priority], fontSize: 10, marginRight: 5 }}>●</span>
+                    <span>{t.name}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Habitudes */}
+            {tomorrowHabits.length > 0 && (
+              <div>
+                <p style={{ fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: .6, marginBottom: 6 }}>
+                  <Repeat size={11} style={{ display: 'inline', verticalAlign: -1, marginRight: 3 }} /> Habitudes ({tomorrowHabits.length})
+                </p>
+                {tomorrowHabits.slice(0, 5).map(t => (
+                  <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 0', fontSize: 12 }}>
+                    <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</span>
+                    {t.recurrenceTime && <span style={{ color: '#5B8DBF', fontSize: 11 }}>{t.recurrenceTime}</span>}
+                  </div>
+                ))}
+                {tomorrowHabits.length > 5 && (
+                  <p style={{ fontSize: 10, color: 'var(--muted)', margin: '4px 0 0' }}>+ {tomorrowHabits.length - 5} autres</p>
+                )}
+              </div>
+            )}
+
+            {/* Examens + Devoirs */}
+            {(tomorrowExamens.length > 0 || tomorrowDevoirs.length > 0) && (
+              <div>
+                <p style={{ fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: .6, marginBottom: 6 }}>
+                  <GraduationCap size={11} style={{ display: 'inline', verticalAlign: -1, marginRight: 3 }} /> École ({tomorrowExamens.length + tomorrowDevoirs.length})
+                </p>
+                {tomorrowExamens.map(e => (
+                  <div key={e.id} onClick={() => setTab('ecole')} style={{ cursor: 'pointer', padding: '5px 0', fontSize: 12 }}>
+                    <span style={{ color: '#f87171', fontWeight: 600 }}>🎓 {e.matiere}</span>
+                    {e.heure && <span style={{ color: 'var(--muted)', marginLeft: 6 }}>{e.heure}</span>}
+                  </div>
+                ))}
+                {tomorrowDevoirs.map(d => (
+                  <div key={d.id} onClick={() => setTab('ecole')} style={{ cursor: 'pointer', padding: '5px 0', fontSize: 12 }}>
+                    <span style={{ color: '#fb923c' }}>📋 {d.matiere}</span>
+                    {d.description && <span style={{ color: 'var(--muted)', marginLeft: 6, fontSize: 11 }}>— {d.description}</span>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      )}
+
+      {view === 'week' && <WeekView
+        tasks={tasks} examens={examens} devoirs={devoirs}
+        upcomingSubs={upcomingSubs} weekScore={weekScore} setTab={setTab}
+      />}
+    </div>
+  )
+}
+
+function WeekView({ tasks, examens, devoirs, upcomingSubs, weekScore, setTab }) {
+  const today = todayISO()
+  const in7 = new Date(); in7.setDate(in7.getDate() + 7)
+  const in7ISO = in7.toISOString().split('T')[0]
+
+  const weekExamens = examens
+    .filter(e => e.date >= today && e.date <= in7ISO)
+    .sort((a, b) => a.date.localeCompare(b.date))
+  const weekDevoirs = devoirs
+    .filter(d => d.statut !== 'Rendu' && d.dateRendu >= today && d.dateRendu <= in7ISO)
+    .sort((a, b) => a.dateRendu.localeCompare(b.dateRendu))
+  const weekTasks = tasks
+    .filter(t => !t.recurring && t.deadline && t.deadline >= today && t.deadline <= in7ISO && t.status !== 'Terminé')
+    .sort((a, b) => a.deadline.localeCompare(b.deadline))
+
+  return (
+    <>
+      {/* Score 7j en grand */}
+      <div className="card" style={{ padding: 20, marginBottom: 18, display: 'flex', alignItems: 'center', gap: 16 }}>
+        <TrendingUp size={36} style={{ color: weekScore >= 70 ? '#4ade80' : weekScore >= 40 ? '#5B8DBF' : '#f87171' }} />
+        <div style={{ flex: 1 }}>
+          <p style={{ fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: .7, margin: 0 }}>Score 7 jours</p>
+          <p style={{ fontSize: 28, fontWeight: 800, fontFamily: 'Fraunces', margin: '2px 0',
+            color: weekScore >= 70 ? '#4ade80' : weekScore >= 40 ? '#5B8DBF' : '#f87171' }}>
+            {weekScore}%
+          </p>
+          <p style={{ fontSize: 12, color: 'var(--muted)', margin: 0 }}>
+            {weekScore >= 70 ? 'Belle semaine — tu tiens la cadence' : weekScore >= 40 ? 'Correct, on peut mieux' : 'Cette semaine, on se remet dedans'}
+          </p>
+        </div>
+      </div>
+
+      {/* Examens à venir */}
+      <div className="card" style={{ padding: 20, marginBottom: 18 }}>
+        <p style={{ fontFamily: 'Fraunces', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, marginBottom: 14 }}>
+          <GraduationCap size={13} style={{ display: 'inline', verticalAlign: -2, marginRight: 4 }} /> Examens (7j) {weekExamens.length > 0 && <span style={{ color: 'var(--muted)', fontWeight: 400 }}>— {weekExamens.length}</span>}
+        </p>
+        {weekExamens.length === 0
+          ? <EmptyState icon="📚" msg="Aucun examen cette semaine." />
+          : weekExamens.map(e => (
+            <div key={e.id} onClick={() => setTab('ecole')}
+              style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--border)', cursor: 'pointer' }}>
+              <span style={{ fontSize: 11, color: '#f87171', fontWeight: 700, minWidth: 42 }}>J-{daysUntil(e.date)}</span>
+              <div style={{ flex: 1 }}>
+                <p style={{ fontSize: 13, fontWeight: 600, margin: 0 }}>{e.matiere}</p>
+                <p style={{ fontSize: 11, color: 'var(--muted)', margin: '2px 0 0' }}>
+                  {fmtDate(e.date)}{e.heure && ` · ${e.heure}`}{e.salle && ` · ${e.salle}`}
+                </p>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+
+      {/* Devoirs à rendre */}
+      <div className="card" style={{ padding: 20, marginBottom: 18 }}>
+        <p style={{ fontFamily: 'Fraunces', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, marginBottom: 14 }}>
+          <ClipboardList size={13} style={{ display: 'inline', verticalAlign: -2, marginRight: 4 }} /> Devoirs à rendre (7j) {weekDevoirs.length > 0 && <span style={{ color: 'var(--muted)', fontWeight: 400 }}>— {weekDevoirs.length}</span>}
+        </p>
+        {weekDevoirs.length === 0
+          ? <EmptyState icon="✅" msg="Rien à rendre cette semaine." />
+          : weekDevoirs.map(d => (
+            <div key={d.id} onClick={() => setTab('ecole')}
+              style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--border)', cursor: 'pointer' }}>
+              <span style={{ fontSize: 11, color: '#fb923c', fontWeight: 700, minWidth: 42 }}>J-{daysUntil(d.dateRendu)}</span>
+              <div style={{ flex: 1 }}>
+                <p style={{ fontSize: 13, fontWeight: 600, margin: 0 }}>{d.matiere}</p>
+                {d.description && <p style={{ fontSize: 11, color: 'var(--muted)', margin: '2px 0 0' }}>{d.description}</p>}
+              </div>
+            </div>
+          ))
+        }
+      </div>
+
+      {/* Tâches à échéance */}
+      {weekTasks.length > 0 && (
+        <div className="card" style={{ padding: 20, marginBottom: 18 }}>
+          <p style={{ fontFamily: 'Fraunces', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, marginBottom: 14 }}>
+            <Zap size={13} style={{ display: 'inline', verticalAlign: -2, marginRight: 4 }} /> Tâches avec deadline (7j) — {weekTasks.length}
+          </p>
+          {weekTasks.map(t => (
+            <div key={t.id} onClick={() => setTab('taches')}
+              style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--border)', cursor: 'pointer' }}>
+              <span style={{ fontSize: 11, color: '#5B8DBF', fontWeight: 700, minWidth: 42 }}>J-{daysUntil(t.deadline)}</span>
+              <div style={{ flex: 1 }}>
+                <p style={{ fontSize: 13, fontWeight: 600, margin: 0 }}>{t.name}</p>
+                <p style={{ fontSize: 11, color: PRIORITY_COLOR[t.priority], margin: '2px 0 0' }}>{t.priority}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Abonnements à venir */}
       {upcomingSubs.length > 0 && (
         <div className="card" style={{ padding: 20 }}>
           <p style={{ fontFamily: 'Fraunces', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, marginBottom: 14 }}>
@@ -363,6 +594,6 @@ export default function Dashboard() {
           ))}
         </div>
       )}
-    </div>
+    </>
   )
 }

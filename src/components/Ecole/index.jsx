@@ -3,6 +3,7 @@ import { useApp } from '../../context/AppContext'
 import EmploiDuTemps from './EmploiDuTemps'
 import DevoirsExamens from './DevoirsExamens'
 import TextImport from '../shared/TextImport'
+import PageHeader from '../shared/PageHeader'
 
 export default function Ecole() {
   const { courses, setCourses, devoirs, setDevoirs, examens, setExamens, tasks, setTasks, apiKey } = useApp()
@@ -17,18 +18,16 @@ export default function Ecole() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 10 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 800 }}>📚 École</h1>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <PageHeader title="École" sub="Emploi du temps, devoirs, examens"
+        action={
           <button className="btn-ghost" onClick={() => setShowImport(true)}
             style={{ fontSize: 12, padding: '7px 13px', border: '1px solid rgba(91,141,191,.3)' }}>
             📋 Import IA
           </button>
-          <div className="subtab-bar">
-            <button className={`subtab${sub === 'emploi' ? ' active' : ''}`} onClick={() => setSub('emploi')}>📅 Emploi du temps</button>
-            <button className={`subtab${sub === 'devoirs' ? ' active' : ''}`} onClick={() => setSub('devoirs')}>📝 Devoirs & Examens</button>
-          </div>
-        </div>
+        } />
+      <div className="subtab-bar" style={{ marginBottom: 20, flexWrap: 'wrap' }}>
+        <button className={`subtab${sub === 'emploi' ? ' active' : ''}`} onClick={() => setSub('emploi')}>📅 Emploi du temps</button>
+        <button className={`subtab${sub === 'devoirs' ? ' active' : ''}`} onClick={() => setSub('devoirs')}>📝 Devoirs & Examens</button>
       </div>
       {sub === 'emploi'
         ? <EmploiDuTemps />

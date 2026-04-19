@@ -26,7 +26,7 @@ export default function Ajustements() {
   return (
     <div>
       <PageHeader
-        title="🔄 Ajustements"
+        title="Ajustements"
         sub={`${adjustments.length} tâche${adjustments.length !== 1 ? 's' : ''} à reprogrammer`}
       />
 

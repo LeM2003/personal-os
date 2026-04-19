@@ -180,7 +180,7 @@ export default function Projets() {
 
   return (
     <div>
-      <PageHeader title="🎯 Projets & Idées" action={
+      <PageHeader title="Projets & Idées" sub="Ce que tu construis, seul ou à plusieurs" action={
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn-ghost" onClick={() => openAdd('idee')}
             style={{ fontSize: 13, padding: '8px 14px', border: '1px solid rgba(139,92,246,.3)', color: '#a78bfa' }}>
