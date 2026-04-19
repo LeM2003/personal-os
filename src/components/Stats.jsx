@@ -5,6 +5,7 @@ import { todayISO, todayDay, daysUntil, fmtDateRange } from '../utils/dates'
 import StatCard from './shared/StatCard'
 import WeeklyReport from './shared/WeeklyReport'
 import PageHeader from './shared/PageHeader'
+import AbstractMark from './shared/AbstractMark'
 
 const JOURS_FR = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
 
@@ -72,6 +73,33 @@ export default function Stats() {
   const totalCreated7  = last7.reduce((s, d) => s + d.created, 0)
   const totalDone7     = last7.reduce((s, d) => s + d.done, 0)
   const completionRate = totalCreated7 > 0 ? Math.round((totalDone7 / totalCreated7) * 100) : 0
+
+  // Semaine précédente (fixe, pour la narration — ignore weekOffset)
+  const prev7Done = tasks.filter(t => {
+    if (t.status !== 'Terminé') return false
+    const d = t.createdAt
+    if (!d) return false
+    return d >= isoMinusDays(13, 0) && d <= isoMinusDays(7, 0)
+  }).length
+  const weekDelta = totalDone7 - prev7Done
+
+  // Narration : phrase humaine adaptée à la performance
+  const heroNarrative = (() => {
+    if (totalDone7 === 0) return prev7Done > 0
+      ? "Pas encore de tâche terminée cette semaine — le moment idéal pour en clôturer une."
+      : "Aucune tâche finie pour l'instant. Un petit pas aujourd'hui suffit à lancer la série."
+    if (totalDone7 >= 15) return weekDelta > 0
+      ? `Belle série. ${weekDelta} de plus que la semaine passée — tu tiens un vrai rythme.`
+      : "Gros volume terminé cette semaine. Garde cette énergie."
+    if (totalDone7 >= 7) return weekDelta > 2
+      ? `Bien joué — ${weekDelta} de plus que la semaine dernière.`
+      : weekDelta < -2
+        ? `Un peu moins que la semaine passée (${Math.abs(weekDelta)} en moins). Tu peux resserrer.`
+        : "Un rythme régulier — c'est souvent ça qui gagne à long terme."
+    return weekDelta > 0
+      ? `Tu démarres la semaine, et c'est déjà mieux que la précédente (+${weekDelta}).`
+      : "Un démarrage calme. Une tâche à la fois — pas besoin de tout d'un coup."
+  })()
 
   const byPriority = ['Critique', 'Important', 'Optionnel'].map(p => ({
     priority: p,
@@ -181,6 +209,47 @@ export default function Stats() {
             📤 Rapport hebdo
           </button>
         } />
+
+      {/* ── Hero cette semaine : grand chiffre + narration ── */}
+      <div className="card" style={{
+        padding: 24, marginBottom: 16, position: 'relative', overflow: 'hidden',
+      }}>
+        <div style={{
+          position: 'absolute', right: -18, top: -22,
+          opacity: 0.45, pointerEvents: 'none',
+        }}>
+          <AbstractMark variant="rings" tone="accent" size={140} />
+        </div>
+        <p style={{
+          fontSize: 11, letterSpacing: 1.2, textTransform: 'uppercase',
+          fontFamily: 'Fraunces', fontWeight: 700,
+          color: 'var(--gold)', margin: '0 0 8px', opacity: 0.85,
+        }}>
+          Cette semaine
+        </p>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 10 }}>
+          <span style={{
+            fontFamily: 'Fraunces', fontWeight: 700,
+            fontSize: 'clamp(56px, 12vw, 72px)',
+            lineHeight: 1, letterSpacing: '-2.2px',
+            color: 'var(--text)',
+          }}>
+            {totalDone7}
+          </span>
+          <span style={{
+            fontSize: 14, color: 'var(--muted)',
+            fontFamily: "'DM Sans', sans-serif",
+          }}>
+            tâche{totalDone7 > 1 ? 's' : ''} terminée{totalDone7 > 1 ? 's' : ''}
+          </span>
+        </div>
+        <p style={{
+          fontSize: 14, color: 'var(--text)',
+          lineHeight: 1.5, margin: 0, maxWidth: 520, opacity: 0.78,
+        }}>
+          {heroNarrative}
+        </p>
+      </div>
 
       {/* ── Score global ── */}
       <div className="card" style={{ padding: 20, marginBottom: 20,

@@ -3,9 +3,26 @@ import { useApp } from '../context/AppContext'
 import { genId, todayISO, fmtDate } from '../utils/dates'
 import PageHeader from './shared/PageHeader'
 import EmptyState from './shared/EmptyState'
+import AbstractMark from './shared/AbstractMark'
 
 const blankProject = {
   name: '', objective: '', targetDate: '', type: 'projet', notes: '',
+}
+
+// Moodboard — 5 tonalités stables assignées par hash du nom.
+// Chaque projet garde la même identité visuelle entre les sessions.
+const COVER_TONES = [
+  { bg: 'rgba(91,141,191,0.14)',  accent: '#5B8DBF', mark: 'rings'  },
+  { bg: 'rgba(167,139,250,0.14)', accent: '#a78bfa', mark: 'offset' },
+  { bg: 'rgba(251,146,60,0.14)',  accent: '#fb923c', mark: 'bars'   },
+  { bg: 'rgba(74,222,128,0.12)',  accent: '#4ade80', mark: 'arc'    },
+  { bg: 'rgba(248,113,113,0.12)', accent: '#f87171', mark: 'grid'   },
+]
+const toneFor = (name) => {
+  const n = name || ''
+  let h = 0
+  for (let i = 0; i < n.length; i++) h = (h + n.charCodeAt(i)) % COVER_TONES.length
+  return COVER_TONES[h]
 }
 
 export default function Projets() {
@@ -255,28 +272,75 @@ export default function Projets() {
           const stepsDone = steps.filter(s => s.done).length
           const isEditing = editingId === proj.id
 
+          const tone = toneFor(proj.name)
+
           return (
             <div key={proj.id} className="card" style={{
               padding: 20, marginBottom: 16,
-              borderLeft: `3px solid ${isIdee ? '#a78bfa' : pct === 100 ? '#4ade80' : '#5B8DBF'}`,
               background: isEditing ? 'rgba(91,141,191,.03)' : undefined,
+              overflow: 'hidden',
             }}>
-              {/* Header */}
+              {/* Bandeau moodboard — identité visuelle du projet */}
+              <div
+                onClick={() => setExpandedId(isExpanded ? null : proj.id)}
+                style={{
+                  margin: '-20px -20px 16px',
+                  height: 76,
+                  background: tone.bg,
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  padding: '0 18px',
+                  position: 'relative', overflow: 'hidden',
+                  cursor: 'pointer',
+                }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, zIndex: 1 }}>
+                  <span style={{
+                    fontSize: 10, letterSpacing: 1.2, textTransform: 'uppercase',
+                    fontFamily: 'Fraunces', fontWeight: 700,
+                    color: tone.accent, opacity: 0.85,
+                  }}>
+                    {isIdee ? 'Idée' : 'Projet'}
+                  </span>
+                  <span style={{
+                    fontSize: 22, fontFamily: 'Fraunces', fontWeight: 700,
+                    letterSpacing: '-0.4px', color: 'var(--text)',
+                    lineHeight: 1.1, maxWidth: 260,
+                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                  }}>{proj.name}</span>
+                </div>
+                <div style={{
+                  position: 'absolute', right: -10, top: -12,
+                  opacity: 0.55, pointerEvents: 'none',
+                  // Override local de --gold pour adopter la couleur tonale
+                  '--gold': tone.accent,
+                }}>
+                  <AbstractMark variant={tone.mark} tone="accent" size={104} />
+                </div>
+                <div style={{
+                  zIndex: 1, fontSize: 13, fontWeight: 700,
+                  color: pct === 100 ? '#4ade80' : tone.accent,
+                  background: 'var(--card)',
+                  borderRadius: 999, padding: '5px 11px',
+                  border: `1px solid ${pct === 100 ? 'rgba(74,222,128,.35)' : tone.accent + '55'}`,
+                }}>
+                  {pct}%
+                </div>
+              </div>
+
+              {/* Header badges & objectif */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 12 }}>
                 <div style={{ flex: 1, minWidth: 0, cursor: 'pointer' }} onClick={() => setExpandedId(isExpanded ? null : proj.id)}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 4 }}>
-                    <span style={{ fontSize: 16 }}>{isIdee ? '💡' : '🎯'}</span>
-                    <h2 style={{ fontSize: 18, margin: 0 }}>{proj.name}</h2>
-                    {ai && (
-                      <span className="badge" style={{ background: `${scoreColor}22`, color: scoreColor, fontSize: 12 }}>
-                        ★ {ai.score_faisabilite}/10
-                      </span>
-                    )}
-                    {ai?.priorite_recommandee && <span className="badge badge-yellow">{ai.priorite_recommandee}</span>}
-                    {isIdee && <span className="badge" style={{ background: 'rgba(139,92,246,.15)', color: '#a78bfa', fontSize: 11 }}>Idée</span>}
-                  </div>
-                  {proj.objective && <p style={{ color: 'var(--muted)', fontSize: 13, margin: '0 0 4px' }}>{proj.objective}</p>}
-                  {proj.targetDate && <p style={{ color: 'var(--muted)', fontSize: 12, margin: 0 }}>🗓 Cible : {fmtDate(proj.targetDate)}</p>}
+                  {(ai || ai?.priorite_recommandee) && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 6 }}>
+                      {ai && (
+                        <span className="badge" style={{ background: `${scoreColor}22`, color: scoreColor, fontSize: 12 }}>
+                          ★ {ai.score_faisabilite}/10
+                        </span>
+                      )}
+                      {ai?.priorite_recommandee && <span className="badge badge-yellow">{ai.priorite_recommandee}</span>}
+                    </div>
+                  )}
+                  {proj.objective && <p style={{ color: 'var(--muted)', fontSize: 13, margin: '0 0 4px', lineHeight: 1.5 }}>{proj.objective}</p>}
+                  {proj.targetDate && <p style={{ color: 'var(--muted)', fontSize: 12, margin: 0 }}>Cible : {fmtDate(proj.targetDate)}</p>}
                 </div>
                 <div style={{ display: 'flex', gap: 6, flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                   {isIdee && (
