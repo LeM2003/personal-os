@@ -2,8 +2,9 @@ import { useState } from 'react'
 import { useApp } from '../../context/AppContext'
 import { genId, todayISO, fmtDate, fmtMonth } from '../../utils/dates'
 import { CAT_COLORS } from '../../utils/constants'
-import StatCard from '../shared/StatCard'
 import EmptyState from '../shared/EmptyState'
+import SegmentedControl from '../shared/SegmentedControl'
+import AbstractMark from '../shared/AbstractMark'
 
 const CATS = ['Nourriture', 'Transport', 'Business', 'École', 'Loisirs', 'Autre']
 
@@ -15,6 +16,7 @@ export default function Depenses() {
   const [form, setForm] = useState(blank)
   const [editingId, setEditingId] = useState(null)
   const [fPeriod, setFPeriod] = useState('Mois')
+  const [heroPeriod, setHeroPeriod] = useState('month')
   const [visibleCount, setVisibleCount] = useState(20)
   const [selYear, setSelYear] = useState(new Date().getFullYear())
   const [selMonth, setSelMonth] = useState(new Date().getMonth())
@@ -109,11 +111,53 @@ export default function Depenses() {
 
   return (
     <div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14, marginBottom: 24 }} className="grid-3">
-        <StatCard icon="☀️" value={`${todayTotal.toLocaleString('fr-FR')} FCFA`} label="Aujourd'hui"      color="#5B8DBF" />
-        <StatCard icon="📅" value={`${weekTotal.toLocaleString('fr-FR')} FCFA`}  label="7 derniers jours" color="#60a5fa" />
-        <StatCard icon="📆" value={`${monthTotal.toLocaleString('fr-FR')} FCFA`} label="Ce mois"          color="#4ade80" />
-      </div>
+      {/* ── Hero dépenses — 1 carte + SegmentedControl ── */}
+      {(() => {
+        const heroValue = heroPeriod === 'day' ? todayTotal : heroPeriod === 'week' ? weekTotal : monthTotal
+        const heroLabel = heroPeriod === 'day' ? "Aujourd'hui"
+          : heroPeriod === 'week' ? '7 derniers jours'
+          : 'Ce mois-ci'
+        const heroCount = heroPeriod === 'day'
+          ? expenses.filter(e => e.date === now).length
+          : heroPeriod === 'week'
+          ? expenses.filter(e => e.date >= weekAgo).length
+          : expenses.filter(e => e.date >= monthStart).length
+        return (
+          <div className="card" style={{
+            padding: '20px 22px', marginBottom: 20,
+            position: 'relative', overflow: 'hidden',
+          }}>
+            <div style={{ position: 'absolute', right: -14, top: -14, opacity: 0.35, pointerEvents: 'none' }}>
+              <AbstractMark variant="stack" tone="accent" size={110} />
+            </div>
+            <div style={{ position: 'relative', marginBottom: 14 }}>
+              <SegmentedControl value={heroPeriod} onChange={setHeroPeriod} size="sm"
+                options={[
+                  { value: 'day',   label: "Aujourd'hui" },
+                  { value: 'week',  label: '7 jours' },
+                  { value: 'month', label: 'Mois' },
+                ]} />
+            </div>
+            <p style={{
+              fontSize: 10.5, fontWeight: 700, color: 'var(--muted)',
+              letterSpacing: 1.1, textTransform: 'uppercase',
+              margin: '0 0 6px', position: 'relative',
+            }}>Dépensé · {heroLabel}</p>
+            <div style={{
+              fontFamily: 'Fraunces', fontSize: 40, fontWeight: 700,
+              letterSpacing: '-1.5px', lineHeight: 1, color: 'var(--text)',
+              position: 'relative',
+            }}>
+              {heroValue.toLocaleString('fr-FR')}
+              <span style={{ fontSize: 18, color: 'var(--muted)', marginLeft: 6, fontWeight: 600 }}>FCFA</span>
+            </div>
+            <p style={{ fontSize: 12.5, color: 'var(--muted)', margin: '8px 0 0', position: 'relative' }}>
+              {heroCount === 0 ? 'Aucune entrée sur cette période.'
+                : `${heroCount} entrée${heroCount > 1 ? 's' : ''} sur la période.`}
+            </p>
+          </div>
+        )
+      })()}
 
       {/* Résumé budget global */}
       {hasBudgets && (

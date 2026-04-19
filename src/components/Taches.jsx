@@ -6,6 +6,7 @@ import PageHeader from './shared/PageHeader'
 import EmptyState from './shared/EmptyState'
 import TextImport from './shared/TextImport'
 import SwipeRow from './shared/SwipeRow'
+import BottomSheet from './shared/BottomSheet'
 import { haptic, hapticSuccess } from '../utils/haptics'
 
 const JOURS       = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
@@ -42,6 +43,7 @@ export default function Taches() {
   const [showDetails, setShowDetails] = useState(false)
   const [expandedTaskId, setExpandedTaskId] = useState(null)
   const [snoozeForId, setSnoozeForId] = useState(null)
+  const [filtersOpen, setFiltersOpen] = useState(false)
 
   const projectNames = projects ? [...new Set(projects.map(p => p.name).filter(Boolean))] : []
 
@@ -363,49 +365,93 @@ export default function Taches() {
         </div>
       )}
 
-      {/* ── Filtres ── */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
-        {/* Ligne 1 : filtre date */}
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-          <span style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: .5 }}>Periode :</span>
-          {["Aujourd'hui", 'Semaine', 'Mois', 'Tout'].map(d => (
-            <button key={d} className={`filter-pill${fDate === d ? ' active' : ''}`} onClick={() => setFDate(d)}>{d}</button>
-          ))}
-        </div>
-        {/* Ligne 2 : filtre statut + priorite */}
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-          {['Tous', 'À faire', 'En cours'].map(s => (
-            <button key={s} className={`filter-pill${fStatus === s ? ' active' : ''}`} onClick={() => setFStatus(s)}>{s}</button>
-          ))}
-          <div style={{ width: 1, background: 'var(--border)', margin: '0 4px' }} />
-          {['Tous', 'Critique', 'Important', 'Optionnel'].map(p => (
-            <button key={p} className={`filter-pill${fPriority === p ? ' active' : ''}`} onClick={() => setFPriority(p)}>
-              {PRIORITY_EMOJI[p] || ''} {p}
-            </button>
-          ))}
+      {/* ── Filtres : 1 ligne scrollable + bouton "Filtres avancés" ── */}
+      {(() => {
+        const advCount = (fStatus !== 'Tous' ? 1 : 0) + (fPriority !== 'Tous' ? 1 : 0) + (fProject !== 'Tous' ? 1 : 0)
+        return (
+          <div style={{ marginBottom: 16 }}>
+            <div style={{
+              display: 'flex', gap: 6, alignItems: 'center',
+              overflowX: 'auto', WebkitOverflowScrolling: 'touch',
+              paddingBottom: 4,
+              scrollbarWidth: 'none',
+            }}>
+              {["Aujourd'hui", 'Semaine', 'Mois', 'Tout'].map(d => (
+                <button key={d} className={`filter-pill${fDate === d ? ' active' : ''}`}
+                  onClick={() => setFDate(d)}
+                  style={{ flexShrink: 0 }}>
+                  {d}
+                </button>
+              ))}
+              <div style={{ width: 1, height: 18, background: 'var(--border)', flexShrink: 0, margin: '0 4px' }} />
+              <button onClick={() => setFiltersOpen(true)}
+                className={`filter-pill${advCount > 0 ? ' active' : ''}`}
+                style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                Filtres
+                {advCount > 0 && (
+                  <span style={{
+                    background: 'rgba(11,18,32,0.25)', color: '#fff',
+                    borderRadius: 999, fontSize: 10, padding: '1px 6px', fontWeight: 700,
+                  }}>{advCount}</span>
+                )}
+              </button>
+            </div>
+            {/* Compteurs */}
+            <div style={{ display: 'flex', gap: 12, fontSize: 12, color: 'var(--muted)', marginTop: 10, flexWrap: 'wrap' }}>
+              <span>{activeTasks.length} active{activeTasks.length !== 1 ? 's' : ''}</span>
+              {countCritique > 0 && <span style={{ color: '#f87171' }}>{countCritique} critique{countCritique > 1 ? 's' : ''}</span>}
+              {countImportant > 0 && <span style={{ color: '#5B8DBF' }}>{countImportant} important{countImportant > 1 ? 'es' : 'e'}</span>}
+              {countOptionnel > 0 && <span style={{ color: 'var(--muted)' }}>{countOptionnel} optionnel{countOptionnel > 1 ? 'les' : 'le'}</span>}
+              {doneTasks.length > 0 && <span style={{ color: '#4ade80' }}>{doneTasks.length} terminee{doneTasks.length > 1 ? 's' : ''}</span>}
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* ── BottomSheet filtres avancés ── */}
+      <BottomSheet open={filtersOpen} onClose={() => setFiltersOpen(false)} title="Filtres avancés">
+        <div style={{ padding: '4px 4px 16px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div>
+            <p style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: .6, marginBottom: 8 }}>Statut</p>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {['Tous', 'À faire', 'En cours'].map(s => (
+                <button key={s} className={`filter-pill${fStatus === s ? ' active' : ''}`}
+                  onClick={() => setFStatus(s)}>{s}</button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <p style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: .6, marginBottom: 8 }}>Priorité</p>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {['Tous', 'Critique', 'Important', 'Optionnel'].map(p => (
+                <button key={p} className={`filter-pill${fPriority === p ? ' active' : ''}`}
+                  onClick={() => setFPriority(p)}>
+                  {PRIORITY_EMOJI[p] || ''} {p}
+                </button>
+              ))}
+            </div>
+          </div>
           {projectNames.length > 0 && (
-            <>
-              <div style={{ width: 1, background: 'var(--border)', margin: '0 4px' }} />
-              <select value={fProject} onChange={e => setFProject(e.target.value)}
-                style={{ padding: '5px 10px', fontSize: 12, borderRadius: 999, width: 'auto',
-                  background: fProject !== 'Tous' ? 'var(--gold)' : 'var(--pill-bg)',
-                  color: fProject !== 'Tous' ? '#0B1220' : 'var(--muted)',
-                  border: 'none', fontWeight: fProject !== 'Tous' ? 700 : 500, cursor: 'pointer' }}>
+            <div>
+              <p style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: .6, marginBottom: 8 }}>Projet</p>
+              <select value={fProject} onChange={e => setFProject(e.target.value)} style={{ width: '100%' }}>
                 <option value="Tous">Tous les projets</option>
                 {projectNames.map(p => <option key={p} value={p}>{p}</option>)}
               </select>
-            </>
+            </div>
           )}
+          <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+            <button className="btn-ghost"
+              onClick={() => { setFStatus('Tous'); setFPriority('Tous'); setFProject('Tous') }}
+              style={{ flex: 1 }}>
+              Réinitialiser
+            </button>
+            <button className="btn-gold" onClick={() => setFiltersOpen(false)} style={{ flex: 1 }}>
+              Appliquer
+            </button>
+          </div>
         </div>
-        {/* Resume compteurs */}
-        <div style={{ display: 'flex', gap: 12, fontSize: 12, color: 'var(--muted)' }}>
-          <span>{activeTasks.length} active{activeTasks.length !== 1 ? 's' : ''}</span>
-          {countCritique > 0 && <span style={{ color: '#f87171' }}>{countCritique} critique{countCritique > 1 ? 's' : ''}</span>}
-          {countImportant > 0 && <span style={{ color: '#5B8DBF' }}>{countImportant} important{countImportant > 1 ? 'es' : 'e'}</span>}
-          {countOptionnel > 0 && <span style={{ color: 'var(--muted)' }}>{countOptionnel} optionnel{countOptionnel > 1 ? 'les' : 'le'}</span>}
-          {doneTasks.length > 0 && <span style={{ color: '#4ade80' }}>{doneTasks.length} terminee{doneTasks.length > 1 ? 's' : ''}</span>}
-        </div>
-      </div>
+      </BottomSheet>
 
       {/* ── Liste active ── */}
       {activeTasks.length === 0 && doneTasks.length === 0

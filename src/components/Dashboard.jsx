@@ -7,6 +7,7 @@ import { computeNextRenewal } from '../utils/subscriptions'
 import StatCard from './shared/StatCard'
 import EmptyState from './shared/EmptyState'
 import SegmentedControl from './shared/SegmentedControl'
+import AbstractMark from './shared/AbstractMark'
 import {
   CloudSun, Cloud, CloudLightning, Moon as MoonIcon,
   Flame, TrendingUp, Target, ClipboardList, CheckCircle2,
@@ -54,6 +55,16 @@ export default function Dashboard() {
   const habitsPct       = todayHabits.length > 0 ? Math.round((habitsCompleted / todayHabits.length) * 100) : 0
 
   const top3         = [...tasks].filter(t => t.status !== 'Terminé').sort((a, b) => PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority]).slice(0, 3)
+  // Focus du jour : la tâche unique à mettre en avant (non-habitude, non-terminée,
+  // priorise deadline aujourd'hui puis haute priorité)
+  const focus = [...tasks]
+    .filter(t => t.status !== 'Terminé' && !t.recurring)
+    .sort((a, b) => {
+      const aDue = a.deadline === now ? 0 : 1
+      const bDue = b.deadline === now ? 0 : 1
+      if (aDue !== bDue) return aDue - bDue
+      return PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority]
+    })[0]
   const todayCourses = courses
     .filter(c => c.jour === dayName)
     .filter(c => (!c.dateDebut || now >= c.dateDebut) && (!c.dateFin || now <= c.dateFin))
@@ -133,8 +144,7 @@ export default function Dashboard() {
     .forEach(s => alerts.push({ type: 'yellow', msg: `${s.name} — paiement dans ${daysUntil(s._next)}j (${s.amount.toLocaleString('fr-FR')} FCFA)` }))
   devoirs.filter(d => d.statut !== 'Rendu' && daysUntil(d.dateRendu) < 0)
     .forEach(d => alerts.push({ type: 'red', msg: `Devoir en retard : ${d.matiere}` }))
-  if (adjustments.length > 0)
-    alerts.push({ type: 'blue', msg: `${adjustments.length} tâche${adjustments.length > 1 ? 's' : ''} en attente de reprogrammation` })
+  // Les ajustements deviennent un chip discret ci-dessous — plus d'alerte bleue
 
   return (
     <div>
@@ -159,6 +169,73 @@ export default function Dashboard() {
       </div>
 
       {view === 'today' && (<>
+      {/* ── "À rattraper" — chip discret (remplace l'ancienne alerte bleue) ── */}
+      {adjustments.length > 0 && (
+        <div
+          onClick={() => setTab('ajustements')}
+          style={{
+            marginBottom: 14,
+            background: 'rgba(248,113,113,0.08)',
+            border: '1px solid rgba(248,113,113,0.22)',
+            borderRadius: 10,
+            padding: '8px 12px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            cursor: 'pointer',
+          }}
+        >
+          <div style={{ width: 6, height: 6, borderRadius: 999, background: '#f87171' }} />
+          <div style={{ fontSize: 12.5, color: '#f87171', fontWeight: 500, flex: 1 }}>
+            {adjustments.length} tâche{adjustments.length > 1 ? 's' : ''} à rattraper
+          </div>
+          <div style={{ fontSize: 12, color: '#f87171', fontWeight: 600 }}>Voir →</div>
+        </div>
+      )}
+
+      {/* ── Focus du jour — hero unique ── */}
+      {focus && (
+        <div
+          className="card"
+          onClick={() => setTab('taches')}
+          style={{
+            padding: 18, marginBottom: 20,
+            borderColor: 'rgba(91,141,191,0.25)',
+            position: 'relative', overflow: 'hidden', cursor: 'pointer',
+          }}
+        >
+          <div style={{ position: 'absolute', top: -10, right: -10, opacity: 0.55, pointerEvents: 'none' }}>
+            <AbstractMark variant="rings" tone="accent" size={92} />
+          </div>
+          <p style={{
+            fontSize: 10.5, fontWeight: 700, color: '#5B8DBF',
+            letterSpacing: 1.1, textTransform: 'uppercase', margin: '0 0 8px',
+            position: 'relative',
+          }}>Focus du jour</p>
+          <h2 style={{
+            fontFamily: 'Fraunces', fontSize: 22, fontWeight: 700,
+            letterSpacing: '-0.5px', lineHeight: 1.2, color: 'var(--text)',
+            maxWidth: 280, margin: '0 0 4px',
+            position: 'relative',
+          }}>{focus.name}</h2>
+          <p style={{
+            fontSize: 13, color: 'var(--muted)', margin: '0 0 14px',
+            position: 'relative',
+          }}>
+            {focus.deadline === now ? 'À rendre aujourd\'hui'
+              : focus.deadline ? `Échéance ${fmtDate(focus.deadline)}`
+              : `Priorité ${focus.priority}`}
+            {focus.category ? ` · ${focus.category}` : ''}
+          </p>
+          <button
+            className="btn-gold"
+            style={{ borderRadius: 10, padding: '10px 18px', fontSize: 13.5, position: 'relative' }}
+          >
+            Ouvrir la tâche
+          </button>
+        </div>
+      )}
+
       {/* ── Bannière Météo / Streak / Score ── */}
       <div className="grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 20 }}>
         <div className="card" style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>

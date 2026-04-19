@@ -7,6 +7,21 @@ const JOURS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
 
 const blankForm = { nom: '', jours: ['Lundi'], heureDebut: '08:00', heureFin: '10:00', salle: '', professeur: '', color: '#6366f1', dateDebut: '', dateFin: '' }
 
+// Timeline config: 8h → 18h (10 heures), 44 px par heure
+const TL_START = 8
+const TL_END = 18
+const TL_HOUR_PX = 44
+const TL_HEIGHT = (TL_END - TL_START) * TL_HOUR_PX
+const TL_MARKS = [8, 10, 12, 14, 16, 18]
+
+// "HH:MM" → décimal (ex: "08:30" → 8.5)
+const parseTime = (s) => {
+  if (!s || typeof s !== 'string') return TL_START
+  const [h, m] = s.split(':').map(n => parseInt(n, 10) || 0)
+  return h + m / 60
+}
+const clampTL = (h) => Math.max(TL_START, Math.min(TL_END, h))
+
 export default function EmploiDuTemps() {
   const { courses, setCourses } = useApp()
   const [showForm,  setShowForm]  = useState(false)
@@ -191,53 +206,97 @@ export default function EmploiDuTemps() {
                 {isToday && <p style={{ fontSize: 10, color: '#5B8DBF', margin: '2px 0 0' }}>Aujourd'hui</p>}
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {dayCourses.length === 0
-                  ? <p style={{ color: 'var(--input-border)', fontSize: 12, textAlign: 'center', padding: '12px 0' }}>—</p>
-                  : dayCourses.map(c => {
-                      const present = isPresent(c)
-                      const attendCount = (c.attended || []).length
-                      return (
-                        <div key={c.id} style={{
-                          background: present ? 'rgba(74,222,128,.08)' : `${c.color}18`,
-                          border: `1px solid ${present ? 'rgba(74,222,128,.3)' : `${c.color}35`}`,
-                          borderLeft: `3px solid ${present ? '#4ade80' : c.color}`,
-                          borderRadius: 8, padding: '8px 10px',
-                          transition: 'all .2s'
-                        }}>
-                          <p style={{ fontWeight: 600, fontSize: 13,
-                            color: present ? '#4ade80' : c.color,
-                            margin: '0 0 2px' }}>
-                            {present ? '✓ ' : ''}{c.nom}
-                          </p>
-                          <p style={{ fontSize: 12, color: 'var(--muted)', margin: 0 }}>{c.heureDebut} – {c.heureFin}</p>
-                          {c.salle && <p style={{ fontSize: 11, color: 'var(--muted)', margin: '2px 0 0' }}>📍 {c.salle}</p>}
-                          {c.professeur && <p style={{ fontSize: 11, color: 'var(--muted)', margin: '2px 0 0' }}>👤 {c.professeur}</p>}
-                          {attendCount > 0 && !isToday && (
-                            <p style={{ fontSize: 10, color: 'rgba(74,222,128,.6)', margin: '3px 0 0' }}>
-                              ✓ {attendCount} séance{attendCount > 1 ? 's' : ''}
-                            </p>
-                          )}
+              <div style={{
+                position: 'relative', height: TL_HEIGHT,
+                borderRadius: 10, border: '1px solid var(--border)',
+                background: 'var(--card)', overflow: 'hidden',
+              }}>
+                {/* Graduations horaires */}
+                {TL_MARKS.map((h, i) => {
+                  const top = (h - TL_START) * TL_HOUR_PX
+                  return (
+                    <div key={h} style={{
+                      position: 'absolute', left: 0, right: 0, top,
+                      height: 1, background: i === 0 ? 'transparent' : 'var(--border)',
+                      opacity: 0.5, pointerEvents: 'none',
+                    }}>
+                      <span style={{
+                        position: 'absolute', left: 4, top: -7,
+                        fontSize: 9, color: 'var(--muted)', fontWeight: 500,
+                        background: 'var(--card)', padding: '0 3px',
+                        fontFamily: 'DM Sans',
+                      }}>{h}h</span>
+                    </div>
+                  )
+                })}
 
-                          <div style={{ display: 'flex', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
-                            {isToday && (
-                              <button onClick={() => togglePresence(c.id)} aria-label="Marquer présence"
-                                style={{ fontSize: 11, padding: '5px 10px', borderRadius: 6, cursor: 'pointer', border: 'none',
-                                  background: present ? 'rgba(74,222,128,.2)' : 'rgba(91,141,191,.15)',
-                                  color: present ? '#4ade80' : '#5B8DBF', fontWeight: 600 }}>
-                                {present ? '✓ Présent' : '+ Présence'}
-                              </button>
-                            )}
-                            <button onClick={() => openEdit(c)} aria-label="Modifier le cours"
-                              style={{ fontSize: 11, padding: '5px 10px', borderRadius: 6, cursor: 'pointer',
-                                background: 'none', border: '1px solid var(--border)', color: 'var(--muted)' }}>
-                              ✏️
-                            </button>
-                          </div>
-                        </div>
-                      )
-                    })
-                }
+                {/* Cours positionnés par heure */}
+                {dayCourses.map(c => {
+                  const present = isPresent(c)
+                  const attendCount = (c.attended || []).length
+                  const start = clampTL(parseTime(c.heureDebut))
+                  const end = clampTL(parseTime(c.heureFin))
+                  const top = (start - TL_START) * TL_HOUR_PX
+                  const height = Math.max(26, (end - start) * TL_HOUR_PX - 2)
+                  const compact = height < 56
+                  return (
+                    <div key={c.id} style={{
+                      position: 'absolute', left: 22, right: 4, top, height,
+                      background: present ? 'rgba(74,222,128,.12)' : `${c.color}20`,
+                      border: `1px solid ${present ? 'rgba(74,222,128,.35)' : `${c.color}45`}`,
+                      borderLeft: `3px solid ${present ? '#4ade80' : c.color}`,
+                      borderRadius: 7, padding: compact ? '3px 7px' : '5px 8px',
+                      overflow: 'hidden', transition: 'all .2s',
+                      display: 'flex', flexDirection: 'column', gap: 1,
+                    }}>
+                      <p style={{ fontWeight: 600, fontSize: compact ? 11 : 12.5,
+                        color: present ? '#4ade80' : c.color,
+                        margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {present ? '✓ ' : ''}{c.nom}
+                      </p>
+                      {!compact && (
+                        <p style={{ fontSize: 10.5, color: 'var(--muted)', margin: 0 }}>
+                          {c.heureDebut}–{c.heureFin}
+                        </p>
+                      )}
+                      {!compact && c.salle && (
+                        <p style={{ fontSize: 10, color: 'var(--muted)', margin: 0,
+                          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          📍 {c.salle}
+                        </p>
+                      )}
+                      {height >= 80 && c.professeur && (
+                        <p style={{ fontSize: 10, color: 'var(--muted)', margin: 0,
+                          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          👤 {c.professeur}
+                        </p>
+                      )}
+                      {height >= 96 && attendCount > 0 && !isToday && (
+                        <p style={{ fontSize: 9.5, color: 'rgba(74,222,128,.7)', margin: 0 }}>
+                          ✓ {attendCount} séance{attendCount > 1 ? 's' : ''}
+                        </p>
+                      )}
+                      <div style={{
+                        display: 'flex', gap: 4, marginTop: 'auto',
+                        flexWrap: 'wrap', alignItems: 'flex-end',
+                      }}>
+                        {isToday && height >= 56 && (
+                          <button onClick={() => togglePresence(c.id)} aria-label="Marquer présence"
+                            style={{ fontSize: 10, padding: '3px 7px', borderRadius: 5, cursor: 'pointer', border: 'none',
+                              background: present ? 'rgba(74,222,128,.22)' : 'rgba(91,141,191,.18)',
+                              color: present ? '#4ade80' : '#5B8DBF', fontWeight: 600, lineHeight: 1 }}>
+                            {present ? '✓' : '+ Prés.'}
+                          </button>
+                        )}
+                        <button onClick={() => openEdit(c)} aria-label="Modifier le cours"
+                          style={{ fontSize: 10, padding: '3px 7px', borderRadius: 5, cursor: 'pointer',
+                            background: 'none', border: '1px solid var(--border)', color: 'var(--muted)', lineHeight: 1 }}>
+                          ✏️
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             </div>
           )
