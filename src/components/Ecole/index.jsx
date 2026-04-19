@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useApp } from '../../context/AppContext'
 import EmploiDuTemps from './EmploiDuTemps'
 import DevoirsExamens from './DevoirsExamens'
+import Notes from './Notes'
 import TextImport from '../shared/TextImport'
 import PageHeader from '../shared/PageHeader'
 
@@ -28,10 +29,11 @@ export default function Ecole() {
       <div className="subtab-bar" style={{ marginBottom: 20, flexWrap: 'wrap' }}>
         <button className={`subtab${sub === 'emploi' ? ' active' : ''}`} onClick={() => setSub('emploi')}>📅 Emploi du temps</button>
         <button className={`subtab${sub === 'devoirs' ? ' active' : ''}`} onClick={() => setSub('devoirs')}>📝 Devoirs & Examens</button>
+        <button className={`subtab${sub === 'notes' ? ' active' : ''}`} onClick={() => setSub('notes')}>📊 Notes</button>
       </div>
-      {sub === 'emploi'
-        ? <EmploiDuTemps />
-        : <DevoirsExamens />}
+      {sub === 'emploi' && <EmploiDuTemps />}
+      {sub === 'devoirs' && <DevoirsExamens />}
+      {sub === 'notes' && <Notes />}
 
       {showImport && (
         <TextImport apiKey={apiKey} onImport={handleImport} onClose={() => setShowImport(false)} />

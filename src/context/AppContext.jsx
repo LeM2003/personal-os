@@ -22,6 +22,7 @@ export function AppProvider({ children }) {
   const [courses,       setCourses]       = useLS('pos_courses',       [])
   const [devoirs,       setDevoirs]       = useLS('pos_devoirs',       [])
   const [examens,       setExamens]       = useLS('pos_examens',       [])
+  const [notes,         setNotes]         = useLS('pos_notes',         [])
   const [profile,       setProfile]       = useLS('pos_profile',       null)
   const [apiKey,        setApiKey]        = useLS('pos_apikey',        '')
   const [notifEnabled,  setNotifEnabled]  = useLS('pos_notif',         false)
@@ -226,7 +227,7 @@ export function AppProvider({ children }) {
     const data = {
       version: 1, exportedAt: new Date().toISOString(),
       profile, tasks, projects, expenses, subscriptions, budgets,
-      objectif, adjustments, courses, devoirs, examens,
+      objectif, adjustments, courses, devoirs, examens, notes,
       debts, savings,
     }
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
@@ -247,7 +248,7 @@ export function AppProvider({ children }) {
         const data = JSON.parse(ev.target.result)
         if (!data.version || typeof data !== 'object') { alert('Fichier invalide — pas un backup Personal OS.'); return }
         // Validate arrays are actually arrays
-        const arrays = ['tasks', 'projects', 'expenses', 'subscriptions', 'adjustments', 'courses', 'devoirs', 'examens']
+        const arrays = ['tasks', 'projects', 'expenses', 'subscriptions', 'adjustments', 'courses', 'devoirs', 'examens', 'notes']
         for (const k of arrays) {
           if (data[k] && !Array.isArray(data[k])) { alert(`Fichier corrompu — "${k}" n'est pas un tableau.`); return }
         }
@@ -263,6 +264,7 @@ export function AppProvider({ children }) {
         if (data.courses)       setCourses(data.courses)
         if (data.devoirs)       setDevoirs(data.devoirs)
         if (data.examens)       setExamens(data.examens)
+        if (data.notes)         setNotes(data.notes)
         if (data.budgets && typeof data.budgets === 'object') setBudgets(data.budgets)
         setBackupModal(false)
         alert('✅ Données restaurées avec succès !')
@@ -288,6 +290,7 @@ export function AppProvider({ children }) {
     courses, setCourses,
     devoirs, setDevoirs,
     examens, setExamens,
+    notes, setNotes,
     profile, setProfile,
     apiKey, setApiKey,
     notifEnabled, setNotifEnabled,
