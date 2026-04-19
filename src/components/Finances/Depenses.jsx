@@ -220,7 +220,7 @@ export default function Depenses() {
               ))}
             </div>
           ) : CATS.filter(c => catTotals[c] > 0 || budgets[c] > 0).length === 0 ? (
-            <EmptyState icon="📊" msg="Rien à ce mois. Page blanche." sub="Fixe tes budgets pour garder l'œil dessus." />
+            <EmptyState mark="stack" tone="muted" title="Rien à ce mois. Page blanche." subtitle="Fixe tes budgets pour garder l'œil dessus." />
           ) : (
             CATS.map(cat => {
               const spent = catTotals[cat]
@@ -332,7 +332,7 @@ export default function Depenses() {
           </span>
         </div>
 
-        {filteredHistory.length === 0 ? <EmptyState icon="🧾" msg="Rien sur cette période." /> : (
+        {filteredHistory.length === 0 ? <EmptyState mark="stack" tone="muted" title="Rien sur cette période." /> : (
           <>
             {filteredHistory.slice(0, visibleCount).map(e => (
               <div key={e.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0',

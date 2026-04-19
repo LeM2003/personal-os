@@ -455,7 +455,9 @@ export default function Taches() {
 
       {/* ── Liste active ── */}
       {activeTasks.length === 0 && doneTasks.length === 0
-        ? <EmptyState icon="📝" msg="Rien à faire. Profite — ou ajoute quelque chose." sub="« + Nouvelle tâche » pour commencer." />
+        ? <EmptyState mark="rings" tone="accent"
+            title="Rien à faire. Profite — ou ajoute quelque chose."
+            subtitle="« + Nouvelle tâche » pour commencer." />
         : <>
           {activeTasks.length === 0 && !showDone
             ? <div style={{ textAlign: 'center', padding: '30px 0', color: 'var(--muted)', fontSize: 14 }}>

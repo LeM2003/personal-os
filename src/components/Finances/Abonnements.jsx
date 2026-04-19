@@ -119,7 +119,7 @@ export default function Abonnements() {
       )}
 
       {sorted.length === 0
-        ? <EmptyState icon="📋" msg="Aucun abonnement suivi." sub="Ajoute-les ici pour ne plus jamais être surpris en fin de mois." />
+        ? <EmptyState mark="bars" tone="muted" title="Aucun abonnement suivi." subtitle="Ajoute-les ici pour ne plus jamais être surpris en fin de mois." />
         : <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {sorted.map(sub => {
               const nextR = sub.nextRenewal || computeNextRenewal(sub.startDate || todayISO(), sub.cycle || 'Mensuel')

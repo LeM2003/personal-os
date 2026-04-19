@@ -365,7 +365,7 @@ export default function Dashboard() {
             </span>
           </div>
           {todayHabits.length === 0
-            ? <EmptyState icon="😌" msg="Pas d'habitudes prévues. Repos." />
+            ? <EmptyState mark="bars" tone="muted" title="Pas d'habitudes prévues. Repos." />
             : todayHabits.map(t => (
               <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0',
                 borderBottom: '1px solid var(--border)' }}>
@@ -387,7 +387,7 @@ export default function Dashboard() {
             <Zap size={13} style={{ display: 'inline', verticalAlign: -2, marginRight: 4 }} /> Top priorités
           </p>
           {top3.length === 0
-            ? <EmptyState icon="✨" msg="Tout est terminé. Profite." />
+            ? <EmptyState mark="rings" tone="success" title="Tout est terminé. Profite." />
             : top3.map((t, i) => (
               <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0',
                 borderBottom: '1px solid var(--border)', cursor: 'pointer' }}
@@ -413,7 +413,7 @@ export default function Dashboard() {
             <BookOpen size={13} style={{ display: 'inline', verticalAlign: -2, marginRight: 4 }} /> Cours aujourd'hui
           </p>
           {todayCourses.length === 0
-            ? <EmptyState icon="☕" msg="Pas de cours. Journée à toi." />
+            ? <EmptyState mark="grid" tone="muted" title="Pas de cours. Journée à toi." />
             : todayCourses.map(c => (
               <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0',
                 borderBottom: '1px solid var(--border)' }}>
@@ -439,7 +439,7 @@ export default function Dashboard() {
             </span>
           </div>
           {todayExpenses.length === 0
-            ? <EmptyState icon="💰" msg="Rien dépensé aujourd'hui. Rare, profite." />
+            ? <EmptyState mark="stack" tone="muted" title="Rien dépensé aujourd'hui. Rare, profite." />
             : todayExpenses.slice(0, 5).map(e => (
               <div key={e.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0',
                 borderBottom: '1px solid var(--border)' }}>
@@ -469,7 +469,7 @@ export default function Dashboard() {
         </div>
 
         {tomorrowTotal === 0 ? (
-          <EmptyState icon="🌙" msg="Demain, rien de prévu. Profites-en pour prendre de l'avance." />
+          <EmptyState mark="arc" tone="muted" title="Demain, rien de prévu." subtitle="Profites-en pour prendre de l'avance." />
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }} className="grid-2">
             {/* Cours */}
@@ -593,7 +593,7 @@ function WeekView({ tasks, examens, devoirs, upcomingSubs, weekScore, setTab }) 
           <GraduationCap size={13} style={{ display: 'inline', verticalAlign: -2, marginRight: 4 }} /> Examens (7j) {weekExamens.length > 0 && <span style={{ color: 'var(--muted)', fontWeight: 400 }}>— {weekExamens.length}</span>}
         </p>
         {weekExamens.length === 0
-          ? <EmptyState icon="📚" msg="Aucun examen cette semaine." />
+          ? <EmptyState mark="grid" tone="muted" title="Aucun examen cette semaine." />
           : weekExamens.map(e => (
             <div key={e.id} onClick={() => setTab('ecole')}
               style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--border)', cursor: 'pointer' }}>
@@ -615,7 +615,7 @@ function WeekView({ tasks, examens, devoirs, upcomingSubs, weekScore, setTab }) 
           <ClipboardList size={13} style={{ display: 'inline', verticalAlign: -2, marginRight: 4 }} /> Devoirs à rendre (7j) {weekDevoirs.length > 0 && <span style={{ color: 'var(--muted)', fontWeight: 400 }}>— {weekDevoirs.length}</span>}
         </p>
         {weekDevoirs.length === 0
-          ? <EmptyState icon="✅" msg="Rien à rendre cette semaine." />
+          ? <EmptyState mark="rings" tone="success" title="Rien à rendre cette semaine." />
           : weekDevoirs.map(d => (
             <div key={d.id} onClick={() => setTab('ecole')}
               style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--border)', cursor: 'pointer' }}>

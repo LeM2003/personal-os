@@ -257,9 +257,9 @@ export default function Projets() {
       {/* Liste */}
       {sorted.length === 0
         ? <EmptyState
-            icon={viewTab === 'idees' ? '💡' : '🚀'}
-            msg={viewTab === 'idees' ? "Pas encore d'idée notée." : "Aucun projet ouvert."}
-            sub={viewTab === 'idees' ? "Dépose tes pensées ici — tu les transformeras en projet quand elles seront mûres." : "C'est peut-être le moment d'en lancer un."} />
+            mark={viewTab === 'idees' ? 'stack' : 'arc'} tone="accent"
+            title={viewTab === 'idees' ? "Pas encore d'idée notée." : "Aucun projet ouvert."}
+            subtitle={viewTab === 'idees' ? "Dépose tes pensées ici — tu les transformeras en projet quand elles seront mûres." : "C'est peut-être le moment d'en lancer un."} />
         : sorted.map(proj => {
           const pct = calcProgress(proj)
           const linked = tasks.filter(t => t.project === proj.name)

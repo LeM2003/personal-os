@@ -95,7 +95,7 @@ export default function DevoirsExamens() {
         )}
 
         {sortedDevoirs.length === 0
-          ? <EmptyState icon="✨" msg="Aucun devoir. Profite." sub="Ça ne durera pas." />
+          ? <EmptyState mark="rings" tone="success" title="Aucun devoir. Profite." subtitle="Ça ne durera pas." />
           : sortedDevoirs.map(d => {
             const due = daysUntil(d.dateRendu)
             const isLinked = tasks?.some(t => t.linkedDevoirId === d.id)
@@ -163,7 +163,7 @@ export default function DevoirsExamens() {
         )}
 
         {sortedExamens.length === 0
-          ? <EmptyState icon="📖" msg="Pas d'examen en vue." sub="Bonne période pour prendre de l'avance." />
+          ? <EmptyState mark="grid" tone="muted" title="Pas d'examen en vue." subtitle="Bonne période pour prendre de l'avance." />
           : sortedExamens.map(e => {
             const due = daysUntil(e.date)
             const total = +e.totalChapitres || 1
