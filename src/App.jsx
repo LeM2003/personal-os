@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useApp } from './context/AppContext'
 import LandingPage from './components/LandingPage'
+import Onboarding from './components/Onboarding'
 import Dashboard from './components/Dashboard'
 import Taches from './components/Taches'
 import Projets from './components/Projets'
@@ -161,11 +162,19 @@ export default function App() {
   const [loggedOut, setLoggedOut] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [icsModal, setIcsModal] = useState(false)
+  const [onboardingDone, setOnboardingDone] = useState(() => {
+    try { return localStorage.getItem('onboardingDone') === '1' } catch { return false }
+  })
 
   const logout = () => setLoggedOut(true)
   const handleStart = (formData) => {
     setProfile(formData)
     setLoggedOut(false)
+  }
+  const handleOnboardingFinish = (nextProfile) => {
+    setProfile(nextProfile)
+    try { localStorage.setItem('onboardingDone', '1') } catch { /* ignore */ }
+    setOnboardingDone(true)
   }
 
   const adjBadge = adjustments.length > 0 && (
@@ -178,6 +187,11 @@ export default function App() {
   // ── Nouveau visiteur OU déconnecté → Landing Page ──
   if (!profile || loggedOut) {
     return <LandingPage onStart={handleStart} />
+  }
+
+  // ── Premier lancement après login → Onboarding 3 écrans ──
+  if (!onboardingDone) {
+    return <Onboarding profile={profile} onFinish={handleOnboardingFinish} />
   }
 
   return (
