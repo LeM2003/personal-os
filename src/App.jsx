@@ -33,33 +33,6 @@ const TABS = [
   { id: 'ajustements', icon: <RefreshCw size={ICON_SIZE} />,        label: 'Ajustements'     },
 ]
 
-function SetupModal({ onSave }) {
-  const [form, setForm] = useState({ prenom: '', nom: '', role: 'Étudiant-entrepreneur' })
-  const save = () => { if (!form.prenom.trim()) return; onSave(form) }
-  return (
-    <div className="modal-overlay" style={{ zIndex: 9999 }}>
-      <div className="modal-box">
-        <h3 style={{ fontSize: 22, marginBottom: 4, color: '#5B8DBF' }}>👋 Content de te voir.</h3>
-        <p style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 24, lineHeight: 1.6 }}>
-          Juste ton prénom pour commencer. Tout reste dans ton navigateur, rien ne part ailleurs.
-        </p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <input value={form.prenom} onChange={e => setForm({ ...form, prenom: e.target.value })}
-            placeholder="Prénom *" autoFocus />
-          <input value={form.nom} onChange={e => setForm({ ...form, nom: e.target.value })}
-            placeholder="Nom (optionnel)" />
-          <select value={form.role} onChange={e => setForm({ ...form, role: e.target.value })}>
-            <option>Étudiant-entrepreneur</option><option>Étudiant</option>
-            <option>Entrepreneur</option><option>Freelance</option><option>Autre</option>
-          </select>
-        </div>
-        <button className="btn-gold" style={{ width: '100%', marginTop: 20 }} onClick={save}
-          disabled={!form.prenom.trim()}>On y va</button>
-      </div>
-    </div>
-  )
-}
-
 function ProfileModal({ profile, onSave, onClose }) {
   const [form, setForm] = useState({ prenom: profile?.prenom || '', nom: profile?.nom || '', role: profile?.role || 'Étudiant-entrepreneur' })
   return (
@@ -202,7 +175,7 @@ export default function App() {
           {sidebarOpen ? (
             <div>
               <h1 style={{ fontSize: 20, fontWeight: 800, color: '#5B8DBF', letterSpacing: '-0.5px' }}>Personal OS</h1>
-              <p style={{ color: 'var(--muted)', fontSize: 11, marginTop: 3 }}>Dashboard Pro · Dakar</p>
+              <p style={{ color: 'var(--muted)', fontSize: 11, marginTop: 3 }}>Ton tableau de bord personnel</p>
             </div>
           ) : (
             <span style={{ fontSize: 20, fontWeight: 800, color: '#5B8DBF' }}>P</span>
@@ -416,8 +389,6 @@ export default function App() {
           </div>
         </div>
       )}
-
-      {/* SETUP PROFIL — remplacé par LandingPage, rendu plus haut */}
 
       {/* MODIFIER PROFIL */}
       {profileModal && (

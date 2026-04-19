@@ -6,6 +6,9 @@ import StatCard from './shared/StatCard'
 import WeeklyReport from './shared/WeeklyReport'
 import PageHeader from './shared/PageHeader'
 import AbstractMark from './shared/AbstractMark'
+import { CheckSquare, Flame, Wallet, Target, GraduationCap, Rocket } from 'lucide-react'
+
+const TITLE_ICON = { display: 'inline', verticalAlign: -2, marginRight: 6 }
 
 const JOURS_FR = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
 
@@ -299,7 +302,7 @@ export default function Stats() {
         <div className="card" style={{ padding: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
             <p style={{ fontFamily: 'Fraunces', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, margin: 0 }}>
-              ✅ Tâches — 7 jours
+              <CheckSquare size={13} style={TITLE_ICON} /> Tâches — 7 jours
             </p>
             <span style={{ fontSize: 20, fontWeight: 800,
               color: completionRate >= 70 ? '#4ade80' : completionRate >= 40 ? '#5B8DBF' : '#f87171' }}>
@@ -339,7 +342,7 @@ export default function Stats() {
 
         <div className="card" style={{ padding: 20 }}>
           <p style={{ fontFamily: 'Fraunces', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, marginBottom: 16 }}>
-            🔥 Habitudes récurrentes
+            <Flame size={13} style={TITLE_ICON} /> Habitudes récurrentes
           </p>
           {allHabits.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--muted)' }}>
@@ -394,7 +397,7 @@ export default function Stats() {
         <div className="card" style={{ padding: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <p style={{ fontFamily: 'Fraunces', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8 }}>
-              💸 Dépenses — 4 semaines
+              <Wallet size={13} style={TITLE_ICON} /> Dépenses — 4 semaines
             </p>
             {weekTrend !== null && (
               <span style={{ fontSize: 13, fontWeight: 700, color: weekTrend > 0 ? '#f87171' : '#4ade80' }}>
@@ -431,7 +434,7 @@ export default function Stats() {
 
         <div className="card" style={{ padding: 20 }}>
           <p style={{ fontFamily: 'Fraunces', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, marginBottom: 16 }}>
-            🎯 Tâches par priorité
+            <Target size={13} style={TITLE_ICON} /> Tâches par priorité
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 20 }}>
             {byPriority.map(({ priority, total, done }) => {
@@ -476,7 +479,7 @@ export default function Stats() {
         {/* École */}
         <div className="card" style={{ padding: 20 }}>
           <p style={{ fontFamily: 'Fraunces', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8, marginBottom: 16 }}>
-            📚 École
+            <GraduationCap size={13} style={TITLE_ICON} /> École
           </p>
           {devoirsTotal === 0 && examens.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--muted)' }}>
@@ -565,7 +568,7 @@ export default function Stats() {
         <div className="card" style={{ padding: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <p style={{ fontFamily: 'Fraunces', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: .8 }}>
-              🚀 Projets actifs
+              <Rocket size={13} style={TITLE_ICON} /> Projets actifs
             </p>
             {projectsWithProgress.length > 0 && (
               <span style={{ fontSize: 12, color: 'var(--muted)' }}>Moy. {avgProgress}%</span>
